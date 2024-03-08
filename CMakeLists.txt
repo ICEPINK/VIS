@@ -8,6 +8,8 @@ set(CMAKE_C_STANDARD 17)
 set(CMAKE_C_STANDARD_REQUIRED True)
 set(CMAKE_EXPORT_COMPILE_COMMANDS True)
 
+add_subdirectory("./lib/")
+
 set(P_SOURCE_FILES
     "./src/main.cpp"
     "./src/application.cpp"
@@ -19,8 +21,26 @@ set(P_HEADER_FILES
 
 add_executable(${PROJECT_NAME} ${P_SOURCE_FILES})
 
+target_include_directories(${PROJECT_NAME}
+    PUBLIC "./lib/glfw/include/"
+    PUBLIC "./lib/glad/include/"
+    PUBLIC "./lib/glm/"
+    PUBLIC "./lib/imgui/"
+    PUBLIC "./lib/imgui/backends/"
+    )
+
+target_link_directories(${PROJECT_NAME}
+    PRIVATE "./lib/glfw/src/"
+    PRIVATE "./lib/glad/src/"
+    PRIVATE "./lib/imgui/"
+    )
+
 target_link_libraries(${PROJECT_NAME}
     PRIVATE -static-libstdc++
+    PRIVATE glfw
+    PRIVATE glad
+    PRIVATE glm
+    PRIVATE imgui
     )
 
 target_compile_options(${PROJECT_NAME} PRIVATE
