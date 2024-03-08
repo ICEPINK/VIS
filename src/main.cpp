@@ -1,7 +1,6 @@
-#include <iostream>
+#include "application.hpp"
 
-int main()
-{
-    std::cout << "Hello VIS!\n";
-    return 0;
+int main() {
+    Vis::Application app;
+    return app.run();
 }

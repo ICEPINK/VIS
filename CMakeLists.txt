@@ -10,9 +10,11 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS True)
 
 set(P_SOURCE_FILES
     "./src/main.cpp"
+    "./src/application.cpp"
     )
 
 set(P_HEADER_FILES
+    "./src/application.hpp"
     )
 
 add_executable(${PROJECT_NAME} ${P_SOURCE_FILES})
