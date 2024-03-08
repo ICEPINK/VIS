@@ -13,10 +13,12 @@ add_subdirectory("./lib/")
 set(P_SOURCE_FILES
     "./src/main.cpp"
     "./src/application.cpp"
+    "./src/window.cpp"
     )
 
 set(P_HEADER_FILES
     "./src/application.hpp"
+    "./src/window.hpp"
     )
 
 add_executable(${PROJECT_NAME} ${P_SOURCE_FILES})
