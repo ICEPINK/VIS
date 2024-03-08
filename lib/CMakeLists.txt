@@ -71,6 +71,7 @@ add_library(${PROJECT_NAME} STATIC ${P_SOURCE_FILES} ${P_HEADER_FILES})
 
 target_include_directories(${PROJECT_NAME}
     PUBLIC "./imgui/"
+    PUBLIC "./glfw/include/"
     )
 
 target_link_libraries(${PROJECT_NAME}
