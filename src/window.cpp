@@ -53,8 +53,21 @@ void Window::update() {
     glfwPollEvents();
 }
 
+void Window::clear() {
+    glClear(GL_COLOR_BUFFER_BIT);
+}
+
+void Window::set_clear_color(float red, float green, float blue, float alpha) {
+    glClearColor(red, green, blue, alpha);
+}
+
 bool Window::should_window_close() const {
     return glfwWindowShouldClose(m_window_ptr);
+}
+
+void Window::init_gui(const std::unique_ptr<Gui> &gui) {
+    gui->glfw_init(m_window_ptr);
+    gui->opengl_init(m_glsl_version);
 }
 
 } // namespace Vis
