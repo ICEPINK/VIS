@@ -8,9 +8,9 @@ namespace Vis {
 
 static size_t s_window_count = 0;
 
-Window::Window(const size_t width, const size_t height, const std::string title)
+Window::Window(const int32_t width, const int32_t height,
+               const std::string title)
     : m_window_ptr(nullptr), m_width(width), m_height(height), m_title(title) {
-
     if (s_window_count == 0) {
         if (!glfwInit()) {
             throw std::runtime_error("Error: Faild to initialize GLFW!\n");

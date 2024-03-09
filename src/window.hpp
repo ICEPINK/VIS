@@ -12,7 +12,7 @@ namespace Vis {
 
 class Window {
   public:
-    Window(const size_t width, const size_t height, const std::string title);
+    Window(const int32_t width, const int32_t height, const std::string title);
     ~Window();
 
     void update();
