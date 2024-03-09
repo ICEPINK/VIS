@@ -14,11 +14,13 @@ set(P_SOURCE_FILES
     "./src/main.cpp"
     "./src/application.cpp"
     "./src/window.cpp"
+    "./src/gui.cpp"
     )
 
 set(P_HEADER_FILES
     "./src/application.hpp"
     "./src/window.hpp"
+    "./src/gui.hpp"
     )
 
 add_executable(${PROJECT_NAME} ${P_SOURCE_FILES})
