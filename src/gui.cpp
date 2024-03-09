@@ -19,7 +19,11 @@ Gui::Gui() {
 
     ImGui::StyleColorsDark();
 }
-Gui::~Gui() {}
+Gui::~Gui() {
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+}
 
 void Gui::render() {
     ImGui::Render();
