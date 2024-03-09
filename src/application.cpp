@@ -1,7 +1,6 @@
 #include "application.hpp"
 
 #include <cstdlib>
-#include <iostream>
 
 #include <imgui.h>
 
@@ -83,7 +82,6 @@ int Application::run() {
         m_window_uptr->update();
     }
 
-    std::cout << "App -> Exit success\n";
     return EXIT_SUCCESS;
 }
 
