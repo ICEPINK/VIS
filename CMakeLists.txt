@@ -15,12 +15,21 @@ set(P_SOURCE_FILES
     "./src/application.cpp"
     "./src/window.cpp"
     "./src/gui.cpp"
+    "./src/image.cpp"
+    "./src/cpu_renderer.cpp"
+    "./src/gpu_api.cpp"
+    "./src/texture.cpp"
     )
 
 set(P_HEADER_FILES
     "./src/application.hpp"
     "./src/window.hpp"
     "./src/gui.hpp"
+    "./src/image.hpp"
+    "./src/cpu_renderer.hpp"
+    "./src/vis_utils.hpp"
+    "./src/gpu_api.hpp"
+    "./src/texture.hpp"
     )
 
 add_executable(${PROJECT_NAME} ${P_SOURCE_FILES})
