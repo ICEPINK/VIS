@@ -5,7 +5,8 @@
 
 namespace Vis {
 
-Gui::Gui(AppInfo &app_info) : m_app_info_ref(app_info) {
+Gui::Gui(AppInfo &app_info, SceneInfo &scene_info)
+    : m_app_info_ref(app_info), m_scene_info_ref(scene_info) {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
 
@@ -74,11 +75,23 @@ void Gui::prepare_gui(const bool demo) {
     ImGui::End();
     ImGui::PopStyleVar();
 
+    static bool alpha_preview = true;
+    static bool alpha_half_preview = false;
+    static bool drag_and_drop = true;
+    static bool options_menu = true;
+    static bool hdr = false;
+    ImGuiColorEditFlags misc_flags =
+        (hdr ? ImGuiColorEditFlags_HDR : 0) |
+        (drag_and_drop ? 0 : ImGuiColorEditFlags_NoDragDrop) |
+        (alpha_half_preview
+             ? ImGuiColorEditFlags_AlphaPreviewHalf
+             : (alpha_preview ? ImGuiColorEditFlags_AlphaPreview : 0)) |
+        (options_menu ? 0 : ImGuiColorEditFlags_NoOptions);
+
     ImGui::Begin("Scene settings");
-    ImGui::Text("Camera1");
-    ImGui::Text("Camera2");
-    ImGui::Text("Line algorithm");
-    ImGui::Text("More settings...");
+    ImGui::Text("Clear color");
+    ImGui::ColorEdit4("", &m_scene_info_ref.clear_color.r,
+                      ImGuiColorEditFlags_Float | misc_flags);
     ImGui::End();
 }
 

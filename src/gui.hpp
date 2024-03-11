@@ -12,7 +12,7 @@ namespace Vis {
 
 class Gui {
   public:
-    Gui(AppInfo &app_info);
+    Gui(AppInfo &app_info, SceneInfo &scene_info);
     ~Gui();
 
     void render();
@@ -24,6 +24,7 @@ class Gui {
 
   private:
     AppInfo &m_app_info_ref;
+    SceneInfo &m_scene_info_ref;
 };
 
 } // namespace Vis

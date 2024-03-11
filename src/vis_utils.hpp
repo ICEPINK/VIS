@@ -15,7 +15,9 @@ struct ColorRGBA8i {
     uint8_t alpha;
 };
 
-struct SceneInfo {};
+struct SceneInfo {
+    ColorRGBA32f clear_color{0.0, 0.0, 0.0, 1.0};
+};
 
 struct AppInfo {
     void *view_image_ptr{nullptr};

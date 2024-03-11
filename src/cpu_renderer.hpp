@@ -18,7 +18,7 @@ class SceneObject {
 
 class CpuRenderer {
   public:
-    CpuRenderer();
+    CpuRenderer(SceneInfo &scene_info);
     ~CpuRenderer();
 
     void *render_image(const size_t width, const size_t height);
@@ -27,6 +27,7 @@ class CpuRenderer {
     size_t m_width{0};
     size_t m_height{0};
     std::unique_ptr<Image> m_image;
+    SceneInfo &m_scene_info_ref;
 };
 
 } // namespace Vis
