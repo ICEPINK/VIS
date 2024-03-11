@@ -11,11 +11,10 @@ Gui::Gui(AppInfo &app_info) : m_app_info_ref(app_info) {
 
     ImGuiIO &io = ImGui::GetIO();
 
-    io.ConfigFlags |=
-        ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
-    io.ConfigFlags |=
-        ImGuiConfigFlags_NavEnableGamepad; // Enable Gamepad Controls
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+    // io.ConfigFlags |= ImGuiConfigFlags_NoMouse; Disable mouse in GUI
+
+    io.ConfigDockingWithShift = true;
 
     ImGui::StyleColorsDark();
 }
@@ -36,7 +35,7 @@ void Gui::new_frame() {
     ImGui::NewFrame();
 }
 
-void Gui::prepare_gui() {
+void Gui::prepare_gui(const bool demo) {
     if (ImGui::BeginMainMenuBar()) {
         if (ImGui::BeginMenu("App")) {
             if (ImGui::MenuItem("Item1")) {
@@ -53,6 +52,11 @@ void Gui::prepare_gui() {
 
     ImGui::DockSpaceOverViewport();
 
+    if (demo) {
+        ImGui::ShowDemoWindow();
+    }
+
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, {0.0, 0.0});
     ImGui::Begin("View");
     m_app_info_ref.view_width = ImGui::GetContentRegionAvail().x;
     m_app_info_ref.view_height = ImGui::GetContentRegionAvail().y;
@@ -68,8 +72,13 @@ void Gui::prepare_gui() {
     ImGui::Image((void *)(intptr_t)m_app_info_ref.view_texture_id,
                  ImVec2(m_app_info_ref.view_width, m_app_info_ref.view_height));
     ImGui::End();
+    ImGui::PopStyleVar();
 
     ImGui::Begin("Scene settings");
+    ImGui::Text("Camera1");
+    ImGui::Text("Camera2");
+    ImGui::Text("Line algorithm");
+    ImGui::Text("More settings...");
     ImGui::End();
 }
 

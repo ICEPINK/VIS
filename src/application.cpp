@@ -20,7 +20,7 @@ int Application::run() {
     while (!m_window_uptr->should_window_close()) {
         m_window_uptr->handle_input(m_app_info, m_scene_info);
         m_gui_uptr->new_frame();
-        m_gui_uptr->prepare_gui();
+        m_gui_uptr->prepare_gui(1);
 
         m_app_info.view_image_ptr = m_cpu_renderer.render_image(
             m_app_info.view_width, m_app_info.view_height);

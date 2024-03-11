@@ -17,7 +17,7 @@ class Gui {
 
     void render();
     void new_frame();
-    void prepare_gui();
+    void prepare_gui(const bool demo = 0);
 
     void glfw_init(GLFWwindow *window);
     void opengl_init(const std::string &glsl_version);
