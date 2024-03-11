@@ -3,22 +3,20 @@
 #include <cstdlib>
 
 #include <glad/glad.h>
-#include <imgui.h>
 
 namespace Vis {
 
-Application::Application() {
-    m_window_uptr = std::make_unique<Window>(800, 600, "Vis");
-    m_gui_uptr = std::make_unique<Gui>();
+Application::Application() : m_gpu_api(GpuApiType::OpenGL) {
+    m_window_uptr = std::make_unique<Window>(800, 600, "Vis", m_gpu_api);
+    m_gui_uptr = std::make_unique<Gui>(m_app_info);
     m_window_uptr->init_gui(m_gui_uptr);
 }
 Application::~Application() {}
 
 int Application::run() {
-    uint32_t texture;
-    glGenTextures(1, &texture);
+    glGenTextures(1, &m_app_info.view_texture_id);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, texture);
+    glBindTexture(GL_TEXTURE_2D, m_app_info.view_texture_id);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -26,29 +24,20 @@ int Application::run() {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
     glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+
     while (!m_window_uptr->should_window_close()) {
 
         m_gui_uptr->new_frame();
-        ImGui::DockSpaceOverViewport();
-        ImGui::ShowDemoWindow();
+        m_gui_uptr->prepare_gui();
 
-        ImGui::Begin("View");
-        auto view_width = ImGui::GetContentRegionAvail().x;
-        auto view_height = ImGui::GetContentRegionAvail().y;
-
-        ImGui::Image((void *)(intptr_t)texture,
-                     ImVec2(view_width, view_height));
-        ImGui::End();
-
-        ImGui::Begin("Scene settings");
-        ImGui::End();
-
-        auto image = m_cpu_renderer.render_image(view_width, view_height);
+        m_app_info.view_image_ptr = m_cpu_renderer.render_image(
+            m_app_info.view_width, m_app_info.view_height);
 
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, texture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, view_width, view_height, 0,
-                     GL_RGBA, GL_UNSIGNED_BYTE, image);
+        glBindTexture(GL_TEXTURE_2D, m_app_info.view_texture_id);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, m_app_info.view_width,
+                     m_app_info.view_height, 0, GL_RGBA, GL_UNSIGNED_BYTE,
+                     m_app_info.view_image_ptr);
 
         m_window_uptr->clear();
         m_gui_uptr->render();

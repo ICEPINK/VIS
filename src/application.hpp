@@ -3,7 +3,9 @@
 #include <memory>
 
 #include "cpu_renderer.hpp"
+#include "gpu_api.hpp"
 #include "gui.hpp"
+#include "vis_utils.hpp"
 #include "window.hpp"
 
 namespace Vis {
@@ -16,13 +18,12 @@ class Application {
     int run();
 
   private:
-    // int init_window();
-    // int init_gui();
-    // int init_opengl();
-  private:
     std::unique_ptr<Window> m_window_uptr;
     std::unique_ptr<Gui> m_gui_uptr;
+    GpuApi m_gpu_api;
     CpuRenderer m_cpu_renderer;
+    AppInfo m_app_info;
+    SceneInfo m_scene_info;
 };
 
 } // namespace Vis

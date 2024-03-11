@@ -9,8 +9,9 @@ namespace Vis {
 static size_t s_window_count = 0;
 
 Window::Window(const int32_t width, const int32_t height,
-               const std::string title)
+               const std::string title, GpuApi &gpu_api)
     : m_window_ptr(nullptr), m_width(width), m_height(height), m_title(title) {
+
     if (s_window_count == 0) {
         if (!glfwInit()) {
             throw std::runtime_error("Error: Faild to initialize GLFW!\n");
@@ -34,9 +35,7 @@ Window::Window(const int32_t width, const int32_t height,
 
     glfwMakeContextCurrent(m_window_ptr);
 
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-        throw std::runtime_error("Error: Faild to load Glad!\n");
-    }
+    gpu_api.init(glfwGetProcAddress);
 }
 
 Window::~Window() {
@@ -53,9 +52,7 @@ void Window::update() {
     glfwPollEvents();
 }
 
-void Window::clear() {
-    glClear(GL_COLOR_BUFFER_BIT);
-}
+void Window::clear() { glClear(GL_COLOR_BUFFER_BIT); }
 
 void Window::set_clear_color(float red, float green, float blue, float alpha) {
     glClearColor(red, green, blue, alpha);

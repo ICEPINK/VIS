@@ -86,7 +86,7 @@ void draw_line(glm::vec2 start, glm::vec2 end, size_t width, size_t height,
 
             if (i >= 0 && i < static_cast<int>(width) && r_y >= 0 &&
                 r_y < static_cast<int>(height)) {
-                image->set_pixel(i, r_y, {1.0, 1.0, 1.0, 1.0});
+                image->set_pixel(i, r_y, {1.0, 0.0, 1.0, 1.0});
             }
         }
     } else {
@@ -105,7 +105,7 @@ void draw_line(glm::vec2 start, glm::vec2 end, size_t width, size_t height,
 
             if (r_x >= 0 && r_x < static_cast<int>(width) && i >= 0 &&
                 i < static_cast<int>(height)) {
-                image->set_pixel(r_x, i, {1.0, 1.0, 1.0, 1.0});
+                image->set_pixel(r_x, i, {1.0, 0.0, 1.0, 1.0});
             }
         }
     }

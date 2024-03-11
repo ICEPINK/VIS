@@ -6,13 +6,15 @@
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 
+#include "gpu_api.hpp"
 #include "gui.hpp"
 
 namespace Vis {
 
 class Window {
   public:
-    Window(const int32_t width, const int32_t height, const std::string title);
+    Window(const int32_t width, const int32_t height, const std::string title,
+           GpuApi &gpu_api);
     ~Window();
 
     void update();

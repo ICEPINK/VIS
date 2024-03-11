@@ -17,6 +17,7 @@ set(P_SOURCE_FILES
     "./src/gui.cpp"
     "./src/image.cpp"
     "./src/cpu_renderer.cpp"
+    "./src/gpu_api.cpp"
     )
 
 set(P_HEADER_FILES
@@ -25,6 +26,8 @@ set(P_HEADER_FILES
     "./src/gui.hpp"
     "./src/image.hpp"
     "./src/cpu_renderer.hpp"
+    "./src/vis_utils.hpp"
+    "./src/gpu_api.hpp"
     )
 
 add_executable(${PROJECT_NAME} ${P_SOURCE_FILES})
