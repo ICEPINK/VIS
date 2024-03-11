@@ -19,6 +19,7 @@ class Window {
 
     void update();
     void clear();
+    void handle_input(AppInfo &app_info, SceneInfo &scene_info);
     void set_clear_color(float reg, float green, float blue, float alpha);
     bool should_window_close() const;
 

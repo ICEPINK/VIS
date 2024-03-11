@@ -37,7 +37,6 @@ void Gui::new_frame() {
 }
 
 void Gui::prepare_gui() {
-
     if (ImGui::BeginMainMenuBar()) {
         if (ImGui::BeginMenu("App")) {
             if (ImGui::MenuItem("Item1")) {

@@ -1,5 +1,6 @@
 #include "window.hpp"
 
+#include <iostream>
 #include <stdexcept>
 
 #include <glad/glad.h>
@@ -53,6 +54,17 @@ void Window::update() {
 }
 
 void Window::clear() { glClear(GL_COLOR_BUFFER_BIT); }
+
+void Window::handle_input([[maybe_unused]] AppInfo &app_info,
+                          [[maybe_unused]] SceneInfo &scene_info) {
+    int glfw_key_w = glfwGetKey(m_window_ptr, GLFW_KEY_W);
+    if (glfw_key_w == GLFW_PRESS || glfw_key_w == GLFW_REPEAT) {
+    }
+
+    int glfw_key_s = glfwGetKey(m_window_ptr, GLFW_KEY_S);
+    if (glfw_key_s == GLFW_PRESS || glfw_key_s == GLFW_REPEAT) {
+    }
+}
 
 void Window::set_clear_color(float red, float green, float blue, float alpha) {
     glClearColor(red, green, blue, alpha);

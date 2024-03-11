@@ -5,6 +5,7 @@
 #include "cpu_renderer.hpp"
 #include "gpu_api.hpp"
 #include "gui.hpp"
+#include "texture.hpp"
 #include "vis_utils.hpp"
 #include "window.hpp"
 
@@ -20,6 +21,7 @@ class Application {
   private:
     std::unique_ptr<Window> m_window_uptr;
     std::unique_ptr<Gui> m_gui_uptr;
+    std::unique_ptr<Texture> m_texture_uptr;
     GpuApi m_gpu_api;
     CpuRenderer m_cpu_renderer;
     AppInfo m_app_info;
