@@ -8,12 +8,61 @@
 
 namespace Vis {
 
-class SceneObject {
-  public:
-    std::string m_name;
-    std::vector<glm::vec4> m_positions;
-    std::vector<std::array<size_t, 3>> m_indices;
-    glm::mat4 m_object_space_matrix;
+struct Camera {
+    glm::mat4 view_matrix;
+    glm::vec3 position;
+    glm::vec1 azimuth;
+    glm::vec1 alitude;
+};
+
+struct Vertex {
+    glm::vec4 position;
+    glm::vec4 color;
+    glm::vec2 uv;
+    float one{1.0};
+
+    Vertex operator+(Vertex &vertex) {
+        return {position + vertex.position, color + vertex.color,
+                uv + vertex.uv, one + vertex.one};
+    }
+
+    Vertex operator+(float f) {
+        return {position + f, color + f, uv + f, one + f};
+    }
+
+    Vertex operator-(Vertex &vertex) {
+        return {position - vertex.position, color - vertex.color,
+                uv - vertex.uv, one - vertex.one};
+    }
+
+    Vertex operator-(float f) {
+        return {position - f, color - f, uv - f, one - f};
+    }
+
+    Vertex operator*(Vertex &vertex) {
+        return {position * vertex.position, color * vertex.color,
+                uv * vertex.uv, one * vertex.one};
+    }
+
+    Vertex operator*(float f) {
+        return {position * f, color * f, uv * f, one * f};
+    }
+};
+
+enum class Topology { Point, Line, Triangle };
+
+struct Layout {
+    Topology topology;
+    size_t start;
+    size_t count;
+};
+
+struct Solid {
+    std::string name;
+    glm::mat4 solid_matrix;
+    std::vector<Layout> leyout;
+    std::vector<Vertex> vertices;
+    std::vector<size_t> indices;
 };
 
 class CpuRenderer {
@@ -22,6 +71,11 @@ class CpuRenderer {
     ~CpuRenderer();
 
     void *render_image(const size_t width, const size_t height);
+    void render_solid(Solid &solid);
+    void render_line(Vertex &a, Vertex &b);
+    void rasterize_line(Vertex &a, Vertex &b);
+    void trasform_to_screen(Vertex &vertex);
+    Solid parse_obj(std::string object_string);
 
   private:
     size_t m_width{0};

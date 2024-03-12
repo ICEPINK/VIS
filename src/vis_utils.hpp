@@ -16,7 +16,9 @@ struct ColorRGBA8i {
 };
 
 struct SceneInfo {
-    ColorRGBA32f clear_color{0.0, 0.0, 0.0, 1.0};
+    ColorRGBA32f clear_color{0.05, 0.05, 0.05, 1.0};
+    glm::mat4 model_matrix{};
+
 };
 
 struct AppInfo {
