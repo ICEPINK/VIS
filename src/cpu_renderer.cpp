@@ -1,6 +1,7 @@
 #include "cpu_renderer.hpp"
 
 #include <algorithm>
+#include <chrono>
 
 namespace Vis {
 
@@ -31,6 +32,8 @@ void CpuRenderer::rasterize_line(Vertex &a, Vertex &b) {
     trasform_to_screen(a);
     trasform_to_screen(b);
 
+    ColorRGBA32f color = a.color;
+
     float alpha = (b.position.y - a.position.y) / (b.position.x - a.position.x);
 
     if (alpha * alpha > 1.0) {
@@ -41,7 +44,7 @@ void CpuRenderer::rasterize_line(Vertex &a, Vertex &b) {
         alpha = (b.position.x - a.position.x) / (b.position.y - a.position.y);
         float x = a.position.x;
         for (size_t y = a.position.y; y <= b.position.y; ++y) {
-            m_image->set_pixel(x, y, a.color);
+            m_image->set_pixel(x, y, color);
             x += alpha;
         }
     } else {
@@ -51,7 +54,7 @@ void CpuRenderer::rasterize_line(Vertex &a, Vertex &b) {
 
         float y = a.position.y;
         for (size_t x = a.position.x; x <= b.position.x; ++x) {
-            m_image->set_pixel(x, y, a.color);
+            m_image->set_pixel(x, y, color);
             y += alpha;
         }
     }
@@ -125,10 +128,15 @@ void *CpuRenderer::render_image(const size_t width, const size_t height) {
         m_height = height;
     }
 
-    m_image->clear(m_scene_info_ref.clear_color);
-
     Solid solid = parse_obj("Square");
+
+    auto start = std::chrono::high_resolution_clock::now();
+
+    m_image->clear(m_scene_info_ref.clear_color);
     render_solid(solid);
+
+    auto end = std::chrono::high_resolution_clock::now();
+    m_scene_info_ref.last_render = end - start;
 
     return m_image->get_image_buffer_ptr();
 }

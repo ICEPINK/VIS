@@ -93,6 +93,11 @@ void Gui::prepare_gui(const bool demo) {
     ImGui::ColorEdit4("", &m_scene_info_ref.clear_color.r,
                       ImGuiColorEditFlags_Float | misc_flags);
     ImGui::End();
+
+    ImGui::Begin("Debug Info");
+    ImGui::Text("Last render: %fms", m_scene_info_ref.last_render.count()*1000);
+    ImGui::Text("FPS: %u", static_cast<uint32_t>(m_app_info_ref.fps));
+    ImGui::End();
 }
 
 void Gui::glfw_init(GLFWwindow *window) {
