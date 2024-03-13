@@ -28,9 +28,11 @@ int Application::run() {
         m_gui_uptr->prepare_gui(1);
 
         m_app_info.view_image_ptr = m_cpu_renderer_uptr->render_image(
-            m_app_info.view_width, m_app_info.view_height);
+            static_cast<size_t>(m_app_info.view_width),
+            static_cast<size_t>(m_app_info.view_height));
 
-        m_texture_uptr->set_image(m_app_info.view_width, m_app_info.view_height,
+        m_texture_uptr->set_image(static_cast<size_t>(m_app_info.view_width),
+                                  static_cast<size_t>(m_app_info.view_height),
                                   m_app_info.view_image_ptr);
 
         m_window_uptr->clear();
@@ -39,7 +41,7 @@ int Application::run() {
 
         auto frame_end = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> frame_time = frame_end - frame_start;
-        m_app_info.fps = 1.0 / frame_time.count();
+        m_app_info.fps = static_cast<size_t>(1.0 / frame_time.count());
     }
 
     return EXIT_SUCCESS;
