@@ -21,6 +21,8 @@ Application::~Application() {}
 int Application::run() {
 
     while (!m_window_uptr->should_window_close()) {
+        auto frame_start = std::chrono::high_resolution_clock::now();
+
         m_window_uptr->handle_input(m_app_info, m_scene_info);
         m_gui_uptr->new_frame();
         m_gui_uptr->prepare_gui(1);
@@ -34,6 +36,10 @@ int Application::run() {
         m_window_uptr->clear();
         m_gui_uptr->render();
         m_window_uptr->update();
+
+        auto frame_end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> frame_time = frame_end - frame_start;
+        m_app_info.fps = 1.0 / frame_time.count();
     }
 
     return EXIT_SUCCESS;
