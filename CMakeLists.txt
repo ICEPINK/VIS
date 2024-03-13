@@ -19,6 +19,7 @@ set(P_SOURCE_FILES
     "./src/cpu_renderer.cpp"
     "./src/gpu_api.cpp"
     "./src/texture.cpp"
+    "./src/depth_buffer.cpp"
     )
 
 set(P_HEADER_FILES
@@ -30,6 +31,7 @@ set(P_HEADER_FILES
     "./src/vis_utils.hpp"
     "./src/gpu_api.hpp"
     "./src/texture.hpp"
+    "./src/depth_buffer.hpp"
     )
 
 add_executable(${PROJECT_NAME} ${P_SOURCE_FILES})
