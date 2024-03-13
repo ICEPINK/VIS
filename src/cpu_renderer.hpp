@@ -50,7 +50,13 @@ struct Vertex {
     }
 
     static Vertex interpolate(const float t, const Vertex &a, const Vertex &b) {
-        return (a * (1 - t)) + (b * t);
+        if (t < 0.0) {
+            return a;
+        } else if (t > 1.0) {
+            return b;
+        } else {
+            return (a * (1 - t)) + (b * t);
+        }
     }
 };
 
