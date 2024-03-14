@@ -7,15 +7,9 @@
 #include "depth_buffer.hpp"
 #include "image.hpp"
 #include "solids/solid.hpp"
+#include "camera.hpp"
 
 namespace Vis {
-
-struct Camera {
-    glm::mat4 view_matrix;
-    glm::vec3 position;
-    glm::vec1 azimuth;
-    glm::vec1 alitude;
-};
 
 class CpuRenderer {
   public:

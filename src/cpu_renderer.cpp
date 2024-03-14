@@ -5,6 +5,7 @@
 
 #include <glm/ext.hpp>
 
+#include "solids/axis.hpp"
 #include "solids/solid.hpp"
 #include "solids/square.hpp"
 
@@ -25,9 +26,11 @@ void CpuRenderer::set_pixel(int64_t x, int64_t y, Vertex &vertex) {
         return;
     }
 
+    y = m_height - 1 - y;
+
     if (vertex.position.z < m_depth_buffer->get_depth(x, y)) {
         m_depth_buffer->set_depth(x, y, vertex.position.z);
-        m_image->set_pixel(x, y, vertex.color);
+        m_image->set_pixel(x, y, vertex.color * (1.0f / vertex.one));
     }
 }
 
@@ -168,12 +171,22 @@ void CpuRenderer::render_solid(Solid &solid) {
     SolidData &solid_data = solid.data;
 
     glm::mat4 model_matrix{1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
-    Camera camera{{1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1}, {}, {}, {}};
-    glm::mat4 projection_matrix{1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
-    projection_matrix = glm::perspective(
-        3.1415f / 2.0f, m_width / static_cast<float>(m_height), 1.0f, 10.0f);
 
-    glm::mat4 matrix = projection_matrix * camera.view_matrix * model_matrix;
+    PerspectiveData perspective_data{{2.0, 2.0, 2.0},
+                                     {0.0, 0.0, 0.0},
+                                     {0.0, 0.0, 1.0},
+                                     1.0f,
+                                     100.0f,
+                                     3.1415f / 2.0f,
+                                     m_width / static_cast<float>(m_height)};
+
+    PerspectiveCamera camera{perspective_data};
+
+    glm::mat4 view_matrix = camera.get_view_matrix();
+    glm::mat4 projection_matrix = camera.get_projection_matrix();
+
+    glm::mat4 matrix =
+        projection_matrix * view_matrix * model_matrix * solid_data.matrix;
 
     std::vector<Vertex> transformed_vertices;
     transformed_vertices.reserve(solid_data.vertices.size());
@@ -234,14 +247,16 @@ void *CpuRenderer::render_image(const size_t width, const size_t height) {
         m_height = height;
     }
 
-    Square square("Name");
+    Square square("Square");
+    Axis axis("Axis");
 
     auto start = std::chrono::high_resolution_clock::now();
 
     m_image->clear(m_scene_info_ref.clear_color);
     m_depth_buffer->clear(1.0);
 
-    render_solid(square);
+    // render_solid(square);
+    render_solid(axis);
 
     auto end = std::chrono::high_resolution_clock::now();
     m_scene_info_ref.last_render = end - start;

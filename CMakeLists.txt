@@ -22,6 +22,8 @@ set(P_SOURCE_FILES
     "./src/depth_buffer.cpp"
     "./src/solids/solid.cpp"
     "./src/solids/square.cpp"
+    "./src/perspective_camera.cpp"
+    "./src/solids/axis.cpp"
     )
 
 set(P_HEADER_FILES
@@ -36,6 +38,8 @@ set(P_HEADER_FILES
     "./src/depth_buffer.hpp"
     "./src/solids/solid.hpp"
     "./src/solids/square.hpp"
+    "./src/camera.hpp"
+    "./src/solids/axis.hpp"
     )
 
 add_executable(${PROJECT_NAME} ${P_SOURCE_FILES})
