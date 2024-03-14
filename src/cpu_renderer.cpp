@@ -5,22 +5,10 @@
 
 #include <glm/ext.hpp>
 
-namespace Vis {
+#include "solids/solid.hpp"
+#include "solids/square.hpp"
 
-Solid CpuRenderer::parse_obj(std::string object_string) {
-    Solid solid{
-        object_string,
-        glm::mat4{},
-        {{Topology::Triangle, 0, 2}},
-        {
-            Vertex({-0.5, -0.5, -1.0, 1.0}, {1.0, 0.0, 0.0, 1.0}, {0.0, 0.0}),
-            Vertex({0.5, -0.5, -1.0, 1.0}, {0.0, 1.0, 0.0, 1.0}, {1.0, 0.0}),
-            Vertex({-0.5, 0.5, -1.0, 1.0}, {0.0, 0.0, 1.0, 1.0}, {0.0, 1.0}),
-            Vertex({0.5, 0.5, -1.0, 1.0}, {1.0, 0.0, 0.0, 1.0}, {1.0, 1.0}),
-        },
-        {0, 1, 2, 1, 2, 3}};
-    return solid;
-}
+namespace Vis {
 
 void CpuRenderer::trasform_to_screen(Vertex &vertex) {
     float &x = vertex.position.x;
@@ -177,6 +165,8 @@ void CpuRenderer::render_line(Vertex &a, Vertex &b) {
 
 void CpuRenderer::render_solid(Solid &solid) {
 
+    SolidData &solid_data = solid.data;
+
     glm::mat4 model_matrix{1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
     Camera camera{{1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1}, {}, {}, {}};
     glm::mat4 projection_matrix{1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
@@ -186,23 +176,24 @@ void CpuRenderer::render_solid(Solid &solid) {
     glm::mat4 matrix = projection_matrix * camera.view_matrix * model_matrix;
 
     std::vector<Vertex> transformed_vertices;
-    transformed_vertices.reserve(solid.vertices.size());
+    transformed_vertices.reserve(solid_data.vertices.size());
 
-    for (Vertex &vertex : solid.vertices) {
+    for (Vertex &vertex : solid_data.vertices) {
         Vertex new_vertex{matrix * vertex.position, vertex.color, vertex.uv,
                           vertex.one};
 
         transformed_vertices.push_back(new_vertex);
     }
 
-    for (Layout layout : solid.leyout) {
+    for (Layout layout : solid_data.leyout) {
         switch (layout.topology) {
         case Topology::Point:
             break;
         case Topology::Line:
             for (size_t i = 0; i < layout.count; ++i) {
-                size_t &index_a = solid.indices[layout.start + (i * 2)];
-                size_t &index_b = solid.indices[layout.start + (i * 2) + 1];
+                size_t &index_a = solid_data.indices[layout.start + (i * 2)];
+                size_t &index_b =
+                    solid_data.indices[layout.start + (i * 2) + 1];
                 Vertex &vertex_a = transformed_vertices[index_a];
                 Vertex &vertex_b = transformed_vertices[index_b];
 
@@ -211,9 +202,11 @@ void CpuRenderer::render_solid(Solid &solid) {
             break;
         case Topology::Triangle:
             for (size_t i = 0; i < layout.count; ++i) {
-                size_t &index_a = solid.indices[layout.start + (i * 3)];
-                size_t &index_b = solid.indices[layout.start + (i * 3) + 1];
-                size_t &index_c = solid.indices[layout.start + (i * 3) + 2];
+                size_t &index_a = solid_data.indices[layout.start + (i * 3)];
+                size_t &index_b =
+                    solid_data.indices[layout.start + (i * 3) + 1];
+                size_t &index_c =
+                    solid_data.indices[layout.start + (i * 3) + 2];
                 Vertex &vertex_a = transformed_vertices[index_a];
                 Vertex &vertex_b = transformed_vertices[index_b];
                 Vertex &vertex_c = transformed_vertices[index_c];
@@ -241,14 +234,14 @@ void *CpuRenderer::render_image(const size_t width, const size_t height) {
         m_height = height;
     }
 
-    Solid solid = parse_obj("Square");
+    Square square("Name");
 
     auto start = std::chrono::high_resolution_clock::now();
 
     m_image->clear(m_scene_info_ref.clear_color);
     m_depth_buffer->clear(1.0);
 
-    render_solid(solid);
+    render_solid(square);
 
     auto end = std::chrono::high_resolution_clock::now();
     m_scene_info_ref.last_render = end - start;

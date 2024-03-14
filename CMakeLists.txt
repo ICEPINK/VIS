@@ -20,6 +20,8 @@ set(P_SOURCE_FILES
     "./src/gpu_api.cpp"
     "./src/texture.cpp"
     "./src/depth_buffer.cpp"
+    "./src/solids/solid.cpp"
+    "./src/solids/square.cpp"
     )
 
 set(P_HEADER_FILES
@@ -32,6 +34,8 @@ set(P_HEADER_FILES
     "./src/gpu_api.hpp"
     "./src/texture.hpp"
     "./src/depth_buffer.hpp"
+    "./src/solids/solid.hpp"
+    "./src/solids/square.hpp"
     )
 
 add_executable(${PROJECT_NAME} ${P_SOURCE_FILES})

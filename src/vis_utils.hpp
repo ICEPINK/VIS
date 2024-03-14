@@ -30,4 +30,48 @@ struct AppInfo {
     float view_height{0};
 };
 
+struct Vertex {
+    glm::vec4 position;
+    glm::vec4 color;
+    glm::vec2 uv;
+    float one{1.0};
+
+    Vertex operator+(const Vertex &vertex) const {
+        return {position + vertex.position, color + vertex.color,
+                uv + vertex.uv, one + vertex.one};
+    }
+
+    Vertex operator+(const float f) const {
+        return {position + f, color + f, uv + f, one + f};
+    }
+
+    Vertex operator-(const Vertex &vertex) const {
+        return {position - vertex.position, color - vertex.color,
+                uv - vertex.uv, one - vertex.one};
+    }
+
+    Vertex operator-(const float f) const {
+        return {position - f, color - f, uv - f, one - f};
+    }
+
+    Vertex operator*(const Vertex &vertex) const {
+        return {position * vertex.position, color * vertex.color,
+                uv * vertex.uv, one * vertex.one};
+    }
+
+    Vertex operator*(const float f) const {
+        return {position * f, color * f, uv * f, one * f};
+    }
+
+    static Vertex interpolate(const float t, const Vertex &a, const Vertex &b) {
+        if (t < 0.0) {
+            return a;
+        } else if (t > 1.0) {
+            return b;
+        } else {
+            return (a * (1 - t)) + (b * t);
+        }
+    }
+};
+
 } // namespace Vis
