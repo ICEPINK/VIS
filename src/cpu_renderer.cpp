@@ -294,7 +294,7 @@ void CpuRenderer::render_solid(Solid &solid) {
         transformed_vertices.push_back(new_vertex);
     }
 
-    for (Layout layout : solid_data.leyout) {
+    for (Layout &layout : solid_data.leyout) {
         switch (layout.topology) {
         case Topology::Point:
             break;
