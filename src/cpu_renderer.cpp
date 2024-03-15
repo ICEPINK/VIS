@@ -66,17 +66,99 @@ void CpuRenderer::rasterize_line(Vertex &a, Vertex &b) {
     }
 }
 
+bool CpuRenderer::fast_clip(const std::vector<Vertex> &vertices,
+                            Topology topology) const {
+    switch (topology) {
+    case Topology::Point:
+        break;
+    case Topology::Line:
+        break;
+    case Topology::Triangle:
+        const Vertex &a = vertices.at(0);
+        const Vertex &b = vertices.at(1);
+        const Vertex &c = vertices.at(2);
+
+        if (a.position.x <= -a.position.w && b.position.x <= -b.position.w &&
+            c.position.x <= -c.position.w) {
+            return true;
+        }
+        if (a.position.x >= a.position.w && b.position.x >= b.position.w &&
+            c.position.x >= c.position.w) {
+            return true;
+        }
+        if (a.position.y <= -a.position.w && b.position.y <= -b.position.w &&
+            c.position.y <= -c.position.w) {
+            return true;
+        }
+        if (a.position.y >= a.position.w && b.position.y >= b.position.w &&
+            c.position.y >= c.position.w) {
+            return true;
+        }
+        if (a.position.z <= 0 && b.position.z <= 0 && c.position.z <= 0) {
+            return true;
+        }
+        if (a.position.z >= a.position.w && b.position.z >= b.position.w &&
+            c.position.z >= c.position.w) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+void CpuRenderer::clip_z(std::vector<Vertex> &vertices) const {
+    Vertex &a = vertices.at(0);
+    Vertex &b = vertices.at(1);
+    Vertex &c = vertices.at(2);
+
+    if (a.position.z > b.position.z) {
+        std::swap(a, b);
+    }
+    if (b.position.z > c.position.z) {
+        std::swap(b, c);
+    }
+    if (a.position.z > b.position.z) {
+        std::swap(a, b);
+    }
+
+    if (b.position.z <= 0) {
+        const float t_cb = (0 - c.position.z) / (b.position.z - c.position.z);
+        b = Vertex::interpolate(t_cb, c, b);
+
+        const float t_ca = (0 - c.position.z) / (a.position.z - c.position.z);
+        a = Vertex::interpolate(t_ca, c, a);
+
+    } else if (a.position.z <= 0) {
+        vertices.push_back(c);
+        vertices.push_back(b);
+
+        Vertex &a = vertices.at(0);
+        Vertex &b = vertices.at(1);
+        Vertex &c = vertices.at(2);
+
+        const float t_ba = (0 - b.position.z) / (a.position.z - b.position.z);
+        b = Vertex::interpolate(t_ba, b, a);
+
+        const float t_ca = (0 - c.position.z) / (a.position.z - c.position.z);
+        a = Vertex::interpolate(t_ca, c, a);
+
+        vertices.push_back(b);
+    }
+}
+
 void CpuRenderer::render_triangle(Vertex &a, Vertex &b, Vertex &c) {
     std::vector<Vertex> vertices = {a, b, c};
 
-    // clip_before_dehomog();
+    if (fast_clip(vertices, Topology::Triangle)) {
+        return;
+    }
 
-    // dehomog
+    clip_z(vertices);
+
+    // Dehomog
     std::for_each(vertices.begin(), vertices.end(), [](Vertex &vertex) {
         vertex = vertex * (1.0 / vertex.position.w);
     });
-
-    // clip_after_dehomog();
 
     for (size_t i = 0; i < vertices.size(); i += 3) {
         rasterize_triangle(vertices[i], vertices[i + 1], vertices[i + 2]);
@@ -226,8 +308,8 @@ CpuRenderer::CpuRenderer(SceneInfo &scene_info) : m_scene_info_ref(scene_info) {
     camera_data.position = {-6.0, 0.0, 2.0};
     camera_data.look_direction = {1.0, 0.0, 0.0};
     camera_data.up_direction = {0.0, 0.0, 1.0};
-    camera_data.near_plane = {1.0};
-    camera_data.far_plane = {100.0};
+    camera_data.near_plane = {0.1};
+    camera_data.far_plane = {10.0};
     camera_data.fov = {glm::pi<double>() / 180.0 * 90.0};
     camera_data.aspect_ratio = {m_width / static_cast<float>(m_height)};
 
@@ -260,7 +342,7 @@ void *CpuRenderer::render_image(const size_t width, const size_t height) {
     m_depth_buffer->clear(1.0);
 
     render_solid(square);
-    render_solid(axis);
+    // render_solid(axis);
 
     auto end = std::chrono::high_resolution_clock::now();
     m_scene_info_ref.last_render = end - start;
