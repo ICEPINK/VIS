@@ -17,12 +17,11 @@ void CpuRenderer::trasform_to_screen(Vertex &vertex) {
     x = (x + 1) / 2.0 * m_image->get_width();
     y = (y + 1) / 2.0 * m_image->get_height();
 }
-
 void CpuRenderer::set_pixel(int64_t x, int64_t y, Vertex &vertex) {
-    if (x < 0 || static_cast<size_t>(x) > m_width) {
+    if (x < 0 || static_cast<size_t>(x) >= m_width) {
         return;
     }
-    if (y < 0 || static_cast<size_t>(y) > m_height) {
+    if (y < 0 || static_cast<size_t>(y) >= m_height) {
         return;
     }
 
