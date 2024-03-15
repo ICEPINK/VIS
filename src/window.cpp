@@ -58,7 +58,7 @@ void Window::clear() { glClear(GL_COLOR_BUFFER_BIT); }
 void Window::handle_input([[maybe_unused]] AppInfo &app_info,
                           [[maybe_unused]] SceneInfo &scene_info) {
 
-    if (!app_info.alt_mode) {
+    if (app_info.alt_mode) {
         int key;
         key = glfwGetKey(m_window_ptr, GLFW_KEY_W);
         if (key == GLFW_PRESS || key == GLFW_REPEAT) {
@@ -94,19 +94,20 @@ void Window::handle_input([[maybe_unused]] AppInfo &app_info,
                 scene_info.camera->move_up(0.02);
             }
         }
-
-        key = glfwGetKey(m_window_ptr, GLFW_KEY_LEFT_CONTROL);
-        if (key == GLFW_PRESS || key == GLFW_REPEAT) {
-            if (scene_info.camera) {
-                scene_info.camera->move_down(0.02);
-            }
-        }
     }
 
-    // int glfw_key_left_alt = glfwGetKey(m_window_ptr, GLFW_KEY_LEFT_ALT);
-    // if (glfw_key_left_alt == GLFW_RELEASE) {
-    //     app_info.alt_mode = !app_info.alt_mode;
-    // }
+    int glfw_key_left_alt = glfwGetKey(m_window_ptr, GLFW_KEY_LEFT_ALT);
+    if (glfw_key_left_alt == GLFW_PRESS) {
+        if (!app_info.alt_mode_lock) {
+            app_info.alt_mode = !app_info.alt_mode;
+        }
+
+        app_info.alt_mode_lock = true;
+    }
+
+    if (glfw_key_left_alt == GLFW_RELEASE) {
+        app_info.alt_mode_lock = false;
+    }
 }
 
 void Window::set_clear_color(float red, float green, float blue, float alpha) {

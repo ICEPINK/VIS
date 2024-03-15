@@ -32,6 +32,7 @@ struct AppInfo {
     float view_width{0};
     float view_height{0};
     bool alt_mode{0};
+    bool alt_mode_lock{0};
 };
 
 struct Vertex {
