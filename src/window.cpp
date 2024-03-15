@@ -94,6 +94,13 @@ void Window::handle_input([[maybe_unused]] AppInfo &app_info,
                 scene_info.camera->move_up(0.02);
             }
         }
+
+        key = glfwGetKey(m_window_ptr, GLFW_KEY_LEFT_CONTROL);
+        if (key == GLFW_PRESS || key == GLFW_REPEAT) {
+            if (scene_info.camera) {
+                scene_info.camera->move_down(0.02);
+            }
+        }
     }
 
     int glfw_key_left_alt = glfwGetKey(m_window_ptr, GLFW_KEY_LEFT_ALT);
