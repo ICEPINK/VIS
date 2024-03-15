@@ -63,42 +63,42 @@ void Window::handle_input([[maybe_unused]] AppInfo &app_info,
         key = glfwGetKey(m_window_ptr, GLFW_KEY_W);
         if (key == GLFW_PRESS || key == GLFW_REPEAT) {
             if (scene_info.camera) {
-                scene_info.camera->move_forward(0.02);
+                scene_info.camera->move_forward(0.02f);
             }
         }
 
         key = glfwGetKey(m_window_ptr, GLFW_KEY_S);
         if (key == GLFW_PRESS || key == GLFW_REPEAT) {
             if (scene_info.camera) {
-                scene_info.camera->move_backward(0.02);
+                scene_info.camera->move_backward(0.02f);
             }
         }
 
         key = glfwGetKey(m_window_ptr, GLFW_KEY_A);
         if (key == GLFW_PRESS || key == GLFW_REPEAT) {
             if (scene_info.camera) {
-                scene_info.camera->move_left(0.02);
+                scene_info.camera->move_left(0.02f);
             }
         }
 
         key = glfwGetKey(m_window_ptr, GLFW_KEY_D);
         if (key == GLFW_PRESS || key == GLFW_REPEAT) {
             if (scene_info.camera) {
-                scene_info.camera->move_right(0.02);
+                scene_info.camera->move_right(0.02f);
             }
         }
 
         key = glfwGetKey(m_window_ptr, GLFW_KEY_SPACE);
         if (key == GLFW_PRESS || key == GLFW_REPEAT) {
             if (scene_info.camera) {
-                scene_info.camera->move_up(0.02);
+                scene_info.camera->move_up(0.02f);
             }
         }
 
         key = glfwGetKey(m_window_ptr, GLFW_KEY_LEFT_CONTROL);
         if (key == GLFW_PRESS || key == GLFW_REPEAT) {
             if (scene_info.camera) {
-                scene_info.camera->move_down(0.02);
+                scene_info.camera->move_down(0.02f);
             }
         }
     }

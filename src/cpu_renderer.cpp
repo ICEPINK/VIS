@@ -14,8 +14,8 @@ namespace Vis {
 void CpuRenderer::trasform_to_screen(Vertex &vertex) {
     float &x = vertex.position.x;
     float &y = vertex.position.y;
-    x = (x + 1) / 2.0 * m_image->get_width();
-    y = (y + 1) / 2.0 * m_image->get_height();
+    x = (x + 1) / 2.0f * m_image->get_width();
+    y = (y + 1) / 2.0f * m_image->get_height();
 }
 void CpuRenderer::set_pixel(int64_t x, int64_t y, Vertex &vertex) {
     if (x < 0 || static_cast<size_t>(x) >= m_width) {
@@ -49,8 +49,10 @@ void CpuRenderer::rasterize_line(Vertex &a, Vertex &b) {
 
         alpha = (b.position.x - a.position.x) / (b.position.y - a.position.y);
         float x = a.position.x;
-        for (int y = a.position.y; y <= b.position.y; ++y) {
-            set_pixel(x, y, vertex_atr);
+        const int64_t a_y = static_cast<int64_t>(a.position.y);
+        const int64_t b_y = static_cast<int64_t>(b.position.y);
+        for (int64_t y = a_y; y <= b_y; ++y) {
+            set_pixel(static_cast<int64_t>(x), y, vertex_atr);
             x += alpha;
         }
     } else {
@@ -59,8 +61,10 @@ void CpuRenderer::rasterize_line(Vertex &a, Vertex &b) {
         }
 
         float y = a.position.y;
-        for (int x = a.position.x; x <= b.position.x; ++x) {
-            set_pixel(x, y, vertex_atr);
+        const int64_t a_x = static_cast<int64_t>(a.position.x);
+        const int64_t b_x = static_cast<int64_t>(b.position.x);
+        for (int64_t x = a_x; x <= b_x; ++x) {
+            set_pixel(x, static_cast<int64_t>(y), vertex_atr);
             y += alpha;
         }
     }
@@ -132,17 +136,19 @@ void CpuRenderer::clip_z(std::vector<Vertex> &vertices) const {
         vertices.push_back(c);
         vertices.push_back(b);
 
-        Vertex &a = vertices.at(0);
-        Vertex &b = vertices.at(1);
-        Vertex &c = vertices.at(2);
+        Vertex &a_new = vertices.at(0);
+        Vertex &b_new = vertices.at(1);
+        Vertex &c_new = vertices.at(2);
 
-        const float t_ba = (0 - b.position.z) / (a.position.z - b.position.z);
-        b = Vertex::interpolate(t_ba, b, a);
+        const float t_ba =
+            (0 - b_new.position.z) / (a_new.position.z - b_new.position.z);
+        b_new = Vertex::interpolate(t_ba, b_new, a_new);
 
-        const float t_ca = (0 - c.position.z) / (a.position.z - c.position.z);
-        a = Vertex::interpolate(t_ca, c, a);
+        const float t_ca =
+            (0 - c_new.position.z) / (a_new.position.z - c_new.position.z);
+        a_new = Vertex::interpolate(t_ca, c_new, a_new);
 
-        vertices.push_back(b);
+        vertices.push_back(b_new);
     }
 }
 
@@ -157,7 +163,7 @@ void CpuRenderer::render_triangle(Vertex &a, Vertex &b, Vertex &c) {
 
     // Dehomog
     std::for_each(vertices.begin(), vertices.end(), [](Vertex &vertex) {
-        vertex = vertex * (1.0 / vertex.position.w);
+        vertex = vertex * (1.0f / vertex.position.w);
     });
 
     for (size_t i = 0; i < vertices.size(); i += 3) {
@@ -181,8 +187,12 @@ void CpuRenderer::rasterize_triangle(Vertex &a, Vertex &b, Vertex &c) {
         std::swap(a, b);
     }
 
-    for (size_t y = std::max(a.position.y, 0.0f);
-         y < std::min(b.position.y, static_cast<float>(m_height)); ++y) {
+    const int64_t start_y_ab =
+        std::max(static_cast<int64_t>(0), static_cast<int64_t>(a.position.y));
+    const int64_t end_y_ab = std::min(static_cast<int64_t>(m_height - 1),
+                                      static_cast<int64_t>(b.position.y));
+
+    for (int64_t y = start_y_ab; y < end_y_ab; ++y) {
 
         float ab_t = (y - a.position.y) / (b.position.y - a.position.y);
         Vertex ab = Vertex::interpolate(ab_t, a, b);
@@ -194,8 +204,13 @@ void CpuRenderer::rasterize_triangle(Vertex &a, Vertex &b, Vertex &c) {
             std::swap(ab, ac);
         }
 
-        for (size_t x = std::max(ab.position.x, 0.0f);
-             x <= std::min(ac.position.x, static_cast<float>(m_width)); ++x) {
+        const int64_t start_x_ab_ac = std::max(
+            static_cast<int64_t>(0), static_cast<int64_t>(ab.position.x));
+        const int64_t end_x_ab_ac =
+            std::min(static_cast<int64_t>(m_width - 1),
+                     static_cast<int64_t>(ac.position.x));
+
+        for (int64_t x = start_x_ab_ac; x <= end_x_ab_ac; ++x) {
 
             float ab_ac_t =
                 (x - ab.position.x) / (ac.position.x - ab.position.x);
@@ -205,8 +220,12 @@ void CpuRenderer::rasterize_triangle(Vertex &a, Vertex &b, Vertex &c) {
         }
     }
 
-    for (size_t y = std::max(b.position.y, 0.0f);
-         y <= std::min(c.position.y, static_cast<float>(m_height)); ++y) {
+    const int64_t start_y_bc =
+        std::max(static_cast<int64_t>(0), static_cast<int64_t>(b.position.y));
+    const int64_t end_y_bc = std::min(static_cast<int64_t>(m_height - 1),
+                                      static_cast<int64_t>(c.position.y));
+
+    for (int64_t y = start_y_bc; y <= end_y_bc; ++y) {
 
         float bc_t = (y - b.position.y) / (c.position.y - b.position.y);
         Vertex bc = Vertex::interpolate(bc_t, b, c);
@@ -218,8 +237,13 @@ void CpuRenderer::rasterize_triangle(Vertex &a, Vertex &b, Vertex &c) {
             std::swap(bc, ac);
         }
 
-        for (size_t x = std::max(bc.position.x, 0.0f);
-             x <= std::min(ac.position.x, static_cast<float>(m_width)); ++x) {
+        const int64_t start_x_bc_ac = std::max(
+            static_cast<int64_t>(0), static_cast<int64_t>(bc.position.x));
+        const int64_t end_x_bc_ac =
+            std::min(static_cast<int64_t>(m_width - 1),
+                     static_cast<int64_t>(ac.position.x));
+
+        for (int64_t x = start_x_bc_ac; x <= end_x_bc_ac; ++x) {
 
             float bc_ac_t =
                 (x - bc.position.x) / (ac.position.x - bc.position.x);
@@ -237,7 +261,7 @@ void CpuRenderer::render_line(Vertex &a, Vertex &b) {
 
     // dehomog
     std::for_each(vertices.begin(), vertices.end(), [](Vertex &vertex) {
-        vertex = vertex * (1.0 / vertex.position.w);
+        vertex = vertex * (1.0f / vertex.position.w);
     });
 
     // clip_after_dehomog();
@@ -305,13 +329,13 @@ void CpuRenderer::render_solid(Solid &solid) {
 
 CpuRenderer::CpuRenderer(SceneInfo &scene_info) : m_scene_info_ref(scene_info) {
     PerspectiveData camera_data;
-    camera_data.position = {-6.0, 0.0, 2.0};
-    camera_data.look_direction = {1.0, 0.0, 0.0};
-    camera_data.up_direction = {0.0, 0.0, 1.0};
-    camera_data.near_plane = {0.1};
-    camera_data.far_plane = {10.0};
-    camera_data.fov = {glm::pi<double>() / 180.0 * 90.0};
-    camera_data.aspect_ratio = {m_width / static_cast<float>(m_height)};
+    camera_data.position = {-6.0f, 0.0f, 2.0f};
+    camera_data.look_direction = {1.0f, 0.0f, 0.0f};
+    camera_data.up_direction = {0.0f, 0.0f, 1.0f};
+    camera_data.near_plane = {0.1f};
+    camera_data.far_plane = {10.0f};
+    camera_data.fov = {glm::pi<float>() / 180.0f * 90.0f};
+    camera_data.aspect_ratio = {1.0f};
 
     scene_info.camera = std::make_unique<PerspectiveCamera>(camera_data);
 }
@@ -327,7 +351,7 @@ void *CpuRenderer::render_image(const size_t width, const size_t height) {
         m_depth_buffer = std::make_unique<DepthBuffer>(width, height);
 
         m_scene_info_ref.camera->set_aspect_ratio(width /
-                                                  static_cast<double>(height));
+                                                  static_cast<float>(height));
 
         m_width = width;
         m_height = height;
