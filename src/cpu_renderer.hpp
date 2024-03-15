@@ -7,7 +7,6 @@
 #include "depth_buffer.hpp"
 #include "image.hpp"
 #include "solids/solid.hpp"
-#include "camera.hpp"
 
 namespace Vis {
 

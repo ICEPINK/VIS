@@ -172,18 +172,9 @@ void CpuRenderer::render_solid(Solid &solid) {
 
     glm::mat4 model_matrix{1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
 
-    PerspectiveData perspective_data{{2.0, 2.0, 2.0},
-                                     {0.0, 0.0, 0.0},
-                                     {0.0, 0.0, 1.0},
-                                     1.0f,
-                                     100.0f,
-                                     3.1415f / 2.0f,
-                                     m_width / static_cast<float>(m_height)};
-
-    PerspectiveCamera camera{perspective_data};
-
-    glm::mat4 view_matrix = camera.get_view_matrix();
-    glm::mat4 projection_matrix = camera.get_projection_matrix();
+    glm::mat4 view_matrix = m_scene_info_ref.camera->get_view_matrix();
+    glm::mat4 projection_matrix =
+        m_scene_info_ref.camera->get_projection_matrix();
 
     glm::mat4 matrix =
         projection_matrix * view_matrix * model_matrix * solid_data.matrix;
@@ -231,8 +222,18 @@ void CpuRenderer::render_solid(Solid &solid) {
     }
 }
 
-CpuRenderer::CpuRenderer(SceneInfo &scene_info)
-    : m_scene_info_ref(scene_info) {}
+CpuRenderer::CpuRenderer(SceneInfo &scene_info) : m_scene_info_ref(scene_info) {
+    PerspectiveData camera_data;
+    camera_data.position = {-6.0, 0.0, 2.0};
+    camera_data.look_direction = {1.0, 0.0, 0.0};
+    camera_data.up_direction = {0.0, 0.0, 1.0};
+    camera_data.near_plane = {1.0};
+    camera_data.far_plane = {100.0};
+    camera_data.fov = {glm::pi<double>() / 180.0 * 90.0};
+    camera_data.aspect_ratio = {m_width / static_cast<float>(m_height)};
+
+    scene_info.camera = std::make_unique<PerspectiveCamera>(camera_data);
+}
 CpuRenderer::~CpuRenderer() {}
 
 void *CpuRenderer::render_image(const size_t width, const size_t height) {
@@ -243,6 +244,10 @@ void *CpuRenderer::render_image(const size_t width, const size_t height) {
     if (m_width != width || m_height != height) {
         m_image = std::make_unique<Image>(width, height);
         m_depth_buffer = std::make_unique<DepthBuffer>(width, height);
+
+        m_scene_info_ref.camera->set_aspect_ratio(width /
+                                                  static_cast<double>(height));
+
         m_width = width;
         m_height = height;
     }
@@ -255,7 +260,7 @@ void *CpuRenderer::render_image(const size_t width, const size_t height) {
     m_image->clear(m_scene_info_ref.clear_color);
     m_depth_buffer->clear(1.0);
 
-    // render_solid(square);
+    render_solid(square);
     render_solid(axis);
 
     auto end = std::chrono::high_resolution_clock::now();

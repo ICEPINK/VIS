@@ -5,6 +5,8 @@
 
 #include <glm/glm.hpp>
 
+#include "camera.hpp"
+
 namespace Vis {
 
 typedef glm::vec4 ColorRGBA32f;
@@ -17,9 +19,10 @@ struct ColorRGBA8i {
 };
 
 struct SceneInfo {
-    ColorRGBA32f clear_color{0.05, 0.05, 0.05, 1.0};
+    ColorRGBA32f clear_color{0.02, 0.02, 0.02, 1.0};
     std::chrono::duration<double> last_render{0};
-    glm::mat4 model_matrix{};
+    glm::mat4 model_matrix{glm::mat4(1.0)};
+    std::unique_ptr<PerspectiveCamera> camera;
 };
 
 struct AppInfo {
@@ -28,6 +31,7 @@ struct AppInfo {
     uint32_t view_texture_id{0};
     float view_width{0};
     float view_height{0};
+    bool alt_mode{0};
 };
 
 struct Vertex {
