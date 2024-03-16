@@ -12,8 +12,7 @@ class Camera {
 
 struct PerspectiveData {
     glm::vec3 position;
-    glm::vec3 look_direction;
-    glm::vec3 up_direction;
+    glm::vec2 rotation;
     float near_plane;
     float far_plane;
     float fov;
@@ -31,6 +30,8 @@ class PerspectiveCamera : public Camera {
     void move_right(const float distance);
     void move_up(const float distance);
     void move_down(const float distance);
+    void rotate_horizon(const float angle);
+    void rotate_vertical(const float angle);
 
     virtual glm::mat4 get_view_matrix() override;
     virtual glm::mat4 get_projection_matrix() override;
@@ -42,7 +43,12 @@ class PerspectiveCamera : public Camera {
     void set_aspect_ratio(const float fov);
 
   private:
+    glm::vec3 calculate_direction();
+
+  private:
     PerspectiveData m_data;
+    glm::vec3 m_up_direction;
+    glm::vec3 m_look_direction;
 };
 
 struct OrthographicData {};

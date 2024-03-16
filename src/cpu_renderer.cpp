@@ -377,8 +377,7 @@ void CpuRenderer::render_solid(Solid &solid) {
 CpuRenderer::CpuRenderer(SceneInfo &scene_info) : m_scene_info_ref(scene_info) {
     PerspectiveData camera_data;
     camera_data.position = {-6.0f, 0.0f, 2.0f};
-    camera_data.look_direction = {1.0f, 0.0f, 0.0f};
-    camera_data.up_direction = {0.0f, 0.0f, 1.0f};
+    camera_data.rotation = {0.0f, 0.0f};
     camera_data.near_plane = {0.1f};
     camera_data.far_plane = {10.0f};
     camera_data.fov = {glm::pi<float>() / 180.0f * 90.0f};
@@ -412,7 +411,7 @@ void *CpuRenderer::render_image(const size_t width, const size_t height) {
     m_image->clear(m_scene_info_ref.clear_color);
     m_depth_buffer->clear(1.0);
 
-    // render_solid(square);
+    render_solid(square);
     render_solid(axis);
 
     auto end = std::chrono::high_resolution_clock::now();
