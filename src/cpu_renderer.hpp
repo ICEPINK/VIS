@@ -26,8 +26,10 @@ class CpuRenderer {
     void rasterize_line(Vertex &a, Vertex &b);
     void rasterize_triangle(Vertex &a, Vertex &b, Vertex &c);
     void trasform_to_screen(Vertex &vertex);
-    bool fast_clip(const std::vector<Vertex> &vertices, Topology topology) const;
-    void clip_z(std::vector<Vertex>& vertices) const;
+    bool fast_clip(const std::vector<Vertex> &vertices,
+                   Topology topology) const;
+    void clip_triangle_z(std::vector<Vertex> &vertices) const;
+    void clip_line_z(std::vector<Vertex> &vertices) const;
 
     void set_pixel(int64_t x, int64_t y, Vertex &vertex);
 

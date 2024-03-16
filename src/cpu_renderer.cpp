@@ -38,8 +38,6 @@ void CpuRenderer::rasterize_line(Vertex &a, Vertex &b) {
     trasform_to_screen(a);
     trasform_to_screen(b);
 
-    Vertex vertex_atr = a;
-
     float alpha = (b.position.y - a.position.y) / (b.position.x - a.position.x);
 
     if (alpha * alpha > 1.0) {
@@ -52,7 +50,9 @@ void CpuRenderer::rasterize_line(Vertex &a, Vertex &b) {
         const int64_t a_y = static_cast<int64_t>(a.position.y);
         const int64_t b_y = static_cast<int64_t>(b.position.y);
         for (int64_t y = a_y; y <= b_y; ++y) {
-            set_pixel(static_cast<int64_t>(x), y, vertex_atr);
+            float t = (y - a_y) / static_cast<float>(b_y - a_y);
+            Vertex vertex = Vertex::interpolate(t, a, b);
+            set_pixel(static_cast<int64_t>(x), y, vertex);
             x += alpha;
         }
     } else {
@@ -64,7 +64,9 @@ void CpuRenderer::rasterize_line(Vertex &a, Vertex &b) {
         const int64_t a_x = static_cast<int64_t>(a.position.x);
         const int64_t b_x = static_cast<int64_t>(b.position.x);
         for (int64_t x = a_x; x <= b_x; ++x) {
-            set_pixel(x, static_cast<int64_t>(y), vertex_atr);
+            float t = (x - a_x) / static_cast<float>(b_x - a_x);
+            Vertex vertex = Vertex::interpolate(t, a, b);
+            set_pixel(x, static_cast<int64_t>(y), vertex);
             y += alpha;
         }
     }
@@ -72,12 +74,37 @@ void CpuRenderer::rasterize_line(Vertex &a, Vertex &b) {
 
 bool CpuRenderer::fast_clip(const std::vector<Vertex> &vertices,
                             Topology topology) const {
+
     switch (topology) {
     case Topology::Point:
         break;
-    case Topology::Line:
-        break;
-    case Topology::Triangle:
+    case Topology::Line: {
+        const Vertex &a = vertices.at(0);
+        const Vertex &b = vertices.at(1);
+
+        if (a.position.x <= -a.position.w && b.position.x <= -b.position.w) {
+            return true;
+        }
+        if (a.position.x >= a.position.w && b.position.x >= b.position.w) {
+            return true;
+        }
+        if (a.position.y <= -a.position.w && b.position.y <= -b.position.w) {
+            return true;
+        }
+        if (a.position.y >= a.position.w && b.position.y >= b.position.w) {
+            return true;
+        }
+        if (a.position.z <= 0 && b.position.z <= 0) {
+            return true;
+        }
+        if (a.position.z >= a.position.w && b.position.z >= b.position.w) {
+            return true;
+        }
+    }
+
+    break;
+    case Topology::Triangle: {
+
         const Vertex &a = vertices.at(0);
         const Vertex &b = vertices.at(1);
         const Vertex &c = vertices.at(2);
@@ -107,10 +134,13 @@ bool CpuRenderer::fast_clip(const std::vector<Vertex> &vertices,
         }
     }
 
+    break;
+    }
+
     return false;
 }
 
-void CpuRenderer::clip_z(std::vector<Vertex> &vertices) const {
+void CpuRenderer::clip_triangle_z(std::vector<Vertex> &vertices) const {
     Vertex &a = vertices.at(0);
     Vertex &b = vertices.at(1);
     Vertex &c = vertices.at(2);
@@ -159,7 +189,7 @@ void CpuRenderer::render_triangle(Vertex &a, Vertex &b, Vertex &c) {
         return;
     }
 
-    clip_z(vertices);
+    clip_triangle_z(vertices);
 
     // Dehomog
     std::for_each(vertices.begin(), vertices.end(), [](Vertex &vertex) {
@@ -168,6 +198,21 @@ void CpuRenderer::render_triangle(Vertex &a, Vertex &b, Vertex &c) {
 
     for (size_t i = 0; i < vertices.size(); i += 3) {
         rasterize_triangle(vertices[i], vertices[i + 1], vertices[i + 2]);
+    }
+}
+
+void CpuRenderer::clip_line_z(std::vector<Vertex> &vertices) const {
+
+    Vertex &a = vertices.at(0);
+    Vertex &b = vertices.at(1);
+
+    if (a.position.z > b.position.z) {
+        std::swap(a, b);
+    }
+
+    if (a.position.z <= 0) {
+        const float t_ba = (0 - b.position.z) / (a.position.z - b.position.z);
+        a = Vertex::interpolate(t_ba, b, a);
     }
 }
 
@@ -257,14 +302,16 @@ void CpuRenderer::rasterize_triangle(Vertex &a, Vertex &b, Vertex &c) {
 void CpuRenderer::render_line(Vertex &a, Vertex &b) {
     std::vector<Vertex> vertices = {a, b};
 
-    // clip_before_dehomog();
+    if (fast_clip(vertices, Topology::Line)) {
+        return;
+    }
+
+    clip_line_z(vertices);
 
     // dehomog
     std::for_each(vertices.begin(), vertices.end(), [](Vertex &vertex) {
         vertex = vertex * (1.0f / vertex.position.w);
     });
-
-    // clip_after_dehomog();
 
     for (size_t i = 0; i < vertices.size(); i += 2) {
         rasterize_line(vertices[i], vertices[i + 1]);
@@ -365,8 +412,8 @@ void *CpuRenderer::render_image(const size_t width, const size_t height) {
     m_image->clear(m_scene_info_ref.clear_color);
     m_depth_buffer->clear(1.0);
 
-    render_solid(square);
-    // render_solid(axis);
+    // render_solid(square);
+    render_solid(axis);
 
     auto end = std::chrono::high_resolution_clock::now();
     m_scene_info_ref.last_render = end - start;
