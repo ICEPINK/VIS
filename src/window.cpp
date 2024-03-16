@@ -65,6 +65,7 @@ void Window::handle_input([[maybe_unused]] AppInfo &app_info,
             app_info.alt_mode = !app_info.alt_mode;
         }
 
+        glfwGetCursorPos(m_window_ptr, &app_info.mouse_x, &app_info.mouse_y);
         app_info.alt_mode_lock = true;
     }
 
@@ -79,6 +80,28 @@ void Window::handle_input([[maybe_unused]] AppInfo &app_info,
     }
 
     if (app_info.alt_mode) {
+        double new_mouse_x;
+        double new_mouse_y;
+        glfwGetCursorPos(m_window_ptr, &new_mouse_x, &new_mouse_y);
+
+        if (scene_info.camera) {
+            float d_mouse_x =
+                static_cast<float>(new_mouse_x - app_info.mouse_x);
+            constexpr float angel = -glm::pi<float>() / 180.0f;
+            scene_info.camera->rotate_horizon(d_mouse_x * angel * 0.1f);
+        }
+
+        if (scene_info.camera) {
+            float d_mouse_y =
+                static_cast<float>(new_mouse_y - app_info.mouse_y);
+            constexpr float angel = glm::pi<float>() / 180.0f;
+            scene_info.camera->rotate_vertical(d_mouse_y * angel * 0.1f);
+        }
+
+        app_info.mouse_x = 0;
+        app_info.mouse_y = 0;
+        glfwSetCursorPos(m_window_ptr, app_info.mouse_x, app_info.mouse_y);
+
         int key;
         key = glfwGetKey(m_window_ptr, GLFW_KEY_W);
         if (key == GLFW_PRESS || key == GLFW_REPEAT) {

@@ -40,8 +40,7 @@ void Gui::prepare_gui(const bool demo) {
     ImGuiIO &io = ImGui::GetIO();
     if (m_app_info_ref.alt_mode) {
         io.ConfigFlags |= ImGuiConfigFlags_NoMouse;
-    }
-    else {
+    } else {
         io.ConfigFlags &= ~ImGuiConfigFlags_NoMouse;
     }
 
@@ -65,23 +64,11 @@ void Gui::prepare_gui(const bool demo) {
         ImGui::ShowDemoWindow();
     }
 
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, {0.0, 0.0});
-    ImGui::Begin("View");
-    m_app_info_ref.view_width = ImGui::GetContentRegionAvail().x;
-    m_app_info_ref.view_height = ImGui::GetContentRegionAvail().y;
-
-    if (m_app_info_ref.view_width < 0) {
-        m_app_info_ref.view_width = 0;
-    }
-
-    if (m_app_info_ref.view_height < 0) {
-        m_app_info_ref.view_height = 0;
-    }
-
-    ImGui::Image((void *)(intptr_t)m_app_info_ref.view_texture_id,
-                 ImVec2(m_app_info_ref.view_width, m_app_info_ref.view_height));
+    ImGui::Begin("Debug Info");
+    ImGui::Text("Last render: %fms",
+                m_scene_info_ref.last_render.count() * 1000);
+    ImGui::Text("FPS: %u", static_cast<uint32_t>(m_app_info_ref.fps));
     ImGui::End();
-    ImGui::PopStyleVar();
 
     static bool alpha_preview = true;
     static bool alpha_half_preview = false;
@@ -102,11 +89,23 @@ void Gui::prepare_gui(const bool demo) {
                       ImGuiColorEditFlags_Float | misc_flags);
     ImGui::End();
 
-    ImGui::Begin("Debug Info");
-    ImGui::Text("Last render: %fms",
-                m_scene_info_ref.last_render.count() * 1000);
-    ImGui::Text("FPS: %u", static_cast<uint32_t>(m_app_info_ref.fps));
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, {0.0, 0.0});
+    ImGui::Begin("View");
+    m_app_info_ref.view_width = ImGui::GetContentRegionAvail().x;
+    m_app_info_ref.view_height = ImGui::GetContentRegionAvail().y;
+
+    if (m_app_info_ref.view_width < 0) {
+        m_app_info_ref.view_width = 0;
+    }
+
+    if (m_app_info_ref.view_height < 0) {
+        m_app_info_ref.view_height = 0;
+    }
+
+    ImGui::Image((void *)(intptr_t)m_app_info_ref.view_texture_id,
+                 ImVec2(m_app_info_ref.view_width, m_app_info_ref.view_height));
     ImGui::End();
+    ImGui::PopStyleVar();
 }
 
 void Gui::glfw_init(GLFWwindow *window) {
