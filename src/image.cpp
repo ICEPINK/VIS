@@ -33,10 +33,10 @@ size_t Image::get_width() const { return m_width; }
 size_t Image::get_height() const { return m_height; }
 
 ColorRGBA32f Image::get_pixel(const size_t x, const size_t y) const {
-    float red = m_image_buffer[x + y * m_width].red / 255.0;
-    float green = m_image_buffer[x + y * m_width].green / 255.0;
-    float blue = m_image_buffer[x + y * m_width].blue / 255.0;
-    float alpha = m_image_buffer[x + y * m_width].alpha / 255.0;
+    float red = m_image_buffer[x + y * m_width].red / 255.0f;
+    float green = m_image_buffer[x + y * m_width].green / 255.0f;
+    float blue = m_image_buffer[x + y * m_width].blue / 255.0f;
+    float alpha = m_image_buffer[x + y * m_width].alpha / 255.0f;
 
     return {red, green, blue, alpha};
 }

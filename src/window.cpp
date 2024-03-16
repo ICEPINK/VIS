@@ -57,12 +57,63 @@ void Window::clear() { glClear(GL_COLOR_BUFFER_BIT); }
 
 void Window::handle_input([[maybe_unused]] AppInfo &app_info,
                           [[maybe_unused]] SceneInfo &scene_info) {
-    int glfw_key_w = glfwGetKey(m_window_ptr, GLFW_KEY_W);
-    if (glfw_key_w == GLFW_PRESS || glfw_key_w == GLFW_REPEAT) {
+
+    if (app_info.alt_mode) {
+        int key;
+        key = glfwGetKey(m_window_ptr, GLFW_KEY_W);
+        if (key == GLFW_PRESS || key == GLFW_REPEAT) {
+            if (scene_info.camera) {
+                scene_info.camera->move_forward(0.02f);
+            }
+        }
+
+        key = glfwGetKey(m_window_ptr, GLFW_KEY_S);
+        if (key == GLFW_PRESS || key == GLFW_REPEAT) {
+            if (scene_info.camera) {
+                scene_info.camera->move_backward(0.02f);
+            }
+        }
+
+        key = glfwGetKey(m_window_ptr, GLFW_KEY_A);
+        if (key == GLFW_PRESS || key == GLFW_REPEAT) {
+            if (scene_info.camera) {
+                scene_info.camera->move_left(0.02f);
+            }
+        }
+
+        key = glfwGetKey(m_window_ptr, GLFW_KEY_D);
+        if (key == GLFW_PRESS || key == GLFW_REPEAT) {
+            if (scene_info.camera) {
+                scene_info.camera->move_right(0.02f);
+            }
+        }
+
+        key = glfwGetKey(m_window_ptr, GLFW_KEY_SPACE);
+        if (key == GLFW_PRESS || key == GLFW_REPEAT) {
+            if (scene_info.camera) {
+                scene_info.camera->move_up(0.02f);
+            }
+        }
+
+        key = glfwGetKey(m_window_ptr, GLFW_KEY_LEFT_CONTROL);
+        if (key == GLFW_PRESS || key == GLFW_REPEAT) {
+            if (scene_info.camera) {
+                scene_info.camera->move_down(0.02f);
+            }
+        }
     }
 
-    int glfw_key_s = glfwGetKey(m_window_ptr, GLFW_KEY_S);
-    if (glfw_key_s == GLFW_PRESS || glfw_key_s == GLFW_REPEAT) {
+    int glfw_key_left_alt = glfwGetKey(m_window_ptr, GLFW_KEY_LEFT_ALT);
+    if (glfw_key_left_alt == GLFW_PRESS) {
+        if (!app_info.alt_mode_lock) {
+            app_info.alt_mode = !app_info.alt_mode;
+        }
+
+        app_info.alt_mode_lock = true;
+    }
+
+    if (glfw_key_left_alt == GLFW_RELEASE) {
+        app_info.alt_mode_lock = false;
     }
 }
 
