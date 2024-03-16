@@ -5,6 +5,8 @@
 
 #include <glad/glad.h>
 
+#include <glm/ext.hpp>
+
 namespace Vis {
 
 static size_t s_window_count = 0;
@@ -99,6 +101,38 @@ void Window::handle_input([[maybe_unused]] AppInfo &app_info,
         if (key == GLFW_PRESS || key == GLFW_REPEAT) {
             if (scene_info.camera) {
                 scene_info.camera->move_down(0.02f);
+            }
+        }
+
+        key = glfwGetKey(m_window_ptr, GLFW_KEY_Q);
+        if (key == GLFW_PRESS || key == GLFW_REPEAT) {
+            if (scene_info.camera) {
+                scene_info.camera->rotate_horizon(glm::pi<float>() / 180 *
+                                                  0.5f);
+            }
+        }
+
+        key = glfwGetKey(m_window_ptr, GLFW_KEY_E);
+        if (key == GLFW_PRESS || key == GLFW_REPEAT) {
+            if (scene_info.camera) {
+                scene_info.camera->rotate_horizon(-glm::pi<float>() / 180 *
+                                                  0.5f);
+            }
+        }
+
+        key = glfwGetKey(m_window_ptr, GLFW_KEY_Y);
+        if (key == GLFW_PRESS || key == GLFW_REPEAT) {
+            if (scene_info.camera) {
+                scene_info.camera->rotate_vertical(glm::pi<float>() / 180 *
+                                                  0.5f);
+            }
+        }
+
+        key = glfwGetKey(m_window_ptr, GLFW_KEY_Z);
+        if (key == GLFW_PRESS || key == GLFW_REPEAT) {
+            if (scene_info.camera) {
+                scene_info.camera->rotate_vertical(-glm::pi<float>() / 180 *
+                                                  0.5f);
             }
         }
     }
