@@ -56,11 +56,11 @@ void PerspectiveCamera::rotate_horizon(const float angle) {
 void PerspectiveCamera::rotate_vertical(const float angle) {
     const float new_rotation = m_data.rotation.y + angle;
     if (new_rotation >= glm::pi<float>() / 2.0f) {
-        m_data.rotation.y = glm::pi<float>() / 2.0f - 0.001;
+        m_data.rotation.y = glm::pi<float>() / 2.0f - 0.001f;
         return;
     }
     if (new_rotation + angle <= -glm::pi<float>() / 2.0f) {
-        m_data.rotation.y = -glm::pi<float>() / 2.0f + 0.001;
+        m_data.rotation.y = -glm::pi<float>() / 2.0f + 0.001f;
         return;
     }
     m_data.rotation.y = new_rotation;
