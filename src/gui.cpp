@@ -37,6 +37,14 @@ void Gui::new_frame() {
 }
 
 void Gui::prepare_gui(const bool demo) {
+    ImGuiIO &io = ImGui::GetIO();
+    if (m_app_info_ref.alt_mode) {
+        io.ConfigFlags |= ImGuiConfigFlags_NoMouse;
+    }
+    else {
+        io.ConfigFlags &= ~ImGuiConfigFlags_NoMouse;
+    }
+
     if (ImGui::BeginMainMenuBar()) {
         if (ImGui::BeginMenu("App")) {
             if (ImGui::MenuItem("Item1")) {
@@ -95,7 +103,8 @@ void Gui::prepare_gui(const bool demo) {
     ImGui::End();
 
     ImGui::Begin("Debug Info");
-    ImGui::Text("Last render: %fms", m_scene_info_ref.last_render.count()*1000);
+    ImGui::Text("Last render: %fms",
+                m_scene_info_ref.last_render.count() * 1000);
     ImGui::Text("FPS: %u", static_cast<uint32_t>(m_app_info_ref.fps));
     ImGui::End();
 }
