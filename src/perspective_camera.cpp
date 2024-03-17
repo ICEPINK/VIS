@@ -7,7 +7,9 @@ namespace Vis {
 PerspectiveCamera::PerspectiveCamera(const PerspectiveData &data)
     : m_data(data), m_up_direction({0.0f, 0.0f, 1.0f}),
       m_look_direction({1.0f, 0.0f, 0.0f}) {
-    // TODO: if rotation
+
+    rotate_horizon(0.0f);
+    rotate_vertical(0.0f);
 }
 
 void PerspectiveCamera::move_forward(const float distance) {
