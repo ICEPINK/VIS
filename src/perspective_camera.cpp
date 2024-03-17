@@ -43,26 +43,31 @@ void PerspectiveCamera::move_down(const float distance) {
 }
 
 void PerspectiveCamera::rotate_horizon(const float angle) {
-    const float new_rotation = m_data.rotation.x + angle;
-    if (new_rotation > glm::pi<float>() * 2) {
-        // TODO:
+    float new_rotation = m_data.rotation.x + angle;
+
+    while (new_rotation > glm::pi<float>() * 2) {
+        new_rotation -= glm::pi<float>() * 2;
     }
-    if (new_rotation < -glm::pi<float>() * 2) {
-        // TODO:
+    while (new_rotation < -glm::pi<float>() * 2) {
+        new_rotation += glm::pi<float>() * 2;
     }
+
     m_data.rotation.x = new_rotation;
 }
 
 void PerspectiveCamera::rotate_vertical(const float angle) {
     const float new_rotation = m_data.rotation.y + angle;
+
     if (new_rotation >= glm::pi<float>() / 2.0f) {
         m_data.rotation.y = glm::pi<float>() / 2.0f - 0.001f;
         return;
     }
+
     if (new_rotation + angle <= -glm::pi<float>() / 2.0f) {
         m_data.rotation.y = -glm::pi<float>() / 2.0f + 0.001f;
         return;
     }
+
     m_data.rotation.y = new_rotation;
 }
 
