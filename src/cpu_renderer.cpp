@@ -237,7 +237,7 @@ void CpuRenderer::rasterize_triangle(Vertex &a, Vertex &b, Vertex &c) {
     const int64_t end_y_ab = std::min(static_cast<int64_t>(m_height - 1),
                                       static_cast<int64_t>(b.position.y));
 
-    for (int64_t y = start_y_ab; y < end_y_ab; ++y) {
+    for (int64_t y = start_y_ab; y <= end_y_ab; ++y) {
 
         float ab_t = (y - a.position.y) / (b.position.y - a.position.y);
         Vertex ab = Vertex::interpolate(ab_t, a, b);
