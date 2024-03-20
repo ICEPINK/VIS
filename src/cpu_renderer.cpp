@@ -6,6 +6,7 @@
 #include <glm/ext.hpp>
 
 #include "solids/axis.hpp"
+#include "solids/grid.hpp"
 #include "solids/solid.hpp"
 #include "solids/square.hpp"
 
@@ -210,8 +211,9 @@ void CpuRenderer::clip_line_z(std::vector<Vertex> &vertices) const {
         std::swap(a, b);
     }
 
-    if (a.position.z <= 0) {
-        const float t_ba = (0 - b.position.z) / (a.position.z - b.position.z);
+    if (a.position.z <= 0.0f) {
+        const float t_ba =
+            (0.0f - b.position.z) / (a.position.z - b.position.z);
         a = Vertex::interpolate(t_ba, b, a);
     }
 }
@@ -341,7 +343,7 @@ void CpuRenderer::render_solid(Solid &solid) {
         transformed_vertices.push_back(new_vertex);
     }
 
-    for (Layout &layout : solid_data.leyout) {
+    for (Layout &layout : solid_data.layout) {
         switch (layout.topology) {
         case Topology::Point:
             break;
@@ -378,14 +380,18 @@ CpuRenderer::CpuRenderer(SceneInfo &scene_info) : m_scene_info_ref(scene_info) {
     PerspectiveData camera_data;
     camera_data.position = {-6.0f, 0.0f, 2.0f};
     camera_data.rotation = {0.0f, 0.0f};
-    camera_data.near_plane = {0.1f};
-    camera_data.far_plane = {10.0f};
+    camera_data.near_plane = {0.5f};
+    camera_data.far_plane = {50.0f};
     camera_data.fov = {glm::pi<float>() / 180.0f * 90.0f};
     camera_data.aspect_ratio = {1.0f};
 
     scene_info.camera = std::make_unique<PerspectiveCamera>(camera_data);
 }
 CpuRenderer::~CpuRenderer() {}
+
+Square square("Square");
+Axis axis("Axis");
+Grid grid("Grid");
 
 void *CpuRenderer::render_image(const size_t width, const size_t height) {
     if (width == 0 || height == 0) {
@@ -403,21 +409,31 @@ void *CpuRenderer::render_image(const size_t width, const size_t height) {
         m_height = height;
     }
 
-    Square square("Square");
-    Axis axis("Axis");
-
     auto start = std::chrono::high_resolution_clock::now();
 
     m_image->clear(m_scene_info_ref.clear_color);
     m_depth_buffer->clear(1.0);
 
-    render_solid(square);
+    // render_solid(square);
     render_solid(axis);
+    render_solid(grid);
+
+    PerspectiveData camera_data;
+    camera_data.position = {0.0f, 0.0f, 0.0f};
+    camera_data.rotation = {0.0f, 0.0f};
+    camera_data.near_plane = {1.0f};
+    camera_data.far_plane = {5.0f};
+    camera_data.fov = {glm::pi<float>() / 180.0f * 90.0f};
+    camera_data.aspect_ratio = {m_width / static_cast<float>(m_height)};
+
+    PerspectiveCamera camera{camera_data};
+
+    Solid camera_solid = camera.generate_solid();
+    render_solid(camera_solid);
 
     auto end = std::chrono::high_resolution_clock::now();
     m_scene_info_ref.last_render = end - start;
 
     return m_image->get_image_buffer_ptr();
 }
-
 } // namespace Vis

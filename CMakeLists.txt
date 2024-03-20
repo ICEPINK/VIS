@@ -35,6 +35,7 @@ set(P_SOURCE_FILES
     "./src/solids/square.cpp"
     "./src/perspective_camera.cpp"
     "./src/solids/axis.cpp"
+    "./src/solids/grid.cpp"
     )
 
 set(P_HEADER_FILES
@@ -54,6 +55,7 @@ set(P_HEADER_FILES
     "./src/utils/vertex.hpp"
     "./src/utils/scene_info.hpp"
     "./src/utils/app_info.hpp"
+    "./src/solids/grid.hpp"
     )
 
 add_executable(${PROJECT_NAME} ${P_SOURCE_FILES})

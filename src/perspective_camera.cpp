@@ -1,5 +1,8 @@
 #include "camera.hpp"
 
+#include <iostream>
+
+#define GLM_CLIP_TO_ZERO
 #include <glm/ext.hpp>
 
 namespace Vis {
@@ -71,6 +74,63 @@ void PerspectiveCamera::rotate_vertical(const float angle) {
     }
 
     m_data.rotation.y = new_rotation;
+}
+Solid PerspectiveCamera::generate_solid() const {
+    std::vector<Vertex> vertices;
+    vertices.reserve(9);
+    vertices.push_back({{m_data.position, 1.0f}});
+
+    const glm::mat4 view = get_view_matrix();
+    const glm::mat4 proj = get_projection_matrix();
+
+    Vertex vec = {{-1.0f, -1.0, -1.0f, 1.0f}};
+    vec.position = glm::inverse(view) * glm::inverse(proj) * vec.position;
+    vertices.push_back(vec);
+
+    vec = {{1.0f, -1.0f, -1.0f, 1.0f}};
+    vec.position = glm::inverse(view) * glm::inverse(proj) * vec.position;
+    vertices.push_back(vec);
+
+    vec = {{-1.0f, 1.0f, -1.0f, 1.0f}};
+    vec.position = glm::inverse(view) * glm::inverse(proj) * vec.position;
+    vertices.push_back(vec);
+
+    vec = {{1.0f, 1.0f, -1.0f, 1.0f}};
+    vec.position = glm::inverse(view) * glm::inverse(proj) * vec.position;
+    vertices.push_back(vec);
+
+    vec = {{-1.0f, -1.0f, 1.0f, 1.0f}};
+    vec.position = glm::inverse(view) * glm::inverse(proj) * vec.position;
+    vertices.push_back(vec);
+
+    vec = {{1.0f, -1.0f, 1.0f, 1.0f}};
+    vec.position = glm::inverse(view) * glm::inverse(proj) * vec.position;
+    vertices.push_back(vec);
+
+    vec = {{-1.0f, 1.0f, 1.0f, 1.0f}};
+    vec.position = glm::inverse(view) * glm::inverse(proj) * vec.position;
+    vertices.push_back(vec);
+
+    vec = {{1.0f, 1.0f, 1.0f, 1.0f}};
+    vec.position = glm::inverse(view) * glm::inverse(proj) * vec.position;
+    vertices.push_back(vec);
+
+    std::vector<size_t> indices = {0, 5, 0, 6, 0, 7, 0, 8, 1, 2, 2, 4,
+                                   4, 3, 3, 1, 5, 6, 6, 8, 8, 7, 7, 5};
+
+    Layout layout{};
+    layout.start = 0;
+    layout.count = indices.size() / 2;
+    layout.topology = Topology::Line;
+
+    SolidData data{};
+    data.name = "Camera";
+    data.vertices = vertices;
+    data.indices = indices;
+    data.layout = {layout};
+    data.matrix = {glm::mat4{1.0f}};
+
+    return {data};
 }
 
 glm::mat4 PerspectiveCamera::get_view_matrix() const {

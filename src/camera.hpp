@@ -10,7 +10,8 @@ class Camera {
   public:
     virtual glm::mat4 get_view_matrix() const = 0;
     virtual glm::mat4 get_projection_matrix() const = 0;
-    // virtual Solid generate_solid() const = 0;
+    virtual Solid generate_solid() const = 0;
+    virtual ~Camera() {}
 };
 
 struct PerspectiveData {
@@ -35,6 +36,7 @@ class PerspectiveCamera : public Camera {
     void move_down(const float distance);
     void rotate_horizon(const float angle);
     void rotate_vertical(const float angle);
+    virtual Solid generate_solid() const override;
 
     virtual glm::mat4 get_view_matrix() const override;
     virtual glm::mat4 get_projection_matrix() const override;

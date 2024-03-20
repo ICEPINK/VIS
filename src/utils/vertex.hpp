@@ -6,7 +6,7 @@ namespace Vis {
 
 struct Vertex {
     glm::vec4 position;
-    glm::vec4 color{0.0f, 0.0f, 0.0f, 1.0f};
+    glm::vec4 color{1.0f, 1.0f, 1.0f, 1.0f};
     glm::vec2 uv{0.0f, 0.0f};
     float one{1.0f};
 
