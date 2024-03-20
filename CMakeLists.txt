@@ -32,7 +32,6 @@ set(P_HEADER_FILES
     "./src/gui.hpp"
     "./src/image.hpp"
     "./src/cpu_renderer.hpp"
-    "./src/vis_utils.hpp"
     "./src/gpu_api.hpp"
     "./src/texture.hpp"
     "./src/depth_buffer.hpp"
@@ -40,6 +39,10 @@ set(P_HEADER_FILES
     "./src/solids/square.hpp"
     "./src/camera.hpp"
     "./src/solids/axis.hpp"
+    "./src/utils/color.hpp"
+    "./src/utils/vertex.hpp"
+    "./src/utils/scene_info.hpp"
+    "./src/utils/app_info.hpp"
     )
 
 add_executable(${PROJECT_NAME} ${P_SOURCE_FILES})

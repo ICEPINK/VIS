@@ -73,12 +73,12 @@ void PerspectiveCamera::rotate_vertical(const float angle) {
     m_data.rotation.y = new_rotation;
 }
 
-glm::mat4 PerspectiveCamera::get_view_matrix() {
+glm::mat4 PerspectiveCamera::get_view_matrix() const {
     return glm::lookAt(m_data.position, m_data.position + calculate_direction(),
                        glm::normalize(m_up_direction));
 }
 
-glm::mat4 PerspectiveCamera::get_projection_matrix() {
+glm::mat4 PerspectiveCamera::get_projection_matrix() const {
     return glm::perspective(m_data.fov, m_data.aspect_ratio, m_data.near_plane,
                             m_data.far_plane);
 }
@@ -101,7 +101,7 @@ void PerspectiveCamera::set_aspect_ratio(const float aspect_ratio) {
     m_data.aspect_ratio = aspect_ratio;
 }
 
-glm::vec3 PerspectiveCamera::calculate_direction() {
+glm::vec3 PerspectiveCamera::calculate_direction() const {
     glm::quat rotation_h = glm::angleAxis(m_data.rotation.x, m_up_direction);
     glm::vec3 direction = rotation_h * m_look_direction;
 

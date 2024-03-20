@@ -2,12 +2,15 @@
 
 #include <glm/glm.hpp>
 
+#include "solids/solid.hpp"
+
 namespace Vis {
 
 class Camera {
   public:
-    virtual glm::mat4 get_view_matrix() = 0;
-    virtual glm::mat4 get_projection_matrix() = 0;
+    virtual glm::mat4 get_view_matrix() const = 0;
+    virtual glm::mat4 get_projection_matrix() const = 0;
+    // virtual Solid generate_solid() const = 0;
 };
 
 struct PerspectiveData {
@@ -33,8 +36,8 @@ class PerspectiveCamera : public Camera {
     void rotate_horizon(const float angle);
     void rotate_vertical(const float angle);
 
-    virtual glm::mat4 get_view_matrix() override;
-    virtual glm::mat4 get_projection_matrix() override;
+    virtual glm::mat4 get_view_matrix() const override;
+    virtual glm::mat4 get_projection_matrix() const override;
 
     void set_position(const glm::vec3 &fov);
     void set_near_plane(const float near);
@@ -43,7 +46,7 @@ class PerspectiveCamera : public Camera {
     void set_aspect_ratio(const float fov);
 
   private:
-    glm::vec3 calculate_direction();
+    glm::vec3 calculate_direction() const;
 
   private:
     PerspectiveData m_data;

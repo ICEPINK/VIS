@@ -2,7 +2,7 @@
 
 #include <vector>
 
-#include "vis_utils.hpp"
+#include "utils/color.hpp"
 
 namespace Vis {
 

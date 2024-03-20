@@ -5,7 +5,7 @@
 
 #include <glm/glm.hpp>
 
-#include "../vis_utils.hpp"
+#include "../utils/vertex.hpp"
 
 namespace Vis {
 

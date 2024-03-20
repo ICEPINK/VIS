@@ -6,7 +6,8 @@
 #include <GLFW/glfw3.h>
 #include <imgui.h>
 
-#include "vis_utils.hpp"
+#include "utils/app_info.hpp"
+#include "utils/scene_info.hpp"
 
 namespace Vis {
 

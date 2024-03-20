@@ -6,7 +6,6 @@
 #include "gpu_api.hpp"
 #include "gui.hpp"
 #include "texture.hpp"
-#include "vis_utils.hpp"
 #include "window.hpp"
 
 namespace Vis {
