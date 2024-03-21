@@ -454,9 +454,36 @@ void *CpuRenderer::render_image(const size_t width, const size_t height) {
     pipeline_data.trasform_vertices_onto_viewport =
         Pipeline::trasform_vertices_onto_viewport_triangle;
     pipeline_data.rasterization = Pipeline::rasterization_triangle_fill_color;
-    pipeline_data.set_pixel = this->set_pixel;
+    pipeline_data.set_pixel =
+        std::bind(&CpuRenderer::set_pixel, this, std::placeholders::_1,
+                  std::placeholders::_2, std::placeholders::_3);
 
     pipeline.update_matrix();
+
+    for (Layout &layout : square.data.layout) {
+        switch (layout.topology) {
+        case Topology::Point:
+            break;
+        case Topology::Line:
+            break;
+        case Topology::Triangle:
+            for (size_t i = 0; i < layout.count; ++i) {
+                size_t &index_a = square.data.indices[layout.start + (i * 3)];
+                size_t &index_b =
+                    square.data.indices[layout.start + (i * 3) + 1];
+                size_t &index_c =
+                    square.data.indices[layout.start + (i * 3) + 2];
+                Vertex &vertex_a = square.data.vertices[index_a];
+                Vertex &vertex_b = square.data.vertices[index_b];
+                Vertex &vertex_c = square.data.vertices[index_c];
+
+                const std::vector<Vertex> vertices = {vertex_a, vertex_b,
+                                                      vertex_c};
+                pipeline.render(vertices);
+            }
+            break;
+        }
+    }
 
     // HACK: End Pipeline test
 

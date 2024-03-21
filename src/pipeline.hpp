@@ -1,5 +1,6 @@
 #pragma once
 ////////////////////////////////////////////////////////////////////////////////
+#include <functional>
 #include <memory>
 #include <vector>
 ////////////////////////////////////////////////////////////////////////////////
@@ -27,11 +28,10 @@ struct PipelineData {
         const size_t height);
     void (*rasterization)(std::unique_ptr<std::vector<Vertex>> &vertices,
                           const size_t widht, const size_t height,
-                          void (*set_pixel)(const int64_t,
-                                                         const int64_t,
-                                                         const Vertex &));
-    void (*set_pixel)(const int64_t, const int64_t,
-                                   const Vertex &);
+                          std::function<void(const int64_t x, const int64_t y,
+                                             const Vertex &vertex)>);
+    std::function<void(const int64_t x, const int64_t y, const Vertex &vertex)>
+        set_pixel;
     size_t width;
     size_t height;
     glm::mat4 solid_matrix;
@@ -72,8 +72,9 @@ class Pipeline {
     static void rasterization_triangle_fill_color(
         std::unique_ptr<std::vector<Vertex>> &vertices, const size_t width,
         const size_t height,
-        void (*set_pixel)(const int64_t x, const int64_t y,
-                                       const Vertex &vertex));
+        std::function<void(const int64_t x, const int64_t y,
+                           const Vertex &vertex)>
+            set_pixel);
 
   private:
     PipelineData &m_data_ref;

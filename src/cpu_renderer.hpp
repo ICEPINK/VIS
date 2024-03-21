@@ -32,7 +32,8 @@ class CpuRenderer {
     void clip_triangle_z(std::vector<Vertex> &vertices) const;
     void clip_line_z(std::vector<Vertex> &vertices) const;
 
-    void set_pixel(const int64_t x, const int64_t y, const Vertex &vertex);
+    void set_pixel(const int64_t x, const int64_t y,
+                   const Vertex &vertex);
 
   private:
     size_t m_width{0};

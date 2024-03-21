@@ -156,8 +156,8 @@ void Pipeline::trasform_vertices_onto_viewport_triangle(
 void Pipeline::rasterization_triangle_fill_color(
     std::unique_ptr<std::vector<Vertex>> &vertices, const size_t width,
     const size_t height,
-    void (*set_pixel)(const int64_t x, const int64_t y,
-                                   const Vertex &vertex)) {
+    std::function<void(const int64_t x, const int64_t y, const Vertex &vertex)>
+        set_pixel) {
     for (size_t i = 0; i < vertices->size(); i += 3) {
         auto &a = vertices->at(i);
         auto &b = vertices->at(i + 1);
