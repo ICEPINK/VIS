@@ -5,6 +5,7 @@
 
 #include <glm/ext.hpp>
 
+#include "pipeline.hpp"
 #include "solids/axis.hpp"
 #include "solids/grid.hpp"
 #include "solids/solid.hpp"
@@ -18,7 +19,8 @@ void CpuRenderer::trasform_to_screen(Vertex &vertex) {
     x = (x + 1) / 2.0f * m_image->get_width();
     y = (y + 1) / 2.0f * m_image->get_height();
 }
-void CpuRenderer::set_pixel(int64_t x, int64_t y, Vertex &vertex) {
+void CpuRenderer::set_pixel(const int64_t x, const int64_t y,
+                            const Vertex &vertex) {
     if (x < 0 || static_cast<size_t>(x) >= m_width) {
         return;
     }
@@ -26,11 +28,11 @@ void CpuRenderer::set_pixel(int64_t x, int64_t y, Vertex &vertex) {
         return;
     }
 
-    y = m_height - 1 - y;
+    auto new_y = m_height - 1 - y;
 
-    if (vertex.position.z < m_depth_buffer->get_depth(x, y)) {
-        m_depth_buffer->set_depth(x, y, vertex.position.z);
-        m_image->set_pixel(x, y, vertex.color * (1.0f / vertex.one));
+    if (vertex.position.z < m_depth_buffer->get_depth(x, new_y)) {
+        m_depth_buffer->set_depth(x, new_y, vertex.position.z);
+        m_image->set_pixel(x, new_y, vertex.color * (1.0f / vertex.one));
     }
 }
 
@@ -415,8 +417,8 @@ void *CpuRenderer::render_image(const size_t width, const size_t height) {
     m_depth_buffer->clear(1.0);
 
     // render_solid(square);
-    render_solid(axis);
-    render_solid(grid);
+    // render_solid(axis);
+    // render_solid(grid);
 
     PerspectiveData camera_data;
     camera_data.position = {0.0f, 0.0f, 0.0f};
@@ -429,7 +431,34 @@ void *CpuRenderer::render_image(const size_t width, const size_t height) {
     PerspectiveCamera camera{camera_data};
 
     Solid camera_solid = camera.generate_solid();
-    render_solid(camera_solid);
+    // render_solid(camera_solid);
+
+    // HACK: Start Pipeline test
+    PipelineData pipeline_data{};
+    Pipeline pipeline{pipeline_data};
+
+    pipeline_data.width = m_width;
+    pipeline_data.height = m_height;
+    pipeline_data.solid_matrix = square.data.matrix;
+    pipeline_data.model_matrix = glm::mat4{1.0f};
+    pipeline_data.view_matrix = m_scene_info_ref.camera->get_view_matrix();
+    pipeline_data.proj_matrix =
+        m_scene_info_ref.camera->get_projection_matrix();
+    pipeline_data.matrix_calculation = Pipeline::matrix_calculation_smvp;
+    pipeline_data.trasform_vertices_by_matrix =
+        Pipeline::trasform_vertices_by_matrix_all;
+    pipeline_data.fast_clip = Pipeline::fast_clip_triangle;
+    pipeline_data.clip_before_dehomog = Pipeline::clip_before_dehomog_triangle;
+    pipeline_data.dehomog_vertices = Pipeline::dehomog_vertices_triangle;
+    pipeline_data.clip_after_dehomog = Pipeline::clip_after_dehomog_none;
+    pipeline_data.trasform_vertices_onto_viewport =
+        Pipeline::trasform_vertices_onto_viewport_triangle;
+    pipeline_data.rasterization = Pipeline::rasterization_triangle_fill_color;
+    pipeline_data.set_pixel = this->set_pixel;
+
+    pipeline.update_matrix();
+
+    // HACK: End Pipeline test
 
     auto end = std::chrono::high_resolution_clock::now();
     m_scene_info_ref.last_render = end - start;

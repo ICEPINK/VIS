@@ -2,7 +2,6 @@
 
 #include <iostream>
 
-#define GLM_CLIP_TO_ZERO
 #include <glm/ext.hpp>
 
 namespace Vis {
@@ -83,19 +82,19 @@ Solid PerspectiveCamera::generate_solid() const {
     const glm::mat4 view = get_view_matrix();
     const glm::mat4 proj = get_projection_matrix();
 
-    Vertex vec = {{-1.0f, -1.0, -1.0f, 1.0f}};
+    Vertex vec = {{-1.0f, -1.0, 0.0f, 1.0f}};
     vec.position = glm::inverse(view) * glm::inverse(proj) * vec.position;
     vertices.push_back(vec);
 
-    vec = {{1.0f, -1.0f, -1.0f, 1.0f}};
+    vec = {{1.0f, -1.0f, 0.0f, 1.0f}};
     vec.position = glm::inverse(view) * glm::inverse(proj) * vec.position;
     vertices.push_back(vec);
 
-    vec = {{-1.0f, 1.0f, -1.0f, 1.0f}};
+    vec = {{-1.0f, 1.0f, 0.0f, 1.0f}};
     vec.position = glm::inverse(view) * glm::inverse(proj) * vec.position;
     vertices.push_back(vec);
 
-    vec = {{1.0f, 1.0f, -1.0f, 1.0f}};
+    vec = {{1.0f, 1.0f, 0.0f, 1.0f}};
     vec.position = glm::inverse(view) * glm::inverse(proj) * vec.position;
     vertices.push_back(vec);
 
