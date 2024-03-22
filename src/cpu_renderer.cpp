@@ -1,6 +1,7 @@
 #include "cpu_renderer.hpp"
 
 #include "solids/axis.hpp"
+#include "solids/cube.hpp"
 #include "solids/grid.hpp"
 #include "solids/solid.hpp"
 #include "solids/square.hpp"
@@ -138,6 +139,8 @@ CpuRenderer::~CpuRenderer() {}
 Square square("Square");
 Axis axis("Axis");
 Grid grid("Grid");
+Cube cube("Cube");
+Cube cube2("Cube");
 
 void *CpuRenderer::render_image(const size_t width, const size_t height) {
     if (width == 0 || height == 0) {
@@ -160,9 +163,15 @@ void *CpuRenderer::render_image(const size_t width, const size_t height) {
     m_image->clear(m_scene_info_ref.clear_color);
     m_depth_buffer->clear(1.0);
 
-    render_solid(square);
-    render_solid(axis);
+    // render_solid(square);
+    // render_solid(axis);
     render_solid(grid);
+
+    cube.data.matrix = {glm::translate(glm::mat4{1.0f}, {0.0f, 0.0f, 2.0f})};
+    render_solid(cube);
+
+    cube2.data.matrix = {glm::translate(glm::mat4{1.0f}, {0.5f, 0.5f, 2.5f})};
+    render_solid(cube2);
 
     PerspectiveData camera_data;
     camera_data.position = {0.0f, 0.0f, 0.0f};
