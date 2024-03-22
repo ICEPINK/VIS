@@ -6,6 +6,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 #include <functional>
 #include <memory>
+#include <optional>
 #include <vector>
 ////////////////////////////////////////////////////////////////////////////////
 namespace Vis {
@@ -38,6 +39,7 @@ struct PipelineData {
     glm::mat4 view_matrix;
     glm::mat4 proj_matrix;
     glm::mat4 matrix;
+    bool callback{false};
 };
 ////////////////////////////////////////////////////////////////////////////////
 class Pipeline {
@@ -45,7 +47,8 @@ class Pipeline {
     Pipeline(PipelineData &data);
     ~Pipeline();
 
-    void render(const std::vector<Vertex> &vertices) const;
+    std::optional<std::unique_ptr<std::vector<Vertex>>>
+    render(const std::vector<Vertex> &vertices) const;
     void update_matrix() const;
 
     static bool fast_clip_line(std::unique_ptr<std::vector<Vertex>> &vertices);

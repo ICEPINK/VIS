@@ -104,20 +104,28 @@ void Pipeline::rasterization_line_dda(
     }
 }
 ////////////////////////////////////////////////////////////////////////////////
-void Pipeline::render(const std::vector<Vertex> &vertices) const {
+std::optional<std::unique_ptr<std::vector<Vertex>>>
+Pipeline::render(const std::vector<Vertex> &vertices) const {
     auto temp_vertices = std::make_unique<std::vector<Vertex>>(vertices);
     auto &d = m_data_ref;
     d.trasform_vertices_by_matrix(temp_vertices, d.matrix);
 
     if (d.fast_clip(temp_vertices)) {
-        return;
+        return {};
     }
 
     d.clip_before_dehomog(temp_vertices);
     d.dehomog_vertices(temp_vertices);
     d.clip_after_dehomog(temp_vertices);
     d.trasform_vertices_onto_viewport(temp_vertices, d.width, d.height);
+
+    if (d.callback) {
+        return temp_vertices;
+    }
+
     d.rasterization(temp_vertices, d.width, d.height, d.set_pixel);
+
+    return {};
 }
 ////////////////////////////////////////////////////////////////////////////////
 void Pipeline::update_matrix() const {
