@@ -65,6 +65,9 @@ void Gui::prepare_gui(const bool demo) {
     }
 
     ImGui::Begin("Debug Info");
+    ImGui::Text("Window: [%ld/%ld]",
+                static_cast<int64_t>(m_app_info_ref.view_width),
+                static_cast<int64_t>(m_app_info_ref.view_height));
     ImGui::Text("Last render: %fms",
                 m_scene_info_ref.last_render.count() * 1000);
     ImGui::Text("FPS: %u", static_cast<uint32_t>(m_app_info_ref.fps));

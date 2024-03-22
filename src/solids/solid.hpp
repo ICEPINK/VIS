@@ -5,7 +5,7 @@
 
 #include <glm/glm.hpp>
 
-#include "../vis_utils.hpp"
+#include "../utils/vertex.hpp"
 
 namespace Vis {
 
@@ -21,7 +21,7 @@ struct SolidData {
     std::string name;
     std::vector<Vertex> vertices;
     std::vector<size_t> indices;
-    std::vector<Layout> leyout;
+    std::vector<Layout> layout;
     glm::mat4 matrix;
 };
 

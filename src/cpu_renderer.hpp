@@ -7,6 +7,7 @@
 #include "depth_buffer.hpp"
 #include "image.hpp"
 #include "solids/solid.hpp"
+#include "utils/scene_info.hpp"
 
 namespace Vis {
 
@@ -19,19 +20,8 @@ class CpuRenderer {
 
   private:
     void render_solid(Solid &solid);
-    // void render_point(Vertex &a);
-    void render_line(Vertex &a, Vertex &b);
-    void render_triangle(Vertex &a, Vertex &b, Vertex &c);
-    // void rasterize_point(Vertex &a);
-    void rasterize_line(Vertex &a, Vertex &b);
-    void rasterize_triangle(Vertex &a, Vertex &b, Vertex &c);
-    void trasform_to_screen(Vertex &vertex);
-    bool fast_clip(const std::vector<Vertex> &vertices,
-                   Topology topology) const;
-    void clip_triangle_z(std::vector<Vertex> &vertices) const;
-    void clip_line_z(std::vector<Vertex> &vertices) const;
-
-    void set_pixel(int64_t x, int64_t y, Vertex &vertex);
+    void set_pixel_rgba_depth(const int64_t x, const int64_t y, const Vertex &vertex);
+    void set_pixel_bw_depth(const int64_t x, const int64_t y, const Vertex &vertex);
 
   private:
     size_t m_width{0};
@@ -39,6 +29,9 @@ class CpuRenderer {
     std::unique_ptr<Image> m_image;
     std::unique_ptr<DepthBuffer> m_depth_buffer;
     SceneInfo &m_scene_info_ref;
+    std::unique_ptr<Pipeline> m_triangle_pipeline;
+    std::unique_ptr<Pipeline> m_line_pipeline;
+    std::unique_ptr<Pipeline> m_point_pipeline;
 };
 
 } // namespace Vis
