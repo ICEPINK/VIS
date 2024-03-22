@@ -20,7 +20,8 @@ class CpuRenderer {
 
   private:
     void render_solid(Solid &solid);
-    void set_pixel(const int64_t x, const int64_t y, const Vertex &vertex);
+    void set_pixel_rgba_depth(const int64_t x, const int64_t y, const Vertex &vertex);
+    void set_pixel_bw_depth(const int64_t x, const int64_t y, const Vertex &vertex);
 
   private:
     size_t m_width{0};

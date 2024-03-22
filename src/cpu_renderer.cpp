@@ -12,8 +12,24 @@
 
 namespace Vis {
 
-void CpuRenderer::set_pixel(const int64_t x, const int64_t y,
-                            const Vertex &vertex) {
+void CpuRenderer::set_pixel_bw_depth(const int64_t x, const int64_t y,
+                                     const Vertex &vertex) {
+    if (x < 0 || static_cast<size_t>(x) >= m_width) {
+        return;
+    }
+    if (y < 0 || static_cast<size_t>(y) >= m_height) {
+        return;
+    }
+    auto new_y = m_height - 1 - y;
+
+    if (vertex.position.z < m_depth_buffer->get_depth(x, new_y)) {
+        m_depth_buffer->set_depth(x, new_y, vertex.position.z);
+        m_image->set_pixel(
+            x, new_y, ColorRGBA32f{1.0f, 1.0f, 1.0f, 1.0f} * vertex.position.z);
+    }
+}
+void CpuRenderer::set_pixel_rgba_depth(const int64_t x, const int64_t y,
+                                       const Vertex &vertex) {
     if (x < 0 || static_cast<size_t>(x) >= m_width) {
         return;
     }
@@ -112,7 +128,7 @@ CpuRenderer::CpuRenderer(SceneInfo &scene_info) : m_scene_info_ref(scene_info) {
     pipeline_triangle_data.rasterization =
         Pipeline::rasterization_triangle_fill_color;
     pipeline_triangle_data.set_pixel =
-        std::bind(&CpuRenderer::set_pixel, this, std::placeholders::_1,
+        std::bind(&CpuRenderer::set_pixel_rgba_depth, this, std::placeholders::_1,
                   std::placeholders::_2, std::placeholders::_3);
     m_triangle_pipeline = std::make_unique<Pipeline>(pipeline_triangle_data);
 
@@ -128,7 +144,7 @@ CpuRenderer::CpuRenderer(SceneInfo &scene_info) : m_scene_info_ref(scene_info) {
         Pipeline::trasform_vertices_onto_viewport;
     pipeline_line_data.rasterization = Pipeline::rasterization_line_dda;
     pipeline_line_data.set_pixel =
-        std::bind(&CpuRenderer::set_pixel, this, std::placeholders::_1,
+        std::bind(&CpuRenderer::set_pixel_rgba_depth, this, std::placeholders::_1,
                   std::placeholders::_2, std::placeholders::_3);
     m_line_pipeline = std::make_unique<Pipeline>(pipeline_line_data);
 
