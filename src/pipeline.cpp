@@ -9,6 +9,101 @@ Pipeline::Pipeline(PipelineData &data) : m_data_ref(data) {}
 ////////////////////////////////////////////////////////////////////////////////
 Pipeline::~Pipeline() {}
 ////////////////////////////////////////////////////////////////////////////////
+bool Pipeline::fast_clip_line(std::unique_ptr<std::vector<Vertex>> &vertices) {
+    const Vertex &a = vertices->at(0);
+    const Vertex &b = vertices->at(1);
+
+    if (a.position.x <= -a.position.w && b.position.x <= -b.position.w) {
+        return true;
+    }
+    if (a.position.x >= a.position.w && b.position.x >= b.position.w) {
+        return true;
+    }
+    if (a.position.y <= -a.position.w && b.position.y <= -b.position.w) {
+        return true;
+    }
+    if (a.position.y >= a.position.w && b.position.y >= b.position.w) {
+        return true;
+    }
+    if (a.position.z <= 0 && b.position.z <= 0) {
+        return true;
+    }
+    if (a.position.z >= a.position.w && b.position.z >= b.position.w) {
+        return true;
+    }
+
+    return false;
+}
+////////////////////////////////////////////////////////////////////////////////
+void Pipeline::clip_after_dehomog_line(
+    [[maybe_unused]] std::unique_ptr<std::vector<Vertex>> &vertices) {
+    // TODO:
+    return;
+}
+////////////////////////////////////////////////////////////////////////////////
+void Pipeline::clip_before_dehomog_line(
+    std::unique_ptr<std::vector<Vertex>> &vertices) {
+    Vertex &a = vertices->at(0);
+    Vertex &b = vertices->at(1);
+
+    if (a.position.z > b.position.z) {
+        std::swap(a, b);
+    }
+
+    if (a.position.z <= 0.0f) {
+        const float t_ba =
+            (0.0f - b.position.z) / (a.position.z - b.position.z);
+        a = Vertex::interpolate(t_ba, b, a);
+    }
+}
+////////////////////////////////////////////////////////////////////////////////
+void Pipeline::rasterization_line_dda(
+    std::unique_ptr<std::vector<Vertex>> &vertices,
+    [[maybe_unused]] const size_t width, [[maybe_unused]] const size_t height,
+    std::function<void(const int64_t x, const int64_t y, const Vertex &vertex)>
+        set_pixel) {
+    // NOTE: unused width, height
+    for (size_t i = 0; i < vertices->size(); i += 2) {
+        auto &a = vertices->at(i);
+        auto &b = vertices->at(i + 1);
+
+        float alpha =
+            (b.position.y - a.position.y) / (b.position.x - a.position.x);
+
+        if (alpha * alpha > 1.0) {
+            if (a.position.y > b.position.y) {
+                std::swap(a, b);
+            }
+
+            alpha =
+                (b.position.x - a.position.x) / (b.position.y - a.position.y);
+            float x = a.position.x;
+            const int64_t a_y = static_cast<int64_t>(a.position.y);
+            const int64_t b_y = static_cast<int64_t>(b.position.y);
+            for (int64_t y = a_y; y <= b_y; ++y) {
+                float t = (y - a_y) / static_cast<float>(b_y - a_y);
+                Vertex vertex = Vertex::interpolate(t, a, b);
+                set_pixel(static_cast<int64_t>(x), y, vertex);
+                x += alpha;
+            }
+        } else {
+            if (a.position.x > b.position.x) {
+                std::swap(a, b);
+            }
+
+            float y = a.position.y;
+            const int64_t a_x = static_cast<int64_t>(a.position.x);
+            const int64_t b_x = static_cast<int64_t>(b.position.x);
+            for (int64_t x = a_x; x <= b_x; ++x) {
+                float t = (x - a_x) / static_cast<float>(b_x - a_x);
+                Vertex vertex = Vertex::interpolate(t, a, b);
+                set_pixel(x, static_cast<int64_t>(y), vertex);
+                y += alpha;
+            }
+        }
+    }
+}
+////////////////////////////////////////////////////////////////////////////////
 void Pipeline::render(const std::vector<Vertex> &vertices) const {
     auto temp_vertices = std::make_unique<std::vector<Vertex>>(vertices);
     auto &d = m_data_ref;
@@ -46,7 +141,7 @@ void Pipeline::trasform_vertices_by_matrix_all(
     }
 }
 ////////////////////////////////////////////////////////////////////////////////
-void Pipeline::dehomog_vertices_triangle(
+void Pipeline::dehomog_vertices(
     std::unique_ptr<std::vector<Vertex>> &vertices) {
     std::for_each(vertices->begin(), vertices->end(), [](Vertex &vertex) {
         vertex = vertex * (1.0f / vertex.position.w);
@@ -142,7 +237,7 @@ void Pipeline::clip_after_dehomog_none(
     return;
 }
 ////////////////////////////////////////////////////////////////////////////////
-void Pipeline::trasform_vertices_onto_viewport_triangle(
+void Pipeline::trasform_vertices_onto_viewport(
     std::unique_ptr<std::vector<Vertex>> &vertices, const size_t widht,
     const size_t height) {
     for (auto &vertex : *vertices) {
