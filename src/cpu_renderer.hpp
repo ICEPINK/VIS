@@ -26,6 +26,7 @@ class CpuRenderer {
                                  const Vertex &vertex);
     void set_pixel_bw_depth(const int64_t x, const int64_t y,
                             const Vertex &vertex);
+    void update_pipeline_settings();
 
   private:
     size_t m_width{0};

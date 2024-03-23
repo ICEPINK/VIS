@@ -177,7 +177,7 @@ glm::mat4 Pipeline::matrix_calculation_smvp(const glm::mat4 &solid,
     return proj * view * model * solid;
 }
 ////////////////////////////////////////////////////////////////////////////////
-void Pipeline::trasform_vertices_by_matrix_all(
+void Pipeline::trasform_vertices_by_matrix_position(
     std::unique_ptr<std::vector<Vertex>> &vertices, const glm::mat4 &matrix) {
     for (Vertex &vertex : *vertices) {
         vertex = {matrix * vertex.position, vertex.color, vertex.uv,
@@ -292,7 +292,7 @@ void Pipeline::trasform_vertices_onto_viewport(
     }
 }
 ////////////////////////////////////////////////////////////////////////////////
-void Pipeline::rasterization_triangle_fill_color(
+void Pipeline::rasterization_triangle_fill(
     std::unique_ptr<std::vector<Vertex>> &vertices, const size_t width,
     const size_t height,
     std::function<void(const int64_t x, const int64_t y, const Vertex &vertex)>

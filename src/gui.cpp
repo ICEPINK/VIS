@@ -90,6 +90,12 @@ void Gui::prepare_gui(const bool demo) {
     ImGui::Text("Clear color");
     ImGui::ColorEdit4("", &m_scene_info_ref.clear_color.r,
                       ImGuiColorEditFlags_Float | misc_flags);
+
+    ImGui::Text("Triangle pipeline");
+    std::array<const char *, 3> items = {"rgba_depth", "rgba_no_depth",
+                                         "bw_depth"};
+    ImGui::Combo("Set pixel", (int *)&m_scene_info_ref.set_pixel_setting,
+                 items.data(), items.size());
     ImGui::End();
 
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, {0.0, 0.0});

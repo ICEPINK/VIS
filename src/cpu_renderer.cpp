@@ -24,8 +24,9 @@ void CpuRenderer::set_pixel_bw_depth(const int64_t x, const int64_t y,
 
     if (vertex.position.z < m_depth_buffer->get_depth(x, new_y)) {
         m_depth_buffer->set_depth(x, new_y, vertex.position.z);
-        m_image->set_pixel(
-            x, new_y, ColorRGBA32f{1.0f, 1.0f, 1.0f, 1.0f} * vertex.position.z);
+        m_image->set_pixel(x, new_y,
+                           ColorRGBA32f{1.0f, 1.0f, 1.0f, 1.0f} *
+                               std::max(0.0f, vertex.position.z * 7.0f - 6.0f));
     }
 }
 void CpuRenderer::set_pixel_rgba_depth(const int64_t x, const int64_t y,
@@ -129,7 +130,7 @@ CpuRenderer::CpuRenderer(SceneInfo &scene_info) : m_scene_info_ref(scene_info) {
     pipeline_triangle_data.matrix_calculation =
         Pipeline::matrix_calculation_smvp;
     pipeline_triangle_data.trasform_vertices_by_matrix =
-        Pipeline::trasform_vertices_by_matrix_all;
+        Pipeline::trasform_vertices_by_matrix_position;
     pipeline_triangle_data.fast_clip = Pipeline::fast_clip_triangle;
     pipeline_triangle_data.clip_before_dehomog =
         Pipeline::clip_before_dehomog_triangle;
@@ -139,7 +140,7 @@ CpuRenderer::CpuRenderer(SceneInfo &scene_info) : m_scene_info_ref(scene_info) {
     pipeline_triangle_data.trasform_vertices_onto_viewport =
         Pipeline::trasform_vertices_onto_viewport;
     pipeline_triangle_data.rasterization =
-        Pipeline::rasterization_triangle_fill_color;
+        Pipeline::rasterization_triangle_fill;
     pipeline_triangle_data.set_pixel = std::bind(
         &CpuRenderer::set_pixel_rgba_depth, this, std::placeholders::_1,
         std::placeholders::_2, std::placeholders::_3);
@@ -148,7 +149,7 @@ CpuRenderer::CpuRenderer(SceneInfo &scene_info) : m_scene_info_ref(scene_info) {
     auto &pipeline_line_data = scene_info.pipeline_line_data;
     pipeline_line_data.matrix_calculation = Pipeline::matrix_calculation_smvp;
     pipeline_line_data.trasform_vertices_by_matrix =
-        Pipeline::trasform_vertices_by_matrix_all;
+        Pipeline::trasform_vertices_by_matrix_position;
     pipeline_line_data.fast_clip = Pipeline::fast_clip_line;
     pipeline_line_data.clip_before_dehomog = Pipeline::clip_before_dehomog_line;
     pipeline_line_data.dehomog_vertices = Pipeline::dehomog_vertices;
@@ -164,6 +165,26 @@ CpuRenderer::CpuRenderer(SceneInfo &scene_info) : m_scene_info_ref(scene_info) {
     // auto &pipeline_point_data = scene_info.pipeline_point_data;
 }
 CpuRenderer::~CpuRenderer() {}
+
+void CpuRenderer::update_pipeline_settings() {
+    switch (m_scene_info_ref.set_pixel_setting) {
+    case SetPixelEnum::RGBA_DEPTH:
+        m_scene_info_ref.pipeline_triangle_data.set_pixel = std::bind(
+            &CpuRenderer::set_pixel_rgba_depth, this, std::placeholders::_1,
+            std::placeholders::_2, std::placeholders::_3);
+        break;
+    case SetPixelEnum::RGBA_NO_DEPTH:
+        m_scene_info_ref.pipeline_triangle_data.set_pixel = std::bind(
+            &CpuRenderer::set_pixel_rgba_no_depth, this, std::placeholders::_1,
+            std::placeholders::_2, std::placeholders::_3);
+        break;
+    case SetPixelEnum::BW_DEPTH:
+        m_scene_info_ref.pipeline_triangle_data.set_pixel = std::bind(
+            &CpuRenderer::set_pixel_bw_depth, this, std::placeholders::_1,
+            std::placeholders::_2, std::placeholders::_3);
+        break;
+    }
+}
 
 Square square("Square");
 Axis axis("Axis");
@@ -186,6 +207,8 @@ void *CpuRenderer::render_image(const size_t width, const size_t height) {
         m_width = width;
         m_height = height;
     }
+
+    update_pipeline_settings();
 
     auto start = std::chrono::high_resolution_clock::now();
 

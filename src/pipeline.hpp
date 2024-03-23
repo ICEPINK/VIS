@@ -76,13 +76,13 @@ class Pipeline {
                            std::function<void(const int64_t x, const int64_t y,
                                               const Vertex &vertex)>
                                set_pixel);
-    static void rasterization_triangle_fill_color(
+    static void rasterization_triangle_fill(
         std::unique_ptr<std::vector<Vertex>> &vertices, const size_t width,
         const size_t height,
         std::function<void(const int64_t x, const int64_t y,
                            const Vertex &vertex)>
             set_pixel);
-    static void trasform_vertices_by_matrix_all(
+    static void trasform_vertices_by_matrix_position(
         std::unique_ptr<std::vector<Vertex>> &vertices,
         const glm::mat4 &matrix);
     static void trasform_vertices_onto_viewport(
