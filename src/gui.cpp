@@ -3,6 +3,8 @@
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 
+#include <array>
+
 namespace Vis {
 
 Gui::Gui(AppInfo &app_info, SceneInfo &scene_info)
@@ -95,7 +97,7 @@ void Gui::prepare_gui(const bool demo) {
     std::array<const char *, 3> items = {"rgba_depth", "rgba_no_depth",
                                          "bw_depth"};
     ImGui::Combo("Set pixel", (int *)&m_scene_info_ref.set_pixel_setting,
-                 items.data(), items.size());
+                 items.data(), static_cast<int>(items.size()));
     ImGui::End();
 
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, {0.0, 0.0});

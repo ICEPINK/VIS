@@ -26,7 +26,7 @@ void CpuRenderer::set_pixel_bw_depth(const int64_t x, const int64_t y,
         m_depth_buffer->set_depth(x, new_y, vertex.position.z);
         m_image->set_pixel(x, new_y,
                            ColorRGBA32f{1.0f, 1.0f, 1.0f, 1.0f} *
-                               std::max(0.0f, vertex.position.z * 7.0f - 6.0f));
+                               std::max(0.0f, vertex.position.z));
     }
 }
 void CpuRenderer::set_pixel_rgba_depth(const int64_t x, const int64_t y,
