@@ -36,9 +36,45 @@ bool Pipeline::fast_clip_line(std::unique_ptr<std::vector<Vertex>> &vertices) {
 }
 ////////////////////////////////////////////////////////////////////////////////
 void Pipeline::clip_after_dehomog_line(
-    [[maybe_unused]] std::unique_ptr<std::vector<Vertex>> &vertices) {
-    // TODO:
-    return;
+    std::unique_ptr<std::vector<Vertex>> &vertices) {
+
+    for (size_t i = 0; i < vertices->size(); i += 2) {
+        auto &a = vertices->at(i);
+        auto &b = vertices->at(i + 1);
+
+        if (a.position.x <= -1) {
+            const auto t = (-1 - a.position.x) / (b.position.x - a.position.x);
+            a = Vertex::interpolate(t, a, b);
+        }
+        if (b.position.x <= -1) {
+            const auto t = (-1 - b.position.x) / (a.position.x - b.position.x);
+            b = Vertex::interpolate(t, b, a);
+        }
+        if (a.position.x >= 1) {
+            const auto t = (1 - a.position.x) / (b.position.x - a.position.x);
+            a = Vertex::interpolate(t, a, b);
+        }
+        if (b.position.x >= 1) {
+            const auto t = (1 - b.position.x) / (a.position.x - b.position.x);
+            b = Vertex::interpolate(t, b, a);
+        }
+        if (a.position.y <= -1) {
+            const auto t = (-1 - a.position.y) / (b.position.y - a.position.y);
+            a = Vertex::interpolate(t, a, b);
+        }
+        if (b.position.y <= -1) {
+            const auto t = (-1 - b.position.y) / (a.position.y - b.position.y);
+            b = Vertex::interpolate(t, b, a);
+        }
+        if (a.position.y >= 1) {
+            const auto t = (1 - a.position.y) / (b.position.y - a.position.y);
+            a = Vertex::interpolate(t, a, b);
+        }
+        if (b.position.y >= 1) {
+            const auto t = (1 - b.position.y) / (a.position.y - b.position.y);
+            b = Vertex::interpolate(t, b, a);
+        }
+    }
 }
 ////////////////////////////////////////////////////////////////////////////////
 void Pipeline::clip_before_dehomog_line(

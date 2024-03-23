@@ -45,6 +45,19 @@ void CpuRenderer::set_pixel_rgba_depth(const int64_t x, const int64_t y,
     }
 }
 
+void CpuRenderer::set_pixel_rgba_no_depth(const int64_t x, const int64_t y,
+                                          const Vertex &vertex) {
+    if (x < 0 || static_cast<size_t>(x) >= m_width) {
+        return;
+    }
+    if (y < 0 || static_cast<size_t>(y) >= m_height) {
+        return;
+    }
+
+    auto new_y = m_height - 1 - y;
+    m_image->set_pixel(x, new_y, vertex.color * (1.0f / vertex.one));
+}
+
 void CpuRenderer::render_solid(Solid &solid) {
 
     auto &vertices = solid.data.vertices;
@@ -106,7 +119,7 @@ CpuRenderer::CpuRenderer(SceneInfo &scene_info) : m_scene_info_ref(scene_info) {
     PerspectiveData camera_data;
     camera_data.position = {-6.0f, 0.0f, 2.0f};
     camera_data.rotation = {0.0f, 0.0f};
-    camera_data.near_plane = {0.5f};
+    camera_data.near_plane = {0.1f};
     camera_data.far_plane = {50.0f};
     camera_data.fov = {glm::pi<float>() / 180.0f * 90.0f};
     camera_data.aspect_ratio = {1.0f};
@@ -127,9 +140,9 @@ CpuRenderer::CpuRenderer(SceneInfo &scene_info) : m_scene_info_ref(scene_info) {
         Pipeline::trasform_vertices_onto_viewport;
     pipeline_triangle_data.rasterization =
         Pipeline::rasterization_triangle_fill_color;
-    pipeline_triangle_data.set_pixel =
-        std::bind(&CpuRenderer::set_pixel_rgba_depth, this, std::placeholders::_1,
-                  std::placeholders::_2, std::placeholders::_3);
+    pipeline_triangle_data.set_pixel = std::bind(
+        &CpuRenderer::set_pixel_rgba_depth, this, std::placeholders::_1,
+        std::placeholders::_2, std::placeholders::_3);
     m_triangle_pipeline = std::make_unique<Pipeline>(pipeline_triangle_data);
 
     auto &pipeline_line_data = scene_info.pipeline_line_data;
@@ -139,13 +152,13 @@ CpuRenderer::CpuRenderer(SceneInfo &scene_info) : m_scene_info_ref(scene_info) {
     pipeline_line_data.fast_clip = Pipeline::fast_clip_line;
     pipeline_line_data.clip_before_dehomog = Pipeline::clip_before_dehomog_line;
     pipeline_line_data.dehomog_vertices = Pipeline::dehomog_vertices;
-    pipeline_line_data.clip_after_dehomog = Pipeline::clip_after_dehomog_none;
+    pipeline_line_data.clip_after_dehomog = Pipeline::clip_after_dehomog_line;
     pipeline_line_data.trasform_vertices_onto_viewport =
         Pipeline::trasform_vertices_onto_viewport;
     pipeline_line_data.rasterization = Pipeline::rasterization_line_dda;
-    pipeline_line_data.set_pixel =
-        std::bind(&CpuRenderer::set_pixel_rgba_depth, this, std::placeholders::_1,
-                  std::placeholders::_2, std::placeholders::_3);
+    pipeline_line_data.set_pixel = std::bind(
+        &CpuRenderer::set_pixel_rgba_depth, this, std::placeholders::_1,
+        std::placeholders::_2, std::placeholders::_3);
     m_line_pipeline = std::make_unique<Pipeline>(pipeline_line_data);
 
     // auto &pipeline_point_data = scene_info.pipeline_point_data;
