@@ -189,8 +189,6 @@ void CpuRenderer::update_pipeline_settings() {
 Square square("Square");
 Axis axis("Axis");
 Grid grid("Grid");
-Cube cube("Cube");
-Cube cube2("Cube");
 
 void *CpuRenderer::render_image(const size_t width, const size_t height) {
     if (width == 0 || height == 0) {
@@ -219,24 +217,31 @@ void *CpuRenderer::render_image(const size_t width, const size_t height) {
     // render_solid(axis);
     render_solid(grid);
 
-    cube.data.matrix = {glm::translate(glm::mat4{1.0f}, {0.0f, 0.0f, 2.0f})};
+    Cube cube("Cube");
+    cube.data.matrix = {glm::translate(glm::mat4{1.0f}, {0.0f, 0.0f, 0.0f})};
+    render_solid(cube);
+    cube.data.matrix = {glm::translate(glm::mat4{1.0f}, {0.0f, 0.0f, 4.0f})};
+    render_solid(cube);
+    cube.data.matrix = {glm::translate(glm::mat4{1.0f}, {5.0f, 0.0f, 0.0f})};
+    render_solid(cube);
+    cube.data.matrix = {glm::translate(glm::mat4{1.0f}, {0.0f, 5.0f, 2.0f})};
+    render_solid(cube);
+    cube.data.matrix = {glm::translate(glm::mat4{1.0f}, {5.0f, 5.0f, 2.0f})};
     render_solid(cube);
 
-    cube2.data.matrix = {glm::translate(glm::mat4{1.0f}, {0.5f, 0.5f, 2.5f})};
-    render_solid(cube2);
 
-    PerspectiveData camera_data;
-    camera_data.position = {0.0f, 0.0f, 0.0f};
-    camera_data.rotation = {0.0f, 0.0f};
-    camera_data.near_plane = {1.0f};
-    camera_data.far_plane = {5.0f};
-    camera_data.fov = {glm::pi<float>() / 180.0f * 90.0f};
-    camera_data.aspect_ratio = {m_width / static_cast<float>(m_height)};
+    // PerspectiveData camera_data;
+    // camera_data.position = {0.0f, 0.0f, 0.0f};
+    // camera_data.rotation = {0.0f, 0.0f};
+    // camera_data.near_plane = {1.0f};
+    // camera_data.far_plane = {5.0f};
+    // camera_data.fov = {glm::pi<float>() / 180.0f * 90.0f};
+    // camera_data.aspect_ratio = {m_width / static_cast<float>(m_height)};
 
-    PerspectiveCamera camera{camera_data};
+    // PerspectiveCamera camera{camera_data};
 
-    Solid camera_solid = camera.generate_solid();
-    render_solid(camera_solid);
+    // Solid camera_solid = camera.generate_solid();
+    // render_solid(camera_solid);
 
     auto end = std::chrono::high_resolution_clock::now();
     m_scene_info_ref.last_render = end - start;
