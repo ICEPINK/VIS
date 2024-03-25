@@ -188,7 +188,7 @@ void CpuRenderer::update_pipeline_settings() {
 }
 
 // Square square("Square");
-// Axis axis("Axis");
+Axis axis("Axis");
 // Grid grid("Grid");
 
 void *CpuRenderer::render_image(const size_t width, const size_t height) {
@@ -215,7 +215,7 @@ void *CpuRenderer::render_image(const size_t width, const size_t height) {
     m_depth_buffer->clear(1.0);
 
     // render_solid(square);
-    // render_solid(axis);
+    render_solid(axis);
     // render_solid(grid);
 
     // PerspectiveData camera_data;
@@ -233,11 +233,9 @@ void *CpuRenderer::render_image(const size_t width, const size_t height) {
 
     // HACK: START
 
-    static float rot{0.0f};
-    rot += 0.003f; 
     PerspectiveData data1{};
-    data1.position = {0.0f, 0.0f, 0.0f};
-    data1.rotation = {rot, 0.0f};
+    data1.position = {-3.0f, 0.0f, 0.0f};
+    data1.rotation = {0.0f, 0.0f};
     data1.near_plane = {1.0f};
     data1.far_plane = {10.0f};
     data1.fov = {1.0f};
@@ -250,8 +248,8 @@ void *CpuRenderer::render_image(const size_t width, const size_t height) {
     // pipeline_data1.set_pixel = std::bind(
     //     &CpuRenderer::set_pixel_rgba_depth, this, std::placeholders::_1,
     //     std::placeholders::_2, std::placeholders::_3);
-    pipeline_data1.clip_after_dehomog = Pipeline::clip_before_dehomog_triangle;
     pipeline_data1.clip_before_dehomog = Pipeline::clip_before_dehomog_triangle;
+    pipeline_data1.clip_after_dehomog = Pipeline::clip_after_dehomog_triangle;
     pipeline_data1.dehomog_vertices = Pipeline::dehomog_vertices;
     // pipeline_data1.rasterization = Pipeline::rasterization_triangle_fill;
     pipeline_data1.trasform_vertices_by_matrix =
@@ -263,7 +261,8 @@ void *CpuRenderer::render_image(const size_t width, const size_t height) {
     pipeline_data1.width = m_width;
     pipeline_data1.height = m_height;
     pipeline_data1.solid_matrix =
-        glm::translate(glm::mat4(1.0f), {5.0f, 0.0f, 0.0f});
+        glm::rotate(glm::translate(glm::mat4(1.0f), {5.0f, 1.0f, 0.0f}), 1.0f,
+                    {0.0f, 0.0f, 1.0f});
     pipeline_data1.model_matrix = glm::mat4(1.0f);
     pipeline_data1.view_matrix = camera1.get_view_matrix();
     pipeline_data1.proj_matrix = camera1.get_projection_matrix();
@@ -271,7 +270,9 @@ void *CpuRenderer::render_image(const size_t width, const size_t height) {
     Pipeline pipeline1{pipeline_data1};
 
     Cube solid1{"Cube"};
-    solid1.data.matrix = glm::translate(glm::mat4(1.0f), {5.0f, 0.0f, 0.0f});
+    solid1.data.matrix =
+        glm::rotate(glm::translate(glm::mat4(1.0f), {5.0f, 1.0f, 0.0f}), 1.0f,
+                    {0.0f, 0.0f, 1.0f});
     auto &vertices = solid1.data.vertices;
 
     SolidData solid2_data{};
@@ -291,17 +292,18 @@ void *CpuRenderer::render_image(const size_t width, const size_t height) {
                     solid1.data.indices[layout.start + (i * 3) + 1];
                 size_t &index_c =
                     solid1.data.indices[layout.start + (i * 3) + 2];
-    
+
                 auto callback = pipeline1.render(
                     {vertices[index_a], vertices[index_b], vertices[index_c]});
-    
+
                 if (callback) {
                     solid2_data.layout.push_back(
                         {Topology::Triangle, solid2_data.indices.size(),
-                         1});
+                         callback.value()->size() / 3});
                     for (auto &vertex : *callback.value()) {
                         solid2_data.vertices.push_back(vertex);
-                        solid2_data.indices.push_back(solid2_data.vertices.size()-1);
+                        solid2_data.indices.push_back(
+                            solid2_data.vertices.size() - 1);
                     }
                 }
             }
@@ -313,7 +315,9 @@ void *CpuRenderer::render_image(const size_t width, const size_t height) {
 
     auto camera_solid = camera1.generate_solid();
     render_solid(camera_solid);
-    render_solid(solid1);
+    // render_solid(solid1);
+    solid2.data.matrix = glm::inverse(camera1.get_view_matrix()) *
+                         glm::inverse(camera1.get_projection_matrix());
     render_solid(solid2);
 
     // HACK: END

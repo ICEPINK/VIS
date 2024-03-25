@@ -271,9 +271,55 @@ void Pipeline::clip_before_dehomog_triangle(
 }
 ////////////////////////////////////////////////////////////////////////////////
 void Pipeline::clip_after_dehomog_triangle(
-    [[maybe_unused]] std::unique_ptr<std::vector<Vertex>> &vertices) {
-    // TODO: clip by every plane
-    return;
+    std::unique_ptr<std::vector<Vertex>> &vertices) {
+
+    std::vector<Vertex> new_vertices;
+
+    for (size_t i = 0; i < vertices->size(); i += 3) {
+        const auto &vertex_a = vertices->at(i);
+        const auto &vertex_b = vertices->at(i + 1);
+        const auto &vertex_c = vertices->at(i + 2);
+
+        std::vector<Vertex> vert_in;
+        std::vector<Vertex> vert_out;
+        vert_in.reserve(9);
+        vert_out.reserve(9);
+
+        vert_in.push_back(vertex_a);
+        vert_in.push_back(vertex_b);
+        vert_in.push_back(vertex_c);
+
+        for (size_t j = 0; j < vert_in.size(); ++j) {
+            const auto &v_a = vert_in[j];
+            const auto &v_b = vert_in[(j + 1) % vert_in.size()];
+
+            const auto v_a_in = (v_a.position.x > -1);
+            const auto v_b_in = (v_b.position.x > -1);
+
+            if (v_a_in && v_b_in) {
+                vert_out.push_back(v_b);
+            } else if (v_a_in) {
+                const auto t =
+                    (-1 - v_a.position.x) / (v_b.position.x - v_a.position.x);
+                const auto v_new = Vertex::interpolate(t, v_a, v_b);
+                vert_out.push_back(v_new);
+            } else if (v_b_in) {
+                const auto t =
+                    (-1 - v_a.position.x) / (v_b.position.x - v_a.position.x);
+                const auto v_new = Vertex::interpolate(t, v_a, v_b);
+                vert_out.push_back(v_new);
+                vert_out.push_back(v_b);
+            }
+        }
+
+        for (size_t k = 2; k < vert_out.size(); ++k) {
+            new_vertices.push_back(vert_out[0]);
+            new_vertices.push_back(vert_out[k - 1]);
+            new_vertices.push_back(vert_out[k]);
+        }
+    }
+
+    *vertices = new_vertices;
 }
 ////////////////////////////////////////////////////////////////////////////////
 void Pipeline::clip_after_dehomog_none(
