@@ -234,8 +234,10 @@ void *CpuRenderer::render_image(const size_t width, const size_t height) {
     // HACK: START
 
     PerspectiveData data1{};
+    static auto rot = 0.0f;
+    rot += 0.005f;
     data1.position = {-3.0f, 0.0f, 0.0f};
-    data1.rotation = {0.0f, 0.0f};
+    data1.rotation = {rot, 0.0f};
     data1.near_plane = {1.0f};
     data1.far_plane = {10.0f};
     data1.fov = {1.0f};

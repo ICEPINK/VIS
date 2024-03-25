@@ -312,6 +312,110 @@ void Pipeline::clip_after_dehomog_triangle(
             }
         }
 
+        vert_in = vert_out;
+        vert_out = {};
+
+        for (size_t j = 0; j < vert_in.size(); ++j) {
+            const auto &v_a = vert_in[j];
+            const auto &v_b = vert_in[(j + 1) % vert_in.size()];
+
+            const auto v_a_in = (v_a.position.x < 1);
+            const auto v_b_in = (v_b.position.x < 1);
+
+            if (v_a_in && v_b_in) {
+                vert_out.push_back(v_b);
+            } else if (v_a_in) {
+                const auto t =
+                    (1 - v_a.position.x) / (v_b.position.x - v_a.position.x);
+                const auto v_new = Vertex::interpolate(t, v_a, v_b);
+                vert_out.push_back(v_new);
+            } else if (v_b_in) {
+                const auto t =
+                    (1 - v_a.position.x) / (v_b.position.x - v_a.position.x);
+                const auto v_new = Vertex::interpolate(t, v_a, v_b);
+                vert_out.push_back(v_new);
+                vert_out.push_back(v_b);
+            }
+        }
+
+        vert_in = vert_out;
+        vert_out = {};
+
+        for (size_t j = 0; j < vert_in.size(); ++j) {
+            const auto &v_a = vert_in[j];
+            const auto &v_b = vert_in[(j + 1) % vert_in.size()];
+
+            const auto v_a_in = (v_a.position.y > -1);
+            const auto v_b_in = (v_b.position.y > -1);
+
+            if (v_a_in && v_b_in) {
+                vert_out.push_back(v_b);
+            } else if (v_a_in) {
+                const auto t =
+                    (-1 - v_a.position.y) / (v_b.position.y - v_a.position.y);
+                const auto v_new = Vertex::interpolate(t, v_a, v_b);
+                vert_out.push_back(v_new);
+            } else if (v_b_in) {
+                const auto t =
+                    (-1 - v_a.position.y) / (v_b.position.y - v_a.position.y);
+                const auto v_new = Vertex::interpolate(t, v_a, v_b);
+                vert_out.push_back(v_new);
+                vert_out.push_back(v_b);
+            }
+        }
+
+        vert_in = vert_out;
+        vert_out = {};
+
+        for (size_t j = 0; j < vert_in.size(); ++j) {
+            const auto &v_a = vert_in[j];
+            const auto &v_b = vert_in[(j + 1) % vert_in.size()];
+
+            const auto v_a_in = (v_a.position.y < 1);
+            const auto v_b_in = (v_b.position.y < 1);
+
+            if (v_a_in && v_b_in) {
+                vert_out.push_back(v_b);
+            } else if (v_a_in) {
+                const auto t =
+                    (1 - v_a.position.y) / (v_b.position.y - v_a.position.y);
+                const auto v_new = Vertex::interpolate(t, v_a, v_b);
+                vert_out.push_back(v_new);
+            } else if (v_b_in) {
+                const auto t =
+                    (1 - v_a.position.y) / (v_b.position.y - v_a.position.y);
+                const auto v_new = Vertex::interpolate(t, v_a, v_b);
+                vert_out.push_back(v_new);
+                vert_out.push_back(v_b);
+            }
+        }
+
+        vert_in = vert_out;
+        vert_out = {};
+
+        for (size_t j = 0; j < vert_in.size(); ++j) {
+            const auto &v_a = vert_in[j];
+            const auto &v_b = vert_in[(j + 1) % vert_in.size()];
+
+            const auto v_a_in = (v_a.position.z < 1);
+            const auto v_b_in = (v_b.position.z < 1);
+
+            if (v_a_in && v_b_in) {
+                vert_out.push_back(v_b);
+            } else if (v_a_in) {
+                const auto t =
+                    (1 - v_a.position.z) / (v_b.position.z - v_a.position.z);
+                const auto v_new = Vertex::interpolate(t, v_a, v_b);
+                vert_out.push_back(v_new);
+            } else if (v_b_in) {
+                const auto t =
+                    (1 - v_a.position.z) / (v_b.position.z - v_a.position.z);
+                const auto v_new = Vertex::interpolate(t, v_a, v_b);
+                vert_out.push_back(v_new);
+                vert_out.push_back(v_b);
+            }
+        }
+
         for (size_t k = 2; k < vert_out.size(); ++k) {
             new_vertices.push_back(vert_out[0]);
             new_vertices.push_back(vert_out[k - 1]);
