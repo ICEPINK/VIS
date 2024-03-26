@@ -5,6 +5,7 @@
 #include "solids/grid.hpp"
 #include "solids/solid.hpp"
 #include "solids/square.hpp"
+#include "utils/timer.hpp"
 
 #include <glm/ext.hpp>
 
@@ -117,6 +118,12 @@ void CpuRenderer::render_solid(Solid &solid) {
     }
 }
 
+void CpuRenderer::render_scene(std::vector<Solid> &scene) {
+    for (auto &solid : scene) {
+        render_solid(solid);
+    };
+}
+
 CpuRenderer::CpuRenderer(SceneInfo &scene_info) : m_scene_info_ref(scene_info) {
     PerspectiveData camera_data;
     camera_data.position = {-6.0f, 0.0f, 2.0f};
@@ -187,15 +194,7 @@ void CpuRenderer::update_pipeline_settings() {
     }
 }
 
-// Square square("Square");
-Axis axis("Axis");
-// Grid grid("Grid");
-
-void *CpuRenderer::render_image(const size_t width, const size_t height) {
-    if (width == 0 || height == 0) {
-        return nullptr;
-    }
-
+void CpuRenderer::resize_image(const size_t width, const size_t height) {
     if (m_width != width || m_height != height) {
         m_image = std::make_unique<Image>(width, height);
         m_depth_buffer = std::make_unique<DepthBuffer>(width, height);
@@ -206,126 +205,22 @@ void *CpuRenderer::render_image(const size_t width, const size_t height) {
         m_width = width;
         m_height = height;
     }
+}
 
+void *CpuRenderer::render_image(const size_t width, const size_t height) {
+    if (width == 0 || height == 0) {
+        return nullptr;
+    }
+
+    Timer timer;
+
+    resize_image(width, height);
     update_pipeline_settings();
-
-    auto start = std::chrono::high_resolution_clock::now();
 
     m_image->clear(m_scene_info_ref.clear_color);
     m_depth_buffer->clear(1.0);
 
-    // render_solid(square);
-    render_solid(axis);
-    // render_solid(grid);
-
-    // PerspectiveData camera_data;
-    // camera_data.position = {0.0f, 0.0f, 0.0f};
-    // camera_data.rotation = {0.0f, 0.0f};
-    // camera_data.near_plane = {1.0f};
-    // camera_data.far_plane = {5.0f};
-    // camera_data.fov = {glm::pi<float>() / 180.0f * 90.0f};
-    // camera_data.aspect_ratio = {m_width / static_cast<float>(m_height)};
-
-    // PerspectiveCamera camera{camera_data};
-
-    // Solid camera_solid = camera.generate_solid();
-    // render_solid(camera_solid);
-
-    // HACK: START
-
-    PerspectiveData data1{};
-    static auto rot = 0.0f;
-    rot += 0.005f;
-    data1.position = {-3.0f, 0.0f, 0.0f};
-    data1.rotation = {rot, 0.0f};
-    data1.near_plane = {1.0f};
-    data1.far_plane = {10.0f};
-    data1.fov = {1.0f};
-    data1.aspect_ratio = {m_width / static_cast<float>(m_height)};
-    PerspectiveCamera camera1{data1};
-
-    PipelineData pipeline_data1{};
-    pipeline_data1.fast_clip = Pipeline::fast_clip_triangle;
-    pipeline_data1.matrix_calculation = Pipeline::matrix_calculation_smvp;
-    // pipeline_data1.set_pixel = std::bind(
-    //     &CpuRenderer::set_pixel_rgba_depth, this, std::placeholders::_1,
-    //     std::placeholders::_2, std::placeholders::_3);
-    pipeline_data1.clip_before_dehomog = Pipeline::clip_before_dehomog_triangle;
-    pipeline_data1.clip_after_dehomog = Pipeline::clip_after_dehomog_triangle;
-    pipeline_data1.dehomog_vertices = Pipeline::dehomog_vertices;
-    // pipeline_data1.rasterization = Pipeline::rasterization_triangle_fill;
-    pipeline_data1.trasform_vertices_by_matrix =
-        Pipeline::trasform_vertices_by_matrix_position;
-    pipeline_data1.trasform_vertices_onto_viewport =
-        [](std::unique_ptr<std::vector<Vertex>> &, const size_t, const size_t) {
-            return;
-        };
-    pipeline_data1.width = m_width;
-    pipeline_data1.height = m_height;
-    pipeline_data1.solid_matrix =
-        glm::rotate(glm::translate(glm::mat4(1.0f), {5.0f, 1.0f, 0.0f}), 1.0f,
-                    {0.0f, 0.0f, 1.0f});
-    pipeline_data1.model_matrix = glm::mat4(1.0f);
-    pipeline_data1.view_matrix = camera1.get_view_matrix();
-    pipeline_data1.proj_matrix = camera1.get_projection_matrix();
-    pipeline_data1.callback = true;
-    Pipeline pipeline1{pipeline_data1};
-
-    Cube solid1{"Cube"};
-    solid1.data.matrix =
-        glm::rotate(glm::translate(glm::mat4(1.0f), {5.0f, 1.0f, 0.0f}), 1.0f,
-                    {0.0f, 0.0f, 1.0f});
-    auto &vertices = solid1.data.vertices;
-
-    SolidData solid2_data{};
-    solid2_data.matrix = glm::mat4(1.0f);
-
-    pipeline1.update_matrix();
-    for (Layout &layout : solid1.data.layout) {
-        switch (layout.topology) {
-        case Topology::Point:
-            break;
-        case Topology::Line:
-            break;
-        case Topology::Triangle:
-            for (size_t i = 0; i < layout.count; ++i) {
-                size_t &index_a = solid1.data.indices[layout.start + (i * 3)];
-                size_t &index_b =
-                    solid1.data.indices[layout.start + (i * 3) + 1];
-                size_t &index_c =
-                    solid1.data.indices[layout.start + (i * 3) + 2];
-
-                auto callback = pipeline1.render(
-                    {vertices[index_a], vertices[index_b], vertices[index_c]});
-
-                if (callback) {
-                    solid2_data.layout.push_back(
-                        {Topology::Triangle, solid2_data.indices.size(),
-                         callback.value()->size() / 3});
-                    for (auto &vertex : *callback.value()) {
-                        solid2_data.vertices.push_back(vertex);
-                        solid2_data.indices.push_back(
-                            solid2_data.vertices.size() - 1);
-                    }
-                }
-            }
-            break;
-        }
-    }
-
-    Solid solid2{solid2_data};
-
-    auto camera_solid = camera1.generate_solid();
-    render_solid(camera_solid);
-    // render_solid(solid1);
-    solid2.data.matrix = glm::inverse(camera1.get_view_matrix()) *
-                         glm::inverse(camera1.get_projection_matrix());
-    render_solid(solid2);
-
-    // HACK: END
-
-    auto end = std::chrono::high_resolution_clock::now();
-    m_scene_info_ref.last_render = end - start;
+    m_scene_info_ref.last_render = timer.get_time();
 
     return m_image->get_image_buffer_ptr();
 }

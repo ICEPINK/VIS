@@ -20,6 +20,7 @@ class CpuRenderer {
 
   private:
     void render_solid(Solid &solid);
+    void render_scene(std::vector<Solid> &scene);
     void set_pixel_rgba_depth(const int64_t x, const int64_t y,
                               const Vertex &vertex);
     void set_pixel_rgba_no_depth(const int64_t x, const int64_t y,
@@ -27,6 +28,7 @@ class CpuRenderer {
     void set_pixel_bw_depth(const int64_t x, const int64_t y,
                             const Vertex &vertex);
     void update_pipeline_settings();
+    void resize_image(const size_t width, const size_t height);
 
   private:
     size_t m_width{0};
