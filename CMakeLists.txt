@@ -58,6 +58,7 @@ set(P_HEADER_FILES
     "./src/utils/app_info.hpp"
     "./src/utils/color.hpp"
     "./src/utils/scene_info.hpp"
+    "./src/utils/timer.hpp"
     "./src/utils/vertex.hpp"
     "./src/window.hpp"
     )
