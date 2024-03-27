@@ -171,6 +171,8 @@ CpuRenderer::CpuRenderer(SceneInfo &scene_info) : m_scene_info_ref(scene_info) {
     m_line_pipeline = std::make_unique<Pipeline>(pipeline_line_data);
 
     // auto &pipeline_point_data = scene_info.pipeline_point_data;
+
+    m_scene.push_back(Axis(""));
 }
 CpuRenderer::~CpuRenderer() {}
 
@@ -219,6 +221,8 @@ void *CpuRenderer::render_image(const size_t width, const size_t height) {
 
     m_image->clear(m_scene_info_ref.clear_color);
     m_depth_buffer->clear(1.0);
+
+    render_scene(m_scene);
 
     m_scene_info_ref.last_render = timer.get_time();
 
