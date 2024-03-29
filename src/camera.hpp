@@ -9,10 +9,11 @@ namespace Vis {
 
 class Camera {
   public:
+    virtual ~Camera() {}
+
     virtual glm::mat4 get_view_matrix() const = 0;
     virtual glm::mat4 get_projection_matrix() const = 0;
     virtual Solid generate_solid() const = 0;
-    virtual ~Camera() {}
 };
 
 struct PerspectiveData {

@@ -55,6 +55,7 @@ struct SceneInfo {
     std::chrono::duration<double> last_render{0};
     glm::mat4 model_matrix{glm::mat4(1.0)};
     std::unique_ptr<PerspectiveCamera> camera;
+    std::unique_ptr<PerspectiveCamera> simulated_camera;
     PipelineData pipeline_triangle_data;
     PipelineData pipeline_line_data;
     PipelineData pipeline_point_data;
@@ -62,7 +63,8 @@ struct SceneInfo {
     PipelineData pipeline_simulated_line_data;
     PipelineData pipeline_simulated_point_data;
     SetPixelEnum set_pixel_setting;
-    bool scene_settings_changed{0};
+    bool scene_settings_changed{false};
+    bool simulated{true};
 };
 ////////////////////////////////////////////////////////////////////////////////
 } // namespace Vis

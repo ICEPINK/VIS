@@ -17,8 +17,10 @@ class CpuRenderer {
     void *render_image(const size_t width, const size_t height);
 
   private:
+    void render();
     void render_solid(Solid &solid);
     void render_scene(std::vector<Solid> &scene);
+    void render_simulation();
     void set_pixel_rgba_depth(const int64_t x, const int64_t y,
                               const Vertex &vertex);
     void set_pixel_rgba_no_depth(const int64_t x, const int64_t y,
@@ -40,7 +42,7 @@ class CpuRenderer {
     std::unique_ptr<Pipeline> m_simulated_point_pipeline;
     std::unique_ptr<Pipeline> m_simulated_triangle_pipeline;
     std::unique_ptr<Pipeline> m_triangle_pipeline;
-    std::unique_ptr<Solid> simulated_solid;
+    std::unique_ptr<Solid> m_simulated_solid;
     std::vector<Solid> m_scene;
 };
 ////////////////////////////////////////////////////////////////////////////////
