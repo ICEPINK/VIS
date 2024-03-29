@@ -294,6 +294,8 @@ void CpuRenderer::render_simulation() {
                 m_scene_info_ref.simulated_camera->get_view_matrix();
             pipeline_line_data.proj_matrix =
                 m_scene_info_ref.simulated_camera->get_projection_matrix();
+            pipeline_line_data.trasform_vertices_onto_viewport =
+                Pipeline::trasform_vertices_onto_viewport;
 
             m_simulated_line_pipeline->update_matrix();
 
@@ -315,6 +317,8 @@ void CpuRenderer::render_simulation() {
                 m_scene_info_ref.simulated_camera->get_view_matrix();
             pipeline_triangle_data.proj_matrix =
                 m_scene_info_ref.simulated_camera->get_projection_matrix();
+            pipeline_triangle_data.trasform_vertices_onto_viewport =
+                Pipeline::trasform_vertices_onto_viewport;
 
             m_simulated_triangle_pipeline->update_matrix();
 
@@ -333,10 +337,100 @@ void CpuRenderer::render_simulation() {
     }
 }
 
+std::unique_ptr<std::vector<Solid>>
+CpuRenderer::render_simulation_with_callback() {
+    auto &solid = *m_simulated_solid;
+    auto &vertices = solid.data.vertices;
+    auto &pipeline_line_data = m_scene_info_ref.pipeline_simulated_line_data;
+    auto &pipeline_triangle_data =
+        m_scene_info_ref.pipeline_simulated_triangle_data;
+
+    pipeline_line_data.callback = true;
+    pipeline_triangle_data.callback = true;
+
+    auto callback_scene = std::make_unique<std::vector<Solid>>();
+
+    for (Layout &layout : solid.data.layout) {
+        switch (layout.topology) {
+        case Topology::Point:
+            break;
+        case Topology::Line:
+            pipeline_line_data.width = m_width;
+            pipeline_line_data.height = m_height;
+            pipeline_line_data.solid_matrix = solid.data.matrix;
+            pipeline_line_data.model_matrix = glm::mat4{1.0f};
+            pipeline_line_data.view_matrix =
+                m_scene_info_ref.simulated_camera->get_view_matrix();
+            pipeline_line_data.proj_matrix =
+                m_scene_info_ref.simulated_camera->get_projection_matrix();
+            pipeline_line_data.trasform_vertices_onto_viewport = [](auto, auto,
+                                                                    auto) {};
+
+            m_simulated_line_pipeline->update_matrix();
+
+            for (size_t i = 0; i < layout.count; ++i) {
+                size_t &index_a = solid.data.indices[layout.start + (i * 2)];
+                size_t &index_b =
+                    solid.data.indices[layout.start + (i * 2) + 1];
+
+                m_simulated_line_pipeline->render(
+                    {vertices[index_a], vertices[index_b]});
+            }
+            break;
+        case Topology::Triangle:
+            pipeline_triangle_data.width = m_width;
+            pipeline_triangle_data.height = m_height;
+            pipeline_triangle_data.solid_matrix = solid.data.matrix;
+            pipeline_triangle_data.model_matrix = glm::mat4{1.0f};
+            pipeline_triangle_data.view_matrix =
+                m_scene_info_ref.simulated_camera->get_view_matrix();
+            pipeline_triangle_data.proj_matrix =
+                m_scene_info_ref.simulated_camera->get_projection_matrix();
+            pipeline_triangle_data.trasform_vertices_onto_viewport =
+                [](auto, auto, auto) {};
+
+            m_simulated_triangle_pipeline->update_matrix();
+
+            for (size_t i = 0; i < layout.count; ++i) {
+                size_t &index_a = solid.data.indices[layout.start + (i * 3)];
+                size_t &index_b =
+                    solid.data.indices[layout.start + (i * 3) + 1];
+                size_t &index_c =
+                    solid.data.indices[layout.start + (i * 3) + 2];
+
+                const auto callback = m_simulated_triangle_pipeline->render(
+                    {vertices[index_a], vertices[index_b], vertices[index_c]});
+                if (callback) {
+                    SolidData data{};
+                    data.name = "_callback_triangle";
+                    data.vertices = *callback.value();
+                    data.indices.reserve(data.vertices.size());
+                    for (size_t j = 0; j < data.vertices.size(); ++j) {
+                        data.indices.push_back(j);
+                    }
+                    Layout callback_layout = {Topology::Triangle, 0,
+                                              data.vertices.size() / 3};
+                    data.layout.push_back(callback_layout);
+                    data.matrix = {
+                        glm::inverse(pipeline_triangle_data.proj_matrix *
+                                     pipeline_triangle_data.view_matrix)};
+                    callback_scene->push_back({data});
+                }
+            }
+            break;
+        }
+    }
+    return callback_scene;
+} // namespace Vis
+
 void CpuRenderer::render() {
     if (m_scene_info_ref.simulated) {
         render_simulation();
     } else {
+        auto callback = render_simulation_with_callback();
+        render_scene(*callback);
+        auto camera = m_scene_info_ref.simulated_camera->generate_solid();
+        render_solid(camera);
         render_scene(m_scene);
     }
 }

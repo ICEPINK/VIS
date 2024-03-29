@@ -21,6 +21,7 @@ class CpuRenderer {
     void render_solid(Solid &solid);
     void render_scene(std::vector<Solid> &scene);
     void render_simulation();
+    std::unique_ptr<std::vector<Solid>> render_simulation_with_callback();
     void set_pixel_rgba_depth(const int64_t x, const int64_t y,
                               const Vertex &vertex);
     void set_pixel_rgba_no_depth(const int64_t x, const int64_t y,
