@@ -67,7 +67,7 @@ void Gui::prepare_gui(const bool demo) {
     }
 
     ImGui::Begin("Debug Info");
-    ImGui::Text("Window: [%ld/%ld]",
+    ImGui::Text("Window: [%lld/%lld]",
                 static_cast<int64_t>(m_app_info_ref.view_width),
                 static_cast<int64_t>(m_app_info_ref.view_height));
     ImGui::Text("Last render: %fms",
