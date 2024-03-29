@@ -80,7 +80,7 @@ void Window::handle_input([[maybe_unused]] AppInfo &app_info,
     }
 
     if (app_info.alt_mode) {
-        if (scene_info.simulated_camera) {
+        if (scene_info.simulated) {
             double new_mouse_x;
             double new_mouse_y;
             glfwGetCursorPos(m_window_ptr, &new_mouse_x, &new_mouse_y);
@@ -180,7 +180,6 @@ void Window::handle_input([[maybe_unused]] AppInfo &app_info,
                 }
             }
         } else {
-
             double new_mouse_x;
             double new_mouse_y;
             glfwGetCursorPos(m_window_ptr, &new_mouse_x, &new_mouse_y);

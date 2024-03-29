@@ -337,7 +337,7 @@ void CpuRenderer::render() {
     if (m_scene_info_ref.simulated) {
         render_simulation();
     } else {
-        // render_scene
+        render_scene(m_scene);
     }
 }
 
