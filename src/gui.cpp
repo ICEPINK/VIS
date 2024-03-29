@@ -89,6 +89,9 @@ void Gui::prepare_gui(const bool demo) {
         (options_menu ? 0 : ImGuiColorEditFlags_NoOptions);
 
     ImGui::Begin("Scene settings");
+
+    ImGui::Checkbox("Simulate", &m_scene_info_ref.simulated);
+
     ImGui::Text("Clear color");
     ImGui::ColorEdit4("", &m_scene_info_ref.clear_color.r,
                       ImGuiColorEditFlags_Float | misc_flags);
