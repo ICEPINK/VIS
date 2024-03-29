@@ -58,7 +58,11 @@ struct SceneInfo {
     PipelineData pipeline_triangle_data;
     PipelineData pipeline_line_data;
     PipelineData pipeline_point_data;
+    PipelineData pipeline_simulated_triangle_data;
+    PipelineData pipeline_simulated_line_data;
+    PipelineData pipeline_simulated_point_data;
     SetPixelEnum set_pixel_setting;
+    bool scene_settings_changed{0};
 };
 ////////////////////////////////////////////////////////////////////////////////
 } // namespace Vis

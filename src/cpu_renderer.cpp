@@ -217,7 +217,10 @@ void *CpuRenderer::render_image(const size_t width, const size_t height) {
     Timer timer;
 
     resize_image(width, height);
-    update_pipeline_settings();
+
+    if (m_scene_info_ref.scene_settings_changed) {
+        update_pipeline_settings();
+    }
 
     m_image->clear(m_scene_info_ref.clear_color);
     m_depth_buffer->clear(1.0);

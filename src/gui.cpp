@@ -96,8 +96,9 @@ void Gui::prepare_gui(const bool demo) {
     ImGui::Text("Triangle pipeline");
     std::array<const char *, 3> items = {"rgba_depth", "rgba_no_depth",
                                          "bw_depth"};
-    ImGui::Combo("Set pixel", (int *)&m_scene_info_ref.set_pixel_setting,
-                 items.data(), static_cast<int>(items.size()));
+    m_scene_info_ref.scene_settings_changed =
+        ImGui::Combo("Set pixel", (int *)&m_scene_info_ref.set_pixel_setting,
+                     items.data(), static_cast<int>(items.size()));
     ImGui::End();
 
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, {0.0, 0.0});

@@ -36,6 +36,9 @@ class CpuRenderer {
     std::unique_ptr<Image> m_image;
     std::unique_ptr<Pipeline> m_line_pipeline;
     std::unique_ptr<Pipeline> m_point_pipeline;
+    std::unique_ptr<Pipeline> m_simulated_line_pipeline;
+    std::unique_ptr<Pipeline> m_simulated_point_pipeline;
+    std::unique_ptr<Pipeline> m_simulated_triangle_pipeline;
     std::unique_ptr<Pipeline> m_triangle_pipeline;
     std::unique_ptr<Solid> simulated_solid;
     std::vector<Solid> m_scene;
