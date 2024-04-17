@@ -1,50 +1,42 @@
 #include "application.hpp"
 
-#include <cstdlib>
-
-#include <glad/glad.h>
+#include <iostream>
 
 namespace Vis {
 
-Application::Application() : m_gpu_api(GpuApiType::OpenGL) {
-    m_scene_info = {};
-    m_app_info = {};
-    m_cpu_renderer_uptr = std::make_unique<CpuRenderer>(m_scene_info);
-    m_window_uptr = std::make_unique<Window>(800, 600, "Vis", m_gpu_api);
-    m_gui_uptr = std::make_unique<Gui>(m_app_info, m_scene_info);
-    m_texture_uptr = std::make_unique<Texture>();
-    m_window_uptr->init_gui(m_gui_uptr);
-    m_app_info.view_texture_id = m_texture_uptr->get_id();
+Application::Application(const std::vector<std::string_view> &args) {
+    if (handle_args(args)) {
+        return;
+    }
 }
+
 Application::~Application() {}
 
-int Application::run() {
-
-    while (!m_window_uptr->should_window_close()) {
-        auto frame_start = std::chrono::high_resolution_clock::now();
-
-        m_window_uptr->handle_input(m_app_info, m_scene_info);
-        m_gui_uptr->new_frame();
-        m_gui_uptr->prepare_gui(1);
-
-        m_app_info.view_image_ptr = m_cpu_renderer_uptr->render_image(
-            static_cast<size_t>(m_app_info.view_width),
-            static_cast<size_t>(m_app_info.view_height));
-
-        m_texture_uptr->set_image(static_cast<size_t>(m_app_info.view_width),
-                                  static_cast<size_t>(m_app_info.view_height),
-                                  m_app_info.view_image_ptr);
-
-        m_window_uptr->clear();
-        m_gui_uptr->render();
-        m_window_uptr->update();
-
-        auto frame_end = std::chrono::high_resolution_clock::now();
-        std::chrono::duration<double> frame_time = frame_end - frame_start;
-        m_app_info.fps = static_cast<size_t>(1.0 / frame_time.count());
+[[nodiscard]] auto
+Application::handle_args(const std::vector<std::string_view> &args) -> bool {
+    [[maybe_unused]] int i = 0;
+    for (const auto &arg : args) {
+        if (arg == "-h" || arg == "--help") {
+            return print_help();
+        }
+        if (arg == "-v" || arg == "--version") {
+            return print_version();
+        }
+        ++i;
     }
+    return false;
+}
 
-    return EXIT_SUCCESS;
+auto Application::print_help() -> bool {
+    std::cout << "VIS HELP:\n";
+    std::cout << " --help, -h: print help\n";
+    std::cout << " --version, -v: print version\n";
+    return true;
+}
+
+auto Application::print_version() -> bool {
+    std::cout << "VIS version: 0.0.0\n";
+    return true;
 }
 
 } // namespace Vis

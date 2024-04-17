@@ -1,30 +1,20 @@
 #pragma once
 
-#include <memory>
-
-#include "cpu_renderer.hpp"
-#include "gpu_api.hpp"
-#include "gui.hpp"
-#include "texture.hpp"
-#include "window.hpp"
+#include <string_view>
+#include <vector>
 
 namespace Vis {
 
 class Application {
   public:
-    Application();
+    Application(const std::vector<std::string_view> &args);
     ~Application();
 
-    int run();
-
   private:
-    std::unique_ptr<Window> m_window_uptr;
-    std::unique_ptr<Gui> m_gui_uptr;
-    std::unique_ptr<Texture> m_texture_uptr;
-    std::unique_ptr<CpuRenderer> m_cpu_renderer_uptr;
-    GpuApi m_gpu_api;
-    AppInfo m_app_info;
-    SceneInfo m_scene_info;
+    [[nodiscard]] auto handle_args(const std::vector<std::string_view> &args)
+        -> bool;
+    auto print_help() -> bool;
+    auto print_version() -> bool;
 };
 
 } // namespace Vis
