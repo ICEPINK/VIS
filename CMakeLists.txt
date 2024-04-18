@@ -22,13 +22,19 @@ message("")
 add_subdirectory("./lib/")
 
 set(P_SOURCE_FILES
-    "./src/main.cpp"
     "./src/application.cpp"
+    "./src/glad.cpp"
+    "./src/glfw.cpp"
+    "./src/main.cpp"
+    "./src/window.cpp"
     )
 
 set(P_HEADER_FILES
-    "./src/main.hpp"
     "./src/application.hpp"
+    "./src/glad.hpp"
+    "./src/glfw.hpp"
+    "./src/main.hpp"
+    "./src/window.hpp"
     )
 
 add_executable(${PROJECT_NAME} ${P_SOURCE_FILES})
