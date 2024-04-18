@@ -1,40 +1,38 @@
 #pragma once
 
+#include "glfw.hpp"
+
 #include <memory>
 #include <string>
 
-#define GLFW_INCLUDE_NONE
-#include <GLFW/glfw3.h>
-
-#include "gpu_api.hpp"
-#include "gui.hpp"
-
 namespace Vis {
+
+struct WindowInfo {
+    size_t width{1};
+    size_t height{1};
+    std::string title{""};
+    GLFWmonitor *monitor{nullptr};
+    GLFWwindow *share{nullptr};
+};
 
 class Window {
   public:
-    Window(const int32_t width, const int32_t height, const std::string title,
-           GpuApi &gpu_api);
+    Window(WindowInfo info, std::shared_ptr<Glfw> glfw);
     ~Window();
 
-    void update();
-    void clear();
-    void handle_input(AppInfo &app_info, SceneInfo &scene_info);
-    void set_clear_color(float reg, float green, float blue, float alpha);
-    bool should_window_close() const;
+    inline auto make_context_current() -> void {
+        p_glfw->make_context_current(p_window);
+    };
 
-    void init_gui(const std::unique_ptr<Gui> &gui);
+    inline auto swap_buffers() -> void { p_glfw->swap_buffers(p_window); };
 
-    size_t get_widht() const { return m_width; }
-    size_t get_height() const { return m_height; }
-    std::string get_title() const { return m_title; }
+    [[nodiscard]] inline auto should_close() -> bool {
+        return p_glfw->window_should_close(p_window);
+    }
 
   private:
-    GLFWwindow *m_window_ptr;
-    size_t m_width;
-    size_t m_height;
-    std::string m_title;
-    std::string m_glsl_version;
+    GLFWwindow *p_window;
+    std::shared_ptr<Glfw> p_glfw;
 };
 
 } // namespace Vis
