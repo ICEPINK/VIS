@@ -1,6 +1,7 @@
 #include "application.hpp"
 
 #include "glad.hpp"
+#include "gui.hpp"
 #include "window.hpp"
 
 #include <iostream>
@@ -12,25 +13,53 @@ Application::Application(const std::vector<std::string_view> &args) {
         return;
     }
 
-    auto glfw = std::make_shared<Glfw>();
-    // const auto glsl_version = "#version 460";
-    glfw->window_hint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfw->window_hint(GLFW_CONTEXT_VERSION_MINOR, 6);
-    glfw->window_hint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfw->window_hint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
+    m_info.glfw = std::make_shared<Glfw>();
+    m_info.glfw->window_hint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    m_info.glfw->window_hint(GLFW_CONTEXT_VERSION_MINOR, 6);
+    m_info.glfw->window_hint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    m_info.glfw->window_hint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
 
-    Window window({800, 600, "VIS"}, glfw);
-    window.make_context_current();
+    WindowInfo info{m_info.width, m_info.height, m_info.title};
+    m_info.window = std::make_unique<Window>(info, m_info.glfw);
+    m_info.window->make_context_current();
 
-    Glad::load_gl_loader((GLADloadproc)glfw->get_proc_address());
+    Glad::load_gl_loader((GLADloadproc)m_info.glfw->get_proc_address());
+
     glDebugMessageCallback(Glad::print_gl_message, nullptr);
-    std::cout << "OpenGL: version " << glGetString(GL_VERSION) << '\n';
+    // std::cout << "OpenGL: Version " << glGetString(GL_VERSION) << '\n';
 
-    while (!window.should_close()) {
-        glfw->poll_events();
+    Gui gui(*m_info.window, "#version 460");
+
+    ImGuiIO &io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+    io.ConfigDockingWithShift = true;
+
+    ImGui::StyleColorsDark();
+
+    while (!m_info.window->should_close()) {
+        m_info.glfw->poll_events();
         glClear(GL_COLOR_BUFFER_BIT);
-        glDrawArrays(GL_LINES, 0, 3);
-        window.swap_buffers();
+
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+
+        if (ImGui::BeginMainMenuBar()) {
+            if (ImGui::BeginMenu("App")) {
+                if (ImGui::MenuItem("Item1")) {
+                }
+                ImGui::EndMenu();
+            }
+            ImGui::EndMainMenuBar();
+        }
+
+        ImGui::DockSpaceOverViewport();
+        ImGui::ShowDemoWindow();
+
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+        m_info.window->swap_buffers();
     }
 }
 

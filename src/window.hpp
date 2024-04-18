@@ -30,6 +30,8 @@ class Window {
         return p_glfw->window_should_close(p_window);
     }
 
+    inline auto get_glfw_window_ptr() const -> auto { return p_window; }
+
   private:
     GLFWwindow *p_window;
     std::shared_ptr<Glfw> p_glfw;

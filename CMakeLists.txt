@@ -27,6 +27,7 @@ set(P_SOURCE_FILES
     "./src/glfw.cpp"
     "./src/main.cpp"
     "./src/window.cpp"
+    "./src/gui.cpp"
     )
 
 set(P_HEADER_FILES
@@ -35,6 +36,8 @@ set(P_HEADER_FILES
     "./src/glfw.hpp"
     "./src/main.hpp"
     "./src/window.hpp"
+    "./src/gui.hpp"
+    "./src/application_info.hpp"
     )
 
 add_executable(${PROJECT_NAME} ${P_SOURCE_FILES})

@@ -3,6 +3,8 @@
 #include <string_view>
 #include <vector>
 
+#include "application_info.hpp"
+
 namespace Vis {
 
 class Application {
@@ -15,6 +17,8 @@ class Application {
         -> bool;
     auto print_help() -> bool;
     auto print_version() -> bool;
+
+    ApplicationInfo m_info;
 };
 
 } // namespace Vis
