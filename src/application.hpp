@@ -1,9 +1,10 @@
 #pragma once
 
+#include "gui.hpp"
+#include "window.hpp"
+
 #include <string_view>
 #include <vector>
-
-#include "application_info.hpp"
 
 namespace Vis {
 
@@ -12,13 +13,22 @@ class Application {
     Application(const std::vector<std::string_view> &args);
     ~Application();
 
+    auto run_main_loop() -> void;
+
   private:
     [[nodiscard]] auto handle_args(const std::vector<std::string_view> &args)
         -> bool;
     auto print_help() -> bool;
     auto print_version() -> bool;
+    auto make_gui(bool show_debug) -> void;
 
-    ApplicationInfo m_info;
+  private:
+    std::shared_ptr<Glfw> p_glfw{nullptr};
+    std::unique_ptr<Window> p_window{nullptr};
+    std::unique_ptr<Gui> p_gui{nullptr};
+    size_t m_width{800};
+    size_t m_height{600};
+    std::string m_title{"VIS"};
 };
 
 } // namespace Vis

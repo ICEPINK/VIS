@@ -1,8 +1,6 @@
 #include "application.hpp"
 
 #include "glad.hpp"
-#include "gui.hpp"
-#include "window.hpp"
 
 #include <iostream>
 
@@ -13,54 +11,27 @@ Application::Application(const std::vector<std::string_view> &args) {
         return;
     }
 
-    m_info.glfw = std::make_shared<Glfw>();
-    m_info.glfw->window_hint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    m_info.glfw->window_hint(GLFW_CONTEXT_VERSION_MINOR, 6);
-    m_info.glfw->window_hint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    m_info.glfw->window_hint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
+    p_glfw = std::make_shared<Glfw>();
+    p_glfw->window_hint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    p_glfw->window_hint(GLFW_CONTEXT_VERSION_MINOR, 6);
+    p_glfw->window_hint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    p_glfw->window_hint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
 
-    WindowInfo info{m_info.width, m_info.height, m_info.title};
-    m_info.window = std::make_unique<Window>(info, m_info.glfw);
-    m_info.window->make_context_current();
+    const WindowInfo info{m_width, m_height, m_title};
+    p_window = std::make_unique<Window>(info, p_glfw);
+    p_window->make_context_current();
 
-    Glad::load_gl_loader((GLADloadproc)m_info.glfw->get_proc_address());
-
+    Glad::load_gl_loader((GLADloadproc)p_glfw->get_proc_address());
     glDebugMessageCallback(Glad::print_gl_message, nullptr);
     // std::cout << "OpenGL: Version " << glGetString(GL_VERSION) << '\n';
 
-    Gui gui(*m_info.window, "#version 460");
+    p_gui = std::make_unique<Gui>(*p_window, "#version 460");
 
     ImGuiIO &io = ImGui::GetIO();
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
     io.ConfigDockingWithShift = true;
 
     ImGui::StyleColorsDark();
-
-    while (!m_info.window->should_close()) {
-        m_info.glfw->poll_events();
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame();
-
-        if (ImGui::BeginMainMenuBar()) {
-            if (ImGui::BeginMenu("App")) {
-                if (ImGui::MenuItem("Item1")) {
-                }
-                ImGui::EndMenu();
-            }
-            ImGui::EndMainMenuBar();
-        }
-
-        ImGui::DockSpaceOverViewport();
-        ImGui::ShowDemoWindow();
-
-        ImGui::Render();
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-        m_info.window->swap_buffers();
-    }
 }
 
 Application::~Application() {}
@@ -90,6 +61,37 @@ auto Application::print_help() -> bool {
 auto Application::print_version() -> bool {
     std::cout << "VIS version: 0.0.0\n";
     return true;
+}
+
+auto Application::run_main_loop() -> void {
+    while (!p_window->should_close()) {
+        p_glfw->poll_events();
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        p_gui->new_frame();
+
+        make_gui(true);
+
+        p_gui->render();
+        p_window->swap_buffers();
+    }
+}
+
+auto Application::make_gui(bool show_debug) -> void {
+    if (ImGui::BeginMainMenuBar()) {
+        if (ImGui::BeginMenu("App")) {
+            if (ImGui::MenuItem("Item1")) {
+            }
+            ImGui::EndMenu();
+        }
+        ImGui::EndMainMenuBar();
+    }
+
+    ImGui::DockSpaceOverViewport();
+
+    if (show_debug) {
+        ImGui::ShowDemoWindow();
+    }
 }
 
 } // namespace Vis

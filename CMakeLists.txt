@@ -37,7 +37,6 @@ set(P_HEADER_FILES
     "./src/main.hpp"
     "./src/window.hpp"
     "./src/gui.hpp"
-    "./src/application_info.hpp"
     )
 
 add_executable(${PROJECT_NAME} ${P_SOURCE_FILES})

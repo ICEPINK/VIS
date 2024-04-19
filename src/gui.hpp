@@ -13,6 +13,9 @@ class Gui {
     Gui(const Window &window, const char *glsl_version);
     ~Gui();
 
+    auto new_frame() -> void;
+    auto render() -> void;
+
   private:
 };
 

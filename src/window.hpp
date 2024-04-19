@@ -17,7 +17,7 @@ struct WindowInfo {
 
 class Window {
   public:
-    Window(WindowInfo info, std::shared_ptr<Glfw> glfw);
+    Window(const WindowInfo &info, std::shared_ptr<Glfw> glfw);
     ~Window();
 
     inline auto make_context_current() -> void {

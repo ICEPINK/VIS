@@ -6,7 +6,8 @@
 
 namespace Vis {
 
-Window::Window(WindowInfo info, std::shared_ptr<Glfw> glfw) : p_glfw(glfw) {
+Window::Window(const WindowInfo &info, std::shared_ptr<Glfw> glfw)
+    : p_glfw(glfw) {
     p_window = p_glfw->create_window(
         std::min(info.width,
                  static_cast<size_t>(std::numeric_limits<int>::max())),

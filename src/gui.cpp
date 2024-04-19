@@ -23,7 +23,8 @@ Gui::Gui(const Window &window, const char *glsl_version) {
         }
     }
     ++s_gui_count;
-};
+}
+
 Gui::~Gui() {
     --s_gui_count;
     if (s_gui_count == 0) {
@@ -31,6 +32,16 @@ Gui::~Gui() {
         ImGui_ImplGlfw_Shutdown();
         ImGui::DestroyContext();
     }
-};
+}
+
+auto Gui::new_frame() -> void {
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+}
+auto Gui::render() -> void {
+    ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+}
 
 } // namespace Vis
