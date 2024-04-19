@@ -5,6 +5,7 @@
 #include "solids/grid.hpp"
 #include "solids/solid.hpp"
 #include "solids/square.hpp"
+#include "solids/triangle.hpp"
 #include "utils/timer.hpp"
 
 #include <glm/ext.hpp>
@@ -219,8 +220,62 @@ CpuRenderer::CpuRenderer(SceneInfo &scene_info) : m_scene_info_ref(scene_info) {
         Pipeline::clip_after_dehomog_triangle;
     pipeline_simulated_triangle_data.trasform_vertices_onto_viewport =
         Pipeline::trasform_vertices_onto_viewport;
+    // pipeline_simulated_triangle_data.rasterization =
+    //     Pipeline::rasterization_triangle_fill;
+    // HACK: START
     pipeline_simulated_triangle_data.rasterization =
-        Pipeline::rasterization_triangle_fill;
+        [](std::unique_ptr<std::vector<Vertex>> &vertices,
+           [[maybe_unused]] const size_t widht,
+           [[maybe_unused]] const size_t height,
+           std::function<void(const int64_t x, const int64_t y,
+                              const Vertex &vertex)>
+               set_pixel) {
+            for (size_t i = 0; i < vertices->size(); i += 3) {
+
+                for (size_t j = 0; j < 3; ++j) {
+                    auto a = vertices->at(i + j);
+                    auto b = vertices->at(i + ((j + 1) % 3));
+
+                    float alpha = (b.position.y - a.position.y) /
+                                  (b.position.x - a.position.x);
+
+                    if (alpha * alpha > 1.0) {
+                        if (a.position.y > b.position.y) {
+                            std::swap(a, b);
+                        }
+
+                        alpha = (b.position.x - a.position.x) /
+                                (b.position.y - a.position.y);
+                        float x = a.position.x;
+                        const int64_t a_y = static_cast<int64_t>(a.position.y);
+                        const int64_t b_y = static_cast<int64_t>(b.position.y);
+                        for (int64_t y = a_y; y <= b_y; ++y) {
+                            float t = (y - a_y) / static_cast<float>(b_y - a_y);
+                            Vertex vertex = Vertex::interpolate(t, a, b);
+                            set_pixel(static_cast<int64_t>(x), y, vertex);
+                            x += alpha;
+                        }
+                    } else {
+                        if (a.position.x > b.position.x) {
+                            std::swap(a, b);
+                        }
+
+                        float y = a.position.y;
+                        const int64_t a_x = static_cast<int64_t>(a.position.x);
+                        const int64_t b_x = static_cast<int64_t>(b.position.x);
+                        for (int64_t x = a_x; x <= b_x; ++x) {
+                            float t = (x - a_x) / static_cast<float>(b_x - a_x);
+                            Vertex vertex = Vertex::interpolate(t, a, b);
+                            set_pixel(x, static_cast<int64_t>(y), vertex);
+                            y += alpha;
+                        }
+                    }
+                }
+            }
+        };
+    pipeline_triangle_data.rasterization =
+        pipeline_simulated_triangle_data.rasterization;
+    // HACK: END
     pipeline_simulated_triangle_data.set_pixel = std::bind(
         &CpuRenderer::set_pixel_rgba_depth, this, std::placeholders::_1,
         std::placeholders::_2, std::placeholders::_3);

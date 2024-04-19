@@ -36,6 +36,7 @@ set(P_SOURCE_FILES
     "./src/solids/grid.cpp"
     "./src/solids/solid.cpp"
     "./src/solids/square.cpp"
+    "./src/solids/triangle.cpp"
     "./src/texture.cpp"
     "./src/window.cpp"
     )
@@ -54,6 +55,7 @@ set(P_HEADER_FILES
     "./src/solids/grid.hpp"
     "./src/solids/solid.hpp"
     "./src/solids/square.hpp"
+    "./src/solids/triangle.hpp"
     "./src/texture.hpp"
     "./src/utils/app_info.hpp"
     "./src/utils/color.hpp"
@@ -89,7 +91,7 @@ target_link_libraries(${PROJECT_NAME}
 
 target_compile_options(${PROJECT_NAME} PRIVATE
     $<$<CXX_COMPILER_ID:MSVC>:/W4 /WX>
-    $<$<CXX_COMPILER_ID:GNU>:-O3 -Wall -Wextra -Wpedantic -Werror>
-    $<$<CXX_COMPILER_ID:Clang>:-O2 -Wall -Wextra -Wpedantic -Werror>
+    $<$<CXX_COMPILER_ID:GNU>:-Wall -Wextra -Wpedantic -Werror>
+    $<$<CXX_COMPILER_ID:Clang>:-Wall -Wextra -Wpedantic -Werror>
     # $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-O2 -Wall -Wextra -Wpedantic -Werror>
 )
