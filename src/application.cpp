@@ -66,6 +66,8 @@ auto Application::print_version() -> bool {
 auto Application::run_main_loop() -> void {
     while (!p_window->should_close()) {
         p_glfw->poll_events();
+        handle_input();
+
         glClear(GL_COLOR_BUFFER_BIT);
 
         p_gui->new_frame();
@@ -74,6 +76,29 @@ auto Application::run_main_loop() -> void {
 
         p_gui->render();
         p_window->swap_buffers();
+    }
+}
+
+auto Application::handle_input() -> void {
+    static bool s_alt_mode_lock{false};
+
+    auto key_left_alt = p_window->get_key(GLFW_KEY_LEFT_ALT);
+    if (key_left_alt == GLFW_PRESS) {
+        if (!s_alt_mode_lock) {
+            m_alt_mode = !m_alt_mode;
+        }
+        p_window->get_cursor_pos(m_mouse_pos_x, m_mouse_pos_y);
+        s_alt_mode_lock = true;
+    }
+
+    if (key_left_alt == GLFW_RELEASE) {
+        s_alt_mode_lock = false;
+    }
+
+    if (m_alt_mode) {
+        p_window->set_input_mode(GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    } else {
+        p_window->set_input_mode(GLFW_CURSOR, GLFW_CURSOR_NORMAL);
     }
 }
 
@@ -92,6 +117,10 @@ auto Application::make_gui(bool show_debug) -> void {
     if (show_debug) {
         ImGui::ShowDemoWindow();
     }
+
+    ImGui::Begin("Info");
+    ImGui::Text("Alt mode: %d", m_alt_mode);
+    ImGui::End();
 }
 
 } // namespace Vis

@@ -21,6 +21,7 @@ class Application {
     auto print_help() -> bool;
     auto print_version() -> bool;
     auto make_gui(bool show_debug) -> void;
+    auto handle_input() -> void;
 
   private:
     std::shared_ptr<Glfw> p_glfw{nullptr};
@@ -29,6 +30,9 @@ class Application {
     size_t m_width{800};
     size_t m_height{600};
     std::string m_title{"VIS"};
+    bool m_alt_mode{false};
+    double m_mouse_pos_x{0.0};
+    double m_mouse_pos_y{0.0};
 };
 
 } // namespace Vis
