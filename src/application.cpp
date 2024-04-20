@@ -68,12 +68,10 @@ auto Application::run_main_loop() -> void {
         p_glfw->poll_events();
         handle_input();
 
-        glClear(GL_COLOR_BUFFER_BIT);
-
         p_gui->new_frame();
-
         make_gui(true);
 
+        glClear(GL_COLOR_BUFFER_BIT);
         p_gui->render();
         p_window->swap_buffers();
     }

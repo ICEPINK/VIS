@@ -31,18 +31,18 @@ class Window {
     }
 
     inline auto set_input_mode(const int mode, const int value) const -> auto {
-        return glfwSetInputMode(p_window, mode, value);
+        return p_glfw->set_input_mode(p_window, mode, value);
     }
 
     inline auto get_glfw_window_ptr() const -> auto { return p_window; }
 
     inline auto get_key(const int key) const -> auto {
-        return glfwGetKey(p_window, key);
+        return p_glfw->get_key(p_window, key);
     }
 
     inline auto get_cursor_pos(double &mouse_pos_x, double &mouse_pos_y) const
         -> auto {
-        return glfwGetCursorPos(p_window, &mouse_pos_x, &mouse_pos_y);
+        return p_glfw->get_cursor_pos(p_window, &mouse_pos_x, &mouse_pos_y);
     }
 
   private:

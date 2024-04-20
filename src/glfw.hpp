@@ -10,32 +10,46 @@ class Glfw {
     Glfw();
     ~Glfw();
 
-    inline auto poll_events() -> auto { glfwPollEvents(); }
-    [[nodiscard]] inline auto create_window(int width, int height,
-                                            const char *title,
-                                            GLFWmonitor *monitor,
-                                            GLFWwindow *share) -> auto {
+    inline auto poll_events() const -> auto { glfwPollEvents(); }
+    [[nodiscard]] inline auto
+    create_window(const int width, const int height, const char *const title,
+                  GLFWmonitor *const monitor, GLFWwindow *const share) const
+        -> auto {
         return glfwCreateWindow(width, height, title, monitor, share);
     }
-    inline auto destroy_window(GLFWwindow *window) -> auto {
+    inline auto destroy_window(GLFWwindow *const window) const -> auto {
         glfwDestroyWindow(window);
     }
-    inline auto make_context_current(GLFWwindow *window) -> auto {
+    inline auto make_context_current(GLFWwindow *const window) const -> auto {
         glfwMakeContextCurrent(window);
     }
-    [[nodiscard]] inline auto window_should_close(GLFWwindow *window) -> auto {
+    [[nodiscard]] inline auto
+    window_should_close(GLFWwindow *const window) const -> auto {
         return glfwWindowShouldClose(window);
     }
-    inline auto swap_buffers(GLFWwindow *window) -> auto {
+    inline auto swap_buffers(GLFWwindow *const window) const -> auto {
         glfwSwapBuffers(window);
-    };
-    [[nodiscard]] inline auto get_proc_address() -> auto {
+    }
+    [[nodiscard]] inline auto get_proc_address() const -> auto {
         return glfwGetProcAddress;
-    };
-    inline auto window_hint(int hint, int value) -> auto {
+    }
+    inline auto window_hint(const int hint, const int value) const -> auto {
         glfwWindowHint(hint, value);
-        ;
-    };
+    }
+    inline auto set_input_mode(GLFWwindow *const window, const int mode,
+                               const int value) const -> auto {
+        return glfwSetInputMode(window, mode, value);
+    }
+
+    inline auto get_key(GLFWwindow *const window, const int key) const -> auto {
+        return glfwGetKey(window, key);
+    }
+
+    inline auto get_cursor_pos(GLFWwindow *const window,
+                               double *const mouse_pos_x,
+                               double *const mouse_pos_y) const -> auto {
+        return glfwGetCursorPos(window, mouse_pos_x, mouse_pos_y);
+    }
 };
 
 } // namespace Vis
