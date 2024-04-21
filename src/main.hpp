@@ -1,7 +1,6 @@
 #pragma once
 
 #include <iostream>
-#include <vector>
 
 namespace Vis {
 
@@ -19,17 +18,6 @@ namespace Vis {
         std::cout << "ERROR: Not handled!!!\n";
     }
     return EXIT_FAILURE;
-}
-
-[[nodiscard]] inline auto make_args(int argc, char **argv)
-    -> std::vector<std::string_view> {
-    std::vector<std::string_view> args;
-    args.reserve(argc);
-    for (size_t i = 0; i < static_cast<size_t>(argc); ++i) {
-        args.push_back(argv[i]);
-    }
-
-    return args;
 }
 
 } // namespace Vis
