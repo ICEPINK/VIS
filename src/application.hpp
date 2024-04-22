@@ -33,6 +33,7 @@ class Application {
     bool m_alt_mode{false};
     double m_mouse_pos_x{0.0};
     double m_mouse_pos_y{0.0};
+    double test_blue{0.0};
 };
 
 } // namespace Vis

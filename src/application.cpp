@@ -64,17 +64,79 @@ auto Application::print_version() -> bool {
 }
 
 auto Application::run_main_loop() -> void {
+    struct Color {
+        uint8_t r{0};
+        uint8_t g{0};
+        uint8_t b{0};
+        uint8_t a{255};
+    };
+
+    GLuint texture_id = 0;
+    glGenTextures(1, &texture_id);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, texture_id);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
     while (!p_window->should_close()) {
         p_glfw->poll_events();
         handle_input();
 
         p_gui->new_frame();
         make_gui(true);
+        ImGui::Begin("Viewport");
+
+        auto panel_width = ImGui::GetContentRegionAvail().x;
+        auto panel_height = ImGui::GetContentRegionAvail().y;
+
+        if (panel_width < 0) {
+            panel_width = 0;
+        }
+
+        if (panel_height < 0) {
+            panel_height = 0;
+        }
+
+        size_t texture_width = static_cast<size_t>(std::max(panel_width, 0.0f));
+        size_t texture_height =
+            static_cast<size_t>(std::max(panel_height, 0.0f));
+
+        ImGui::Image((ImTextureID)(intptr_t)texture_id,
+                     ImVec2{static_cast<float>(texture_width),
+                            static_cast<float>(texture_height)},
+                     ImVec2(0, 1), ImVec2(1, 0));
+        ImGui::End();
+
+        std::vector<Color> texture_buffer;
+        texture_buffer.resize(texture_width * texture_height);
+        for (size_t y{0}; y < texture_height; ++y) {
+            for (size_t x{0}; x < texture_width; ++x) {
+                texture_buffer[x + y * texture_width] = {
+                    static_cast<uint8_t>(
+                        (x / static_cast<double>(texture_width) * 255.999)),
+                    static_cast<uint8_t>(
+                        (y / static_cast<double>(texture_height) * 255.999)),
+                    static_cast<uint8_t>(test_blue * 255.999)};
+            }
+        }
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, texture_id);
+
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8,
+                     static_cast<GLsizei>(texture_width),
+                     static_cast<GLsizei>(texture_height), 0, GL_RGBA,
+                     GL_UNSIGNED_BYTE, texture_buffer.data());
 
         glClear(GL_COLOR_BUFFER_BIT);
         p_gui->render();
         p_window->swap_buffers();
     }
+
+    glDeleteTextures(1, &texture_id);
 }
 
 auto Application::handle_input() -> void {
@@ -98,6 +160,24 @@ auto Application::handle_input() -> void {
     } else {
         p_window->set_input_mode(GLFW_CURSOR, GLFW_CURSOR_NORMAL);
     }
+
+    if (m_alt_mode) {
+        int key;
+        key = p_window->get_key(GLFW_KEY_W);
+        if (key == GLFW_PRESS || key == GLFW_REPEAT) {
+            test_blue += 0.01;
+            if (test_blue > 1.0) {
+                test_blue = 1.0;
+            }
+        }
+        key = p_window->get_key(GLFW_KEY_S);
+        if (key == GLFW_PRESS || key == GLFW_REPEAT) {
+            test_blue -= 0.01;
+            if (test_blue < 0.0) {
+                test_blue = 0.0;
+            }
+        }
+    }
 }
 
 auto Application::make_gui(bool show_debug) -> void {
@@ -117,7 +197,7 @@ auto Application::make_gui(bool show_debug) -> void {
     }
 
     ImGui::Begin("Info");
-    ImGui::Text("Alt mode: %d", m_alt_mode);
+    ImGui::Text("Alt mode: %s", m_alt_mode ? "true" : "false");
     ImGui::End();
 }
 
