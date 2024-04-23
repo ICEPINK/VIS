@@ -41,6 +41,7 @@ set(P_HEADER_FILES
     "./src/gui.hpp"
     "./src/texture.hpp"
     "./src/image.hpp"
+    "./src/utils/timer.hpp"
     )
 
 add_executable(${PROJECT_NAME} ${P_SOURCE_FILES})

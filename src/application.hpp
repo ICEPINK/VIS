@@ -40,6 +40,7 @@ class Application {
     double m_mouse_pos_x{0.0};
     double m_mouse_pos_y{0.0};
     Image m_image{};
+    double m_last_loop_time{0};
     double test_blue{0.0};
 };
 

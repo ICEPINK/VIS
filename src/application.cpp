@@ -1,6 +1,7 @@
 #include "application.hpp"
 
 #include "glad.hpp"
+#include "utils/timer.hpp"
 
 #include <iostream>
 
@@ -72,10 +73,10 @@ auto Application::print_version() -> bool {
 
 auto Application::run_main_loop() -> void {
     while (!p_window->should_close()) {
-        p_glfw->poll_events();
+        Timer timer(&m_last_loop_time);
+
         handle_input();
 
-        p_gui->new_frame();
         make_gui(true);
 
         render_image();
@@ -103,11 +104,15 @@ auto Application::render_image() -> void {
 }
 
 auto Application::handle_input() -> void {
+    p_glfw->poll_events();
+
     int width{};
     int height{};
     p_window->get_window_size(width, height);
     m_width = static_cast<size_t>(width);
     m_height = static_cast<size_t>(height);
+
+    p_window->get_cursor_pos(m_mouse_pos_x, m_mouse_pos_y);
 
     static bool s_alt_mode_lock{false};
     auto key_left_alt = p_window->get_key(GLFW_KEY_LEFT_ALT);
@@ -115,7 +120,6 @@ auto Application::handle_input() -> void {
         if (!s_alt_mode_lock) {
             m_alt_mode = !m_alt_mode;
         }
-        p_window->get_cursor_pos(m_mouse_pos_x, m_mouse_pos_y);
         s_alt_mode_lock = true;
     }
 
@@ -130,6 +134,7 @@ auto Application::handle_input() -> void {
     }
 
     if (m_alt_mode) {
+
         int key;
         key = p_window->get_key(GLFW_KEY_W);
         if (key == GLFW_PRESS || key == GLFW_REPEAT) {
@@ -145,10 +150,23 @@ auto Application::handle_input() -> void {
                 test_blue = 0.0;
             }
         }
+
+        m_mouse_pos_x = 0;
+        m_mouse_pos_y = 0;
+        p_window->set_cursor_pos(m_mouse_pos_x, m_mouse_pos_y);
     }
 }
 
 auto Application::make_gui(bool show_debug) -> void {
+    p_gui->new_frame();
+
+    ImGuiIO &io = ImGui::GetIO();
+    if (m_alt_mode) {
+        io.ConfigFlags |= ImGuiConfigFlags_NoMouse;
+    } else {
+        io.ConfigFlags &= ~ImGuiConfigFlags_NoMouse;
+    }
+
     if (ImGui::BeginMainMenuBar()) {
         if (ImGui::BeginMenu("App")) {
             if (ImGui::MenuItem("Item1")) {
@@ -184,10 +202,13 @@ auto Application::make_gui(bool show_debug) -> void {
     ImGui::Text("m_image:");
     ImGui::Text("- width: %zu", m_image.get_width());
     ImGui::Text("- height: %zu", m_image.get_height());
+    ImGui::Text("m_last_loop_time: %f", m_last_loop_time);
+    ImGui::Text("- fps: %f", 1 / m_last_loop_time);
     ImGui::SeparatorText("Test variables");
     ImGui::Text("test_blue: %f", test_blue);
     ImGui::End();
 
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, {0.0, 0.0});
     ImGui::Begin("Viewport");
 
     m_panel_width = ImGui::GetContentRegionAvail().x;
@@ -205,6 +226,7 @@ auto Application::make_gui(bool show_debug) -> void {
                  ImVec2{m_panel_width, m_panel_height}, ImVec2(0, 1),
                  ImVec2(1, 0));
     ImGui::End();
+    ImGui::PopStyleVar();
 }
 
 } // namespace Vis
