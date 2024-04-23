@@ -28,6 +28,7 @@ set(P_SOURCE_FILES
     "./src/main.cpp"
     "./src/window.cpp"
     "./src/gui.cpp"
+    "./src/texture.cpp"
     )
 
 set(P_HEADER_FILES
@@ -37,6 +38,7 @@ set(P_HEADER_FILES
     "./src/main.hpp"
     "./src/window.hpp"
     "./src/gui.hpp"
+    "./src/texture.hpp"
     )
 
 add_executable(${PROJECT_NAME} ${P_SOURCE_FILES})

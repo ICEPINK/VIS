@@ -25,6 +25,13 @@ Application::Application(const std::vector<std::string_view> &args) {
     glDebugMessageCallback(Glad::print_gl_message, nullptr);
     // std::cout << "OpenGL: Version " << glGetString(GL_VERSION) << '\n';
 
+    p_texture = std::make_unique<Texture>();
+    p_texture->bind();
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
     p_gui = std::make_unique<Gui>(*p_window, "#version 460");
 
     ImGuiIO &io = ImGui::GetIO();
@@ -64,22 +71,13 @@ auto Application::print_version() -> bool {
 }
 
 auto Application::run_main_loop() -> void {
-    struct Color {
+    struct ColorRGBA8 {
         uint8_t r{0};
         uint8_t g{0};
         uint8_t b{0};
         uint8_t a{255};
     };
 
-    GLuint texture_id = 0;
-    glGenTextures(1, &texture_id);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, texture_id);
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
     while (!p_window->should_close()) {
         p_glfw->poll_events();
@@ -87,30 +85,10 @@ auto Application::run_main_loop() -> void {
 
         p_gui->new_frame();
         make_gui(true);
-        ImGui::Begin("Viewport");
 
-        auto panel_width = ImGui::GetContentRegionAvail().x;
-        auto panel_height = ImGui::GetContentRegionAvail().y;
-
-        if (panel_width < 0) {
-            panel_width = 0;
-        }
-
-        if (panel_height < 0) {
-            panel_height = 0;
-        }
-
-        size_t texture_width = static_cast<size_t>(std::max(panel_width, 0.0f));
-        size_t texture_height =
-            static_cast<size_t>(std::max(panel_height, 0.0f));
-
-        ImGui::Image((ImTextureID)(intptr_t)texture_id,
-                     ImVec2{static_cast<float>(texture_width),
-                            static_cast<float>(texture_height)},
-                     ImVec2(0, 1), ImVec2(1, 0));
-        ImGui::End();
-
-        std::vector<Color> texture_buffer;
+        size_t texture_width = static_cast<size_t>(m_panel_width);
+        size_t texture_height = static_cast<size_t>(m_panel_height);
+        std::vector<ColorRGBA8> texture_buffer;
         texture_buffer.resize(texture_width * texture_height);
         for (size_t y{0}; y < texture_height; ++y) {
             for (size_t x{0}; x < texture_width; ++x) {
@@ -123,20 +101,16 @@ auto Application::run_main_loop() -> void {
             }
         }
 
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, texture_id);
-
+        p_texture->bind();
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8,
-                     static_cast<GLsizei>(texture_width),
-                     static_cast<GLsizei>(texture_height), 0, GL_RGBA,
+                     static_cast<GLsizei>(m_panel_width),
+                     static_cast<GLsizei>(m_panel_height), 0, GL_RGBA,
                      GL_UNSIGNED_BYTE, texture_buffer.data());
 
         glClear(GL_COLOR_BUFFER_BIT);
         p_gui->render();
         p_window->swap_buffers();
     }
-
-    glDeleteTextures(1, &texture_id);
 }
 
 auto Application::handle_input() -> void {
@@ -198,6 +172,24 @@ auto Application::make_gui(bool show_debug) -> void {
 
     ImGui::Begin("Info");
     ImGui::Text("Alt mode: %s", m_alt_mode ? "true" : "false");
+    ImGui::End();
+
+    ImGui::Begin("Viewport");
+
+    m_panel_width = ImGui::GetContentRegionAvail().x;
+    m_panel_height = ImGui::GetContentRegionAvail().y;
+
+    if (m_panel_width < 0.0f) {
+        m_panel_width = 0.0f;
+    }
+
+    if (m_panel_height < 0.0f) {
+        m_panel_height = 0.0f;
+    }
+
+    ImGui::Image((ImTextureID)(intptr_t)p_texture->get_id(),
+                 ImVec2{m_panel_width, m_panel_height}, ImVec2(0, 1),
+                 ImVec2(1, 0));
     ImGui::End();
 }
 

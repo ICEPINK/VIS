@@ -1,6 +1,7 @@
 #pragma once
 
 #include "gui.hpp"
+#include "texture.hpp"
 #include "window.hpp"
 
 #include <string_view>
@@ -27,8 +28,11 @@ class Application {
     std::shared_ptr<Glfw> p_glfw{nullptr};
     std::unique_ptr<Window> p_window{nullptr};
     std::unique_ptr<Gui> p_gui{nullptr};
+    std::unique_ptr<Texture> p_texture{nullptr};
     size_t m_width{800};
     size_t m_height{600};
+    float m_panel_width{0.0f};
+    float m_panel_height{0.0f};
     std::string m_title{"VIS"};
     bool m_alt_mode{false};
     double m_mouse_pos_x{0.0};
