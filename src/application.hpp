@@ -1,6 +1,7 @@
 #pragma once
 
 #include "gui.hpp"
+#include "image.hpp"
 #include "texture.hpp"
 #include "window.hpp"
 
@@ -23,6 +24,7 @@ class Application {
     auto print_version() -> bool;
     auto make_gui(bool show_debug) -> void;
     auto handle_input() -> void;
+    auto render_image() -> void;
 
   private:
     std::shared_ptr<Glfw> p_glfw{nullptr};
@@ -37,6 +39,7 @@ class Application {
     bool m_alt_mode{false};
     double m_mouse_pos_x{0.0};
     double m_mouse_pos_y{0.0};
+    Image m_image{};
     double test_blue{0.0};
 };
 

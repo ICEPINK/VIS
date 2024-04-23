@@ -1,6 +1,5 @@
 #include "application.hpp"
 
-#include "image.hpp"
 #include "glad.hpp"
 
 #include <iostream>
@@ -71,10 +70,7 @@ auto Application::print_version() -> bool {
     return true;
 }
 
-
 auto Application::run_main_loop() -> void {
-    Image image;
-
     while (!p_window->should_close()) {
         p_glfw->poll_events();
         handle_input();
@@ -82,16 +78,13 @@ auto Application::run_main_loop() -> void {
         p_gui->new_frame();
         make_gui(true);
 
-        image.resize(static_cast<size_t>(m_panel_width),
-                     static_cast<size_t>(m_panel_height));
-
-        image.clear({0.0, 0.0, test_blue, 1.0});
+        render_image();
 
         p_texture->bind();
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8,
                      static_cast<GLsizei>(m_panel_width),
                      static_cast<GLsizei>(m_panel_height), 0, GL_RGBA,
-                     GL_UNSIGNED_BYTE, image.get_image_data());
+                     GL_UNSIGNED_BYTE, m_image.get_image_data());
 
         glClear(GL_COLOR_BUFFER_BIT);
         p_gui->render();
@@ -99,9 +92,24 @@ auto Application::run_main_loop() -> void {
     }
 }
 
-auto Application::handle_input() -> void {
-    static bool s_alt_mode_lock{false};
+auto Application::render_image() -> void {
+    if (m_panel_width != m_image.get_width() ||
+        m_panel_height != m_image.get_height()) {
+        m_image.resize(static_cast<size_t>(m_panel_width),
+                       static_cast<size_t>(m_panel_height));
+    }
 
+    m_image.clear({0.0, 0.0, test_blue, 1.0});
+}
+
+auto Application::handle_input() -> void {
+    int width{};
+    int height{};
+    p_window->get_window_size(width, height);
+    m_width = static_cast<size_t>(width);
+    m_height = static_cast<size_t>(height);
+
+    static bool s_alt_mode_lock{false};
     auto key_left_alt = p_window->get_key(GLFW_KEY_LEFT_ALT);
     if (key_left_alt == GLFW_PRESS) {
         if (!s_alt_mode_lock) {
@@ -156,8 +164,28 @@ auto Application::make_gui(bool show_debug) -> void {
         ImGui::ShowDemoWindow();
     }
 
-    ImGui::Begin("Info");
-    ImGui::Text("Alt mode: %s", m_alt_mode ? "true" : "false");
+    ImGui::Begin("Application Info");
+    ImGui::SeparatorText("Applicaton Info");
+    ImGui::Text("p_glfw: %p", (void *)p_glfw.get());
+    ImGui::Text("p_window: %p", (void *)p_window.get());
+    ImGui::Text("- glfw_window_ptr: %p",
+                (void *)p_window->get_glfw_window_ptr());
+    ImGui::Text("p_gui: %p", (void *)p_gui.get());
+    ImGui::Text("p_texture: %p", (void *)p_texture.get());
+    ImGui::Text("- opengl_id: %u", p_texture->get_id());
+    ImGui::Text("m_width: %zu", m_width);
+    ImGui::Text("m_height: %zu", m_height);
+    ImGui::Text("m_panel_width: %f", m_panel_width);
+    ImGui::Text("m_panel_height: %f", m_panel_height);
+    ImGui::Text("m_title: %s", m_title.c_str());
+    ImGui::Text("m_alt_mode: %s", m_alt_mode ? "true" : "false");
+    ImGui::Text("m_mouse_pos_x: %f", m_mouse_pos_x);
+    ImGui::Text("m_mouse_pos_y: %f", m_mouse_pos_y);
+    ImGui::Text("m_image:");
+    ImGui::Text("- width: %zu", m_image.get_width());
+    ImGui::Text("- height: %zu", m_image.get_height());
+    ImGui::SeparatorText("Test variables");
+    ImGui::Text("test_blue: %f", test_blue);
     ImGui::End();
 
     ImGui::Begin("Viewport");
