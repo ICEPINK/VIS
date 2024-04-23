@@ -1,5 +1,6 @@
 #include "application.hpp"
 
+#include "image.hpp"
 #include "glad.hpp"
 
 #include <iostream>
@@ -70,14 +71,9 @@ auto Application::print_version() -> bool {
     return true;
 }
 
-auto Application::run_main_loop() -> void {
-    struct ColorRGBA8 {
-        uint8_t r{0};
-        uint8_t g{0};
-        uint8_t b{0};
-        uint8_t a{255};
-    };
 
+auto Application::run_main_loop() -> void {
+    Image image;
 
     while (!p_window->should_close()) {
         p_glfw->poll_events();
@@ -86,26 +82,16 @@ auto Application::run_main_loop() -> void {
         p_gui->new_frame();
         make_gui(true);
 
-        size_t texture_width = static_cast<size_t>(m_panel_width);
-        size_t texture_height = static_cast<size_t>(m_panel_height);
-        std::vector<ColorRGBA8> texture_buffer;
-        texture_buffer.resize(texture_width * texture_height);
-        for (size_t y{0}; y < texture_height; ++y) {
-            for (size_t x{0}; x < texture_width; ++x) {
-                texture_buffer[x + y * texture_width] = {
-                    static_cast<uint8_t>(
-                        (x / static_cast<double>(texture_width) * 255.999)),
-                    static_cast<uint8_t>(
-                        (y / static_cast<double>(texture_height) * 255.999)),
-                    static_cast<uint8_t>(test_blue * 255.999)};
-            }
-        }
+        image.resize(static_cast<size_t>(m_panel_width),
+                     static_cast<size_t>(m_panel_height));
+
+        image.clear({0.0, 0.0, test_blue, 1.0});
 
         p_texture->bind();
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8,
                      static_cast<GLsizei>(m_panel_width),
                      static_cast<GLsizei>(m_panel_height), 0, GL_RGBA,
-                     GL_UNSIGNED_BYTE, texture_buffer.data());
+                     GL_UNSIGNED_BYTE, image.get_image_data());
 
         glClear(GL_COLOR_BUFFER_BIT);
         p_gui->render();
