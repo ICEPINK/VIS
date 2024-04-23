@@ -47,6 +47,9 @@ class Window {
         -> auto {
         return p_glfw->get_cursor_pos(p_window, &mouse_pos_x, &mouse_pos_y);
     }
+    inline auto get_window_size(int &width, int &height) const -> auto {
+        p_glfw->get_window_size(p_window, &width, &height);
+    }
 
   private:
     GLFWwindow *p_window;

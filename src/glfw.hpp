@@ -50,6 +50,11 @@ class Glfw {
                                double *const mouse_pos_y) const -> auto {
         return glfwGetCursorPos(window, mouse_pos_x, mouse_pos_y);
     }
+
+    inline auto get_window_size(GLFWwindow *const window, int *const width,
+                                int *const height) const -> auto {
+        glfwGetWindowSize(window, width, height);
+    }
 };
 
 } // namespace Vis
