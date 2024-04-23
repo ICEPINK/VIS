@@ -8,7 +8,7 @@ auto Texture::bind() -> void { glBindTexture(GL_TEXTURE_2D, m_id); }
 
 auto Texture::unbind() -> void { glBindTexture(GL_TEXTURE_2D, 0); }
 
-auto Texture::active_texture(int texture_slot) -> void {
+auto Texture::active_texture(const int texture_slot) -> void {
     glActiveTexture(texture_slot);
 }
 
