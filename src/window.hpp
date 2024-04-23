@@ -42,11 +42,16 @@ class Window {
         return p_glfw->get_key(p_window, key);
     }
 
-    [[nodiscard]] inline auto get_cursor_pos(double &mouse_pos_x,
-                                             double &mouse_pos_y) const
+    inline auto get_cursor_pos(double &mouse_pos_x, double &mouse_pos_y) const
         -> auto {
-        return p_glfw->get_cursor_pos(p_window, &mouse_pos_x, &mouse_pos_y);
+        p_glfw->get_cursor_pos(p_window, &mouse_pos_x, &mouse_pos_y);
     }
+
+    inline auto set_cursor_pos(const double mouse_pos_x,
+                               const double mouse_pos_y) const -> auto {
+        p_glfw->set_cursor_pos(p_window, mouse_pos_x, mouse_pos_y);
+    }
+
     inline auto get_window_size(int &width, int &height) const -> auto {
         p_glfw->get_window_size(p_window, &width, &height);
     }
