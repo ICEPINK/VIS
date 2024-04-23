@@ -1,46 +1,51 @@
 #include "image.hpp"
 
 namespace Vis {
-
-uint8_t cast_color_32f_to_8i(const float color) {
-    return static_cast<uint8_t>(color * 255.999);
+Image::Image() {}
+Image::Image(const size_t width, const size_t height)
+    : m_width(width), m_height(height) {
+    m_buffer.resize(width * height);
 }
 
-void cast_pixel_32f_to_8i(ColorRGBA8i &pixel, const ColorRGBA32f &color) {
-    pixel.red = cast_color_32f_to_8i(color.r);
-    pixel.green = cast_color_32f_to_8i(color.g);
-    pixel.blue = cast_color_32f_to_8i(color.b);
-    pixel.alpha = cast_color_32f_to_8i(color.a);
+auto Image::resize(const size_t width, const size_t height) -> void {
+    m_width = width;
+    m_height = height;
+    m_buffer.resize(width * height);
 }
 
-Image::Image(size_t width, size_t height)
-    : m_width(width), m_height(height), m_image_buffer(width * height) {}
-
-void Image::clear(const ColorRGBA32f &color) {
-    for (auto &pixel : m_image_buffer) {
-        cast_pixel_32f_to_8i(pixel, color);
+auto Image::clear(const glm::dvec4 &color) -> void {
+    for (auto &pixel : m_buffer) {
+        pixel = dvec4_to_rgba8(color);
     }
 }
 
-void Image::set_pixel(const size_t x, const size_t y,
-                      const ColorRGBA32f &color) {
-    ColorRGBA8i &pixel = m_image_buffer[x + y * m_width];
-    cast_pixel_32f_to_8i(pixel, color);
+auto Image::set_pixel(const size_t x, const size_t y, const glm::dvec4 &color)
+    -> void {
+    m_buffer[x + y * m_width] = dvec4_to_rgba8(color);
 }
 
-size_t Image::get_width() const { return m_width; }
-
-size_t Image::get_height() const { return m_height; }
-
-ColorRGBA32f Image::get_pixel(const size_t x, const size_t y) const {
-    float red = m_image_buffer[x + y * m_width].red / 255.0f;
-    float green = m_image_buffer[x + y * m_width].green / 255.0f;
-    float blue = m_image_buffer[x + y * m_width].blue / 255.0f;
-    float alpha = m_image_buffer[x + y * m_width].alpha / 255.0f;
-
-    return {red, green, blue, alpha};
+[[nodiscard]] auto Image::get_width() const -> size_t { return m_width; }
+[[nodiscard]] auto Image::get_height() const -> size_t { return m_height; }
+[[nodiscard]] auto Image::get_image_data() -> ColorRGBA8 * {
+    return m_buffer.data();
+}
+[[nodiscard]] auto Image::get_pixel(const size_t x, const size_t y) const
+    -> glm::dvec4 {
+    return rgba8_to_dvec4(m_buffer[x + y * m_width]);
 }
 
-ColorRGBA8i *Image::get_image_buffer_ptr() { return m_image_buffer.data(); }
+auto Image::dvec4_to_rgba8(const glm::dvec4 &color) const -> ColorRGBA8 {
+    ColorRGBA8 ret_color{static_cast<uint8_t>(color.r * 255.999),
+                         static_cast<uint8_t>(color.g * 255.999),
+                         static_cast<uint8_t>(color.b * 255.999),
+                         static_cast<uint8_t>(color.a * 255.999)};
+    return ret_color;
+}
+
+auto Image::rgba8_to_dvec4(const ColorRGBA8 &color) const -> glm::dvec4 {
+    glm::dvec4 ret_color{color.r / 255.999, color.g / 255.999,
+                         color.b / 255.999, color.a / 255.999};
+    return ret_color;
+}
 
 } // namespace Vis
