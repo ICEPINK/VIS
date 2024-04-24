@@ -55,7 +55,7 @@ Application::handle_args(const std::vector<std::string_view> &args) -> bool {
             return arg_print_version();
         }
         if (arg == "-r" || arg == "--res") {
-            if (i + 1 >= args.size()) {
+            if (i + 1 >= args.size() || args[i+1][0] == '-') {
                 throw std::runtime_error("Missing resolution argument");
             }
             arg_resolution(args[i + 1]);
