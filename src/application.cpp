@@ -46,7 +46,7 @@ Application::~Application() {}
 
 [[nodiscard]] auto
 Application::handle_args(const std::vector<std::string_view> &args) -> bool {
-    [[maybe_unused]] int i = 0;
+    [[maybe_unused]] size_t i = 0;
     for (const auto &arg : args) {
         if (arg == "-h" || arg == "--help") {
             return arg_print_help();
@@ -55,11 +55,10 @@ Application::handle_args(const std::vector<std::string_view> &args) -> bool {
             return arg_print_version();
         }
         if (arg == "-r" || arg == "--res") {
-            try {
-                arg_resolution(args.at(i + 1));
-            } catch (const std::out_of_range &e) {
+            if (i + 1 >= args.size()) {
                 throw std::runtime_error("Missing resolution argument");
             }
+            arg_resolution(args[i + 1]);
         }
         ++i;
     }
