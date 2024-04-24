@@ -69,6 +69,7 @@ auto Application::arg_print_help() -> bool {
     std::cout << "VIS HELP:\n";
     std::cout << " --help, -h: print help\n";
     std::cout << " --version, -v: print version\n";
+    std::cout << " --res, -r: sets resolution (default 800x600)\n";
     return true;
 }
 
