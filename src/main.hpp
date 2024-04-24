@@ -9,6 +9,8 @@ namespace Vis {
         throw;
     } catch (const std::runtime_error &e) {
         std::cout << "ERROR: " << e.what() << '\n';
+    } catch (const std::out_of_range &e) {
+        std::cout << "ERROR: " << e.what() << " out of range!" << '\n';
     } catch (const std::exception &e) {
         std::cout << "ERROR: " << e.what() << '\n';
     } catch (const int &e) {
