@@ -20,8 +20,9 @@ class Application {
   private:
     [[nodiscard]] auto handle_args(const std::vector<std::string_view> &args)
         -> bool;
-    auto print_help() -> bool;
-    auto print_version() -> bool;
+    auto arg_print_help() -> bool;
+    auto arg_print_version() -> bool;
+    auto arg_resolution(std::string_view resolution) -> void;
     auto make_gui(bool show_debug) -> void;
     auto handle_input() -> void;
     auto render_image() -> void;

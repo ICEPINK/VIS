@@ -49,26 +49,59 @@ Application::handle_args(const std::vector<std::string_view> &args) -> bool {
     [[maybe_unused]] int i = 0;
     for (const auto &arg : args) {
         if (arg == "-h" || arg == "--help") {
-            return print_help();
+            return arg_print_help();
         }
         if (arg == "-v" || arg == "--version") {
-            return print_version();
+            return arg_print_version();
+        }
+        if (arg == "-r" || arg == "--res") {
+            try {
+                arg_resolution(args.at(i + 1));
+            } catch (const std::out_of_range &e) {
+                throw std::runtime_error("Missing resolution argument");
+            }
         }
         ++i;
     }
     return false;
 }
 
-auto Application::print_help() -> bool {
+auto Application::arg_print_help() -> bool {
     std::cout << "VIS HELP:\n";
     std::cout << " --help, -h: print help\n";
     std::cout << " --version, -v: print version\n";
     return true;
 }
 
-auto Application::print_version() -> bool {
+auto Application::arg_print_version() -> bool {
     std::cout << "VIS version: 0.0.0\n";
     return true;
+}
+auto Application::arg_resolution(const std::string_view resolution) -> void {
+    auto x = resolution.find('x');
+    if (x == std::string::npos) {
+        throw std::runtime_error("Resolution argument is in wrong format!");
+    }
+
+    const auto width = resolution.substr(0, x);
+    const auto height = resolution.substr(x + 1, resolution.size());
+    if (width.empty() || height.empty()) {
+        throw std::runtime_error("Resolution argument is in wrong format!");
+    }
+
+    if (!std::isdigit(width[0]) || !std::isdigit(height[0])) {
+        throw std::runtime_error("Resolution argument is in wrong format!");
+    }
+
+    std::stringstream ss;
+    ss << width;
+    ss >> m_width;
+
+    ss.clear();
+    ss.str("");
+
+    ss << height;
+    ss >> m_height;
 }
 
 auto Application::run_main_loop() -> void {
@@ -76,16 +109,8 @@ auto Application::run_main_loop() -> void {
         Timer timer(&m_last_loop_time);
 
         handle_input();
-
         make_gui(true);
-
         render_image();
-
-        p_texture->bind();
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8,
-                     static_cast<GLsizei>(m_panel_width),
-                     static_cast<GLsizei>(m_panel_height), 0, GL_RGBA,
-                     GL_UNSIGNED_BYTE, m_image.get_image_data());
 
         glClear(GL_COLOR_BUFFER_BIT);
         p_gui->render();
@@ -101,6 +126,12 @@ auto Application::render_image() -> void {
     }
 
     m_image.clear({0.0, 0.0, test_blue, 1.0});
+
+    p_texture->bind();
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8,
+                 static_cast<GLsizei>(m_panel_width),
+                 static_cast<GLsizei>(m_panel_height), 0, GL_RGBA,
+                 GL_UNSIGNED_BYTE, m_image.get_image_data());
 }
 
 auto Application::handle_input() -> void {
