@@ -19,9 +19,9 @@ auto Image::clear(const glm::dvec4 &color) -> void {
     }
 }
 
-auto Image::set_pixel(const size_t x, const size_t y, const glm::dvec4 &color)
-    -> void {
-    if (x < 0 || y < 0 || x >= m_width || y >= m_height) {
+auto Image::set_pixel(const size_t x, const size_t y,
+                      const glm::dvec4 &color) -> void {
+    if (x >= m_width || y >= m_height) {
         return;
     }
     m_buffer[x + y * m_width] = dvec4_to_rgba8(color);
@@ -32,8 +32,8 @@ auto Image::set_pixel(const size_t x, const size_t y, const glm::dvec4 &color)
 [[nodiscard]] auto Image::get_image_data() -> ColorRGBA8 * {
     return m_buffer.data();
 }
-[[nodiscard]] auto Image::get_pixel(const size_t x, const size_t y) const
-    -> glm::dvec4 {
+[[nodiscard]] auto Image::get_pixel(const size_t x,
+                                    const size_t y) const -> glm::dvec4 {
     return rgba8_to_dvec4(m_buffer[x + y * m_width]);
 }
 
