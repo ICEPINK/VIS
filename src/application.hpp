@@ -23,7 +23,7 @@ class Application {
     auto arg_print_help() -> bool;
     auto arg_print_version() -> bool;
     auto arg_resolution(std::string_view resolution) -> void;
-    auto make_gui(bool show_debug) -> void;
+    auto make_gui(bool show_debug = false) -> void;
     auto handle_input() -> void;
     auto render_image() -> void;
 
