@@ -25,23 +25,26 @@ set(P_SOURCE_FILES
     "./src/application.cpp"
     "./src/glad.cpp"
     "./src/glfw.cpp"
-    "./src/main.cpp"
-    "./src/window.cpp"
     "./src/gui.cpp"
-    "./src/texture.cpp"
     "./src/image.cpp"
+    "./src/main.cpp"
+    "./src/pipeline.cpp"
+    "./src/texture.cpp"
+    "./src/window.cpp"
     )
 
 set(P_HEADER_FILES
     "./src/application.hpp"
     "./src/glad.hpp"
     "./src/glfw.hpp"
-    "./src/main.hpp"
-    "./src/window.hpp"
     "./src/gui.hpp"
-    "./src/texture.hpp"
     "./src/image.hpp"
+    "./src/main.hpp"
+    "./src/pipeline.hpp"
+    "./src/texture.hpp"
     "./src/utils/timer.hpp"
+    "./src/utils/vertex.hpp"
+    "./src/window.hpp"
     )
 
 add_executable(${PROJECT_NAME} ${P_SOURCE_FILES})

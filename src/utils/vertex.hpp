@@ -5,39 +5,35 @@
 namespace Vis {
 
 struct Vertex {
-    glm::vec4 position;
-    glm::vec4 color{1.0f, 1.0f, 1.0f, 1.0f};
-    glm::vec2 uv{0.0f, 0.0f};
-    float one{1.0f};
+    glm::dvec4 pos;
+    glm::dvec4 col{1.0f, 1.0f, 1.0f, 1.0f};
+    double one{1.0};
 
     constexpr inline Vertex operator+(const Vertex &vertex) const {
-        return {position + vertex.position, color + vertex.color,
-                uv + vertex.uv, one + vertex.one};
+        return {pos + vertex.pos, col + vertex.col, one + vertex.one};
     }
 
-    constexpr inline Vertex operator+(const float f) const {
-        return {position + f, color + f, uv + f, one + f};
+    constexpr inline Vertex operator+(const double f) const {
+        return {pos + f, col + f, one + f};
     }
 
     constexpr inline Vertex operator-(const Vertex &vertex) const {
-        return {position - vertex.position, color - vertex.color,
-                uv - vertex.uv, one - vertex.one};
+        return {pos - vertex.pos, col - vertex.col, one - vertex.one};
     }
 
-    constexpr inline Vertex operator-(const float f) const {
-        return {position - f, color - f, uv - f, one - f};
+    constexpr inline Vertex operator-(const double f) const {
+        return {pos - f, col - f, one - f};
     }
 
     constexpr inline Vertex operator*(const Vertex &vertex) const {
-        return {position * vertex.position, color * vertex.color,
-                uv * vertex.uv, one * vertex.one};
+        return {pos * vertex.pos, col * vertex.col, one * vertex.one};
     }
 
-    constexpr inline Vertex operator*(const float f) const {
-        return {position * f, color * f, uv * f, one * f};
+    constexpr inline Vertex operator*(const double f) const {
+        return {pos * f, col * f, one * f};
     }
 
-    constexpr inline static Vertex interpolate(const float t, const Vertex &a,
+    constexpr inline static Vertex interpolate(const double t, const Vertex &a,
                                                const Vertex &b) {
         if (t < 0.0) {
             return a;
