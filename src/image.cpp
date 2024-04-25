@@ -21,6 +21,9 @@ auto Image::clear(const glm::dvec4 &color) -> void {
 
 auto Image::set_pixel(const size_t x, const size_t y, const glm::dvec4 &color)
     -> void {
+    if (x < 0 || y < 0 || x >= m_width || y >= m_height) {
+        return;
+    }
     m_buffer[x + y * m_width] = dvec4_to_rgba8(color);
 }
 
