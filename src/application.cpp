@@ -55,7 +55,7 @@ Application::handle_args(const std::vector<std::string_view> &args) -> bool {
             return arg_print_version();
         }
         if (arg == "-r" || arg == "--res") {
-            if (i + 1 >= args.size() || args[i+1][0] == '-') {
+            if (i + 1 >= args.size() || args[i + 1][0] == '-') {
                 throw std::runtime_error("Missing resolution argument");
             }
             arg_resolution(args[i + 1]);
@@ -117,6 +117,59 @@ auto Application::run_main_loop() -> void {
         p_window->swap_buffers();
     }
 }
+// HACK:
+enum class PrimitivesTopology { Points, Lines, Triangles };
+
+class Layout {
+  public:
+    Layout(PrimitivesTopology topology, size_t start, size_t count)
+        : m_topology(topology), m_start(start), m_count(count) {}
+    ~Layout() = default;
+
+    [[nodiscard]] auto get_topology() const -> auto { return m_topology; }
+    [[nodiscard]] auto get_start() const -> auto { return m_start; }
+    [[nodiscard]] auto get_count() const -> auto { return m_count; }
+
+  private:
+    PrimitivesTopology m_topology;
+    size_t m_start;
+    size_t m_count;
+};
+
+struct Vertices {
+    glm::dvec4 pos;
+    glm::dvec4 col;
+};
+
+class Solid {
+  public:
+    Solid() {}
+    ~Solid() = default;
+
+    [[nodiscard]] auto get_vertices() const -> auto { return m_vertices; }
+    [[nodiscard]] auto get_indices() const -> auto { return m_indices; }
+    [[nodiscard]] auto get_layouts() const -> auto { return m_layouts; }
+    [[nodiscard]] auto get_matrix() const -> auto { return m_matrix; }
+
+  private:
+    std::vector<Vertices> m_vertices;
+    std::vector<size_t> m_indices;
+    std::vector<Layout> m_layouts;
+    glm::dmat4 m_matrix;
+};
+
+auto render_solid(const Solid &solid) -> auto {
+    for (const auto &layout : solid.get_layouts()) {
+        switch (layout.get_topology()) {
+        case PrimitivesTopology::Points:
+            break;
+        case PrimitivesTopology::Lines:
+            break;
+        case PrimitivesTopology::Triangles:
+            break;
+        }
+    }
+}
 
 auto Application::render_image() -> void {
     if (m_panel_width != m_image.get_width() ||
@@ -125,7 +178,10 @@ auto Application::render_image() -> void {
                        static_cast<size_t>(m_panel_height));
     }
 
-    m_image.clear({0.0, 0.0, test_blue, 1.0});
+    m_image.clear({0.0, 0.0, 0.0, 1.0});
+
+    Solid solid{};
+    render_solid(solid);
 
     p_texture->bind();
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8,
