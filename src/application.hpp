@@ -12,7 +12,7 @@ namespace Vis {
 
 class Application {
   public:
-    Application(const std::vector<std::string_view> &args);
+    Application(const std::vector<std::string_view> &args = {});
     ~Application();
 
     auto run() -> void;
