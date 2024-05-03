@@ -14,6 +14,7 @@ namespace Vis {
 
 Application::Application(const std::vector<std::string_view> &args) {
     if (handle_args(args)) {
+        m_exit = true;
         return;
     }
 
@@ -79,7 +80,7 @@ auto Application::arg_print_help() -> bool {
 }
 
 auto Application::arg_print_version() -> bool {
-    std::cout << "VIS version: 0.0.0\n";
+    std::cout << "VIS version: 0.0.0" << std::endl;
     return true;
 }
 auto Application::arg_resolution(const std::string_view resolution) -> void {
@@ -109,7 +110,7 @@ auto Application::arg_resolution(const std::string_view resolution) -> void {
     ss >> m_height;
 }
 
-auto Application::run_main_loop() -> void {
+auto Application::run() -> void {
     while (!p_window->should_close()) {
         Timer timer(&m_last_loop_time);
 
@@ -346,5 +347,7 @@ auto Application::make_gui(bool show_debug) -> void {
     ImGui::End();
     ImGui::PopStyleVar();
 }
+
+[[nodiscard]] auto Application::exit() const -> bool { return m_exit; }
 
 } // namespace Vis

@@ -15,11 +15,12 @@ class Application {
     Application(const std::vector<std::string_view> &args);
     ~Application();
 
-    auto run_main_loop() -> void;
+    auto run() -> void;
+    [[nodiscard]] auto exit() const -> bool;
 
   private:
-    [[nodiscard]] auto handle_args(const std::vector<std::string_view> &args)
-        -> bool;
+    [[nodiscard]] auto
+    handle_args(const std::vector<std::string_view> &args) -> bool;
     auto arg_print_help() -> bool;
     auto arg_print_version() -> bool;
     auto arg_resolution(std::string_view resolution) -> void;
@@ -38,6 +39,7 @@ class Application {
     float m_panel_height{0.0f};
     std::string m_title{"VIS"};
     bool m_alt_mode{false};
+    bool m_exit{false};
     double m_mouse_pos_x{0.0};
     double m_mouse_pos_y{0.0};
     Image m_image{};
