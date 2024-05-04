@@ -14,7 +14,7 @@ namespace Vis {
 
 // HACK: {
 struct SceneInfo {
-    glm::dmat4 model{1.0};
+    glm::dmat4 model_matrix{1.0};
     bool render_axis{true};
     bool render_grid{true};
     std::unique_ptr<Solid> simulated_solid{
@@ -26,7 +26,7 @@ struct SceneInfo {
 class Application {
   public:
     Application(const std::vector<std::string_view> &args = {});
-    ~Application();
+    ~Application() = default;
 
     auto run() -> void;
     [[nodiscard]] auto exit() const -> bool;
