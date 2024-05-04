@@ -2,9 +2,9 @@
 -- Globals ---------------------------------------------------------------------
 local g_build_type = 'Release'
 local g_executable = '.\\build\\VIS.exe'
-local g_executable_args = { '--help' }
-local g_cmake_cxx_compiler = 'g++'
-local g_cmake_c_compiler = 'gcc'
+local g_executable_args = {}
+local g_cmake_cxx_compiler = 'clang++'
+local g_cmake_c_compiler = 'clang'
 -- FncDefinitions --------------------------------------------------------------
 function in_args(a)
     for i,v in ipairs(arg) do

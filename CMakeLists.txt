@@ -31,6 +31,7 @@ set(P_SOURCE_FILES
     "./src/pipeline.cpp"
     "./src/texture.cpp"
     "./src/window.cpp"
+    "./src/solids/solid.cpp"
     )
 
 set(P_HEADER_FILES
@@ -45,6 +46,7 @@ set(P_HEADER_FILES
     "./src/utils/timer.hpp"
     "./src/utils/vertex.hpp"
     "./src/window.hpp"
+    "./src/solids/solid.hpp"
     )
 
 add_executable(${PROJECT_NAME} ${P_SOURCE_FILES})

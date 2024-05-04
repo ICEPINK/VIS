@@ -17,20 +17,14 @@ struct Layout {
     size_t count;
 };
 
-struct SolidData {
-    std::string name;
-    std::vector<Vertex> vertices;
-    std::vector<size_t> indices;
-    std::vector<Layout> layout;
-    glm::mat4 matrix;
-};
+struct Solid {
+    std::string name{""};
+    std::vector<Vertex> vertices{};
+    std::vector<size_t> indices{};
+    std::vector<Layout> layout{};
+    glm::dmat4 matrix{1.0};
 
-class Solid {
-  public:
-    Solid(const SolidData &data);
-
-  public:
-    SolidData data;
+    static auto Cube(const std::string_view name = "") -> Solid;
 };
 
 } // namespace Vis
