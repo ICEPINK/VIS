@@ -2,6 +2,8 @@
 
 #include "gui.hpp"
 #include "image.hpp"
+#include "pipeline.hpp"
+#include "solids/solid.hpp"
 #include "texture.hpp"
 #include "window.hpp"
 
@@ -9,6 +11,17 @@
 #include <vector>
 
 namespace Vis {
+
+// HACK: {
+struct SceneInfo {
+    glm::dmat4 model{1.0};
+    bool render_axis{true};
+    bool render_grid{true};
+    std::unique_ptr<Solid> simulated_solid{
+        std::make_unique<Solid>(Solid::Cube())};
+    // Camera camera{};
+};
+// HACK: }
 
 class Application {
   public:
@@ -27,6 +40,9 @@ class Application {
     auto make_gui(bool show_debug = false) -> void;
     auto handle_input() -> void;
     auto render_image() -> void;
+    auto render_solid(const Solid &solid) -> void;
+    auto render(std::vector<Vertex> &vertices, const Pipeline &pipeline,
+                const glm::dmat4 &matrix) -> void;
 
   private:
     std::shared_ptr<Glfw> p_glfw{nullptr};
@@ -44,6 +60,7 @@ class Application {
     double m_mouse_pos_y{0.0};
     Image m_image{};
     double m_last_loop_time{0};
+    SceneInfo m_scene_info{};
     double test_blue{0.0};
 };
 

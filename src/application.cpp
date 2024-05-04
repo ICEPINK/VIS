@@ -1,7 +1,6 @@
 #include "application.hpp"
 
 #include "glad.hpp"
-#include "pipeline.hpp"
 #include "utils/timer.hpp"
 
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -124,79 +123,28 @@ auto Application::run() -> void {
     }
 }
 
-class Solid {
-  public:
-    Solid() {
-        m_vertices = {
-            Vertex({-1.0, -1.0, -1.0, 1.0}, {0.0, 0.0, 0.0, 1.0}),
-            Vertex({1.0, -1.0, -1.0, 1.0}, {1.0, 0.0, 0.0, 1.0}),
-            Vertex({-1.0, 1.0, -1.0, 1.0}, {0.0, 1.0, 0.0, 1.0}),
-            Vertex({1.0, 1.0, -1.0, 1.0}, {1.0, 1.0, 0.0, 1.0}),
-            Vertex({-1.0, -1.0, 1.0, 1.0}, {0.0, 0.0, 1.0, 1.0}),
-            Vertex({1.0, -1.0, 1.0, 1.0}, {1.0, 0.0, 1.0, 1.0}),
-            Vertex({-1.0, 1.0, 1.0, 1.0}, {0.0, 1.0, 1.0, 1.0}),
-            Vertex({1.0, 1.0, 1.0, 1.0}, {1.0, 1.0, 1.0, 1.0}),
-        };
-        m_indices = {0, 1, 2, 3, 2, 1, 4, 5, 7, 7, 6, 4, 1, 5, 3, 7, 3, 5,
-                     4, 0, 6, 2, 6, 0, 2, 3, 6, 7, 6, 3, 4, 5, 0, 1, 5, 0};
-    }
-    ~Solid() = default;
-
-    auto get_vertices() const -> auto { return m_vertices; }
-    auto get_indices() const -> auto { return m_indices; }
-    auto get_matrix() const -> auto { return m_matrix; }
-
-  private:
-    std::vector<Vertex> m_vertices;
-    std::vector<size_t> m_indices;
-    glm::dmat4 m_matrix{1.0};
-};
-Image *g_image;
-auto render(std::vector<Vertex> &vertices, const Pipeline &pipeline) -> void {
+auto Application::render(std::vector<Vertex> &vertices,
+                         const Pipeline &pipeline,
+                         const glm::dmat4 &matrix) -> void {
+    pipeline.vertex_trasform(vertices, matrix);
     pipeline.dehomog(vertices);
-    pipeline.trasform_to_viewport(vertices, *g_image);
-    pipeline.rasterize(vertices, *g_image, pipeline.set_pixel);
+    pipeline.trasform_to_viewport(vertices, m_image);
+    pipeline.rasterize(vertices, m_image, pipeline.set_pixel);
 }
 
-Pipeline g_pipeline;
+auto Application::render_solid(const Solid &solid) -> void {
+    // HACK: {
 
-auto render_solid(const Solid &solid) -> void {
-    glm::dmat4 model{1.0};
+    // NOTE: model matrix
+    // NOTE: camera
+    // NOTE: -> view matrix
+    // NOTE: -> proj matrix
+    // NOTE: multiply matrices (proj * view * model * solid)
+    // NOTE: divide solid by topology layouts
+    // NOTE: setup current pipeline
 
-    glm::dvec3 pos{-5.0, 0.0, 0.0};
-    glm::dvec3 at{0.0, 0.0, 0.0};
-    glm::dvec3 up{0.0, 1.0, 0.0};
-    glm::dmat4 view = glm::lookAt(pos, at, up);
-
-    double fov{glm::pi<double>() / 180.0 * 70.0};
-    double aspect_ratio{g_image->get_width() /
-                        static_cast<double>(g_image->get_height())};
-    double near_plane{1.0};
-    double far_plane{20.0};
-    glm::dmat4 proj =
-        glm::perspective(fov, aspect_ratio, near_plane, far_plane);
-
-    glm::dmat4 matrix = proj * view * model * solid.get_matrix();
-
-    decltype(solid.get_vertices()) vertices;
-    vertices.reserve(solid.get_vertices().size());
-
-    for (const auto &vertex : solid.get_vertices()) {
-        vertices.push_back({matrix * vertex.pos, vertex.col, vertex.one});
-    }
-
-    const auto &indices = solid.get_indices();
-    for (size_t i = 0; i < indices.size(); i += 3) {
-        const auto &a = vertices[indices[i]];
-        const auto &b = vertices[indices[i + 1]];
-        const auto &c = vertices[indices[i + 2]];
-
-        std::vector<Vertex> triangle{a, b, c};
-        render(triangle, g_pipeline);
-    }
+    // HACK: }
 }
-
-Solid g_solid;
 
 auto Application::render_image() -> void {
     if (m_panel_width != m_image.get_width() ||
@@ -207,13 +155,42 @@ auto Application::render_image() -> void {
 
     m_image.clear({0.0, 0.0, 0.0, 1.0});
 
-    g_pipeline.dehomog = Alg::dehomog;
-    g_pipeline.trasform_to_viewport = Alg::trasform_to_viewport;
-    g_pipeline.rasterize = Alg::rasterize_triangle;
-    g_pipeline.set_pixel = Alg::set_pixel;
+    // HACK: {
+    render_solid(*m_scene_info.simulated_solid);
+    // HACK: ! ----- !
+    //
+    // Pipeline simulate_point;
+    // Pipeline simulate_line;
+    // Pipeline simulate_triangle;
+    // Pipeline render_point;
+    // Pipeline render_line;
+    // Pipeline render_triangle;
+    // Pipeline default_point;
+    // Pipeline default_line;
+    // Pipeline default_triangle;
+    // if (m_alt_mode) {
+    //     render_solid(g_solid);
+    // } else {
+    //     // simulate_solid(g_solid);
 
-    g_image = &m_image;
-    render_solid(g_solid);
+    //     render_solid(g_solid);
+    //     render_solid(g_solid);
+    //     render_solid(g_solid);
+    // }
+    //
+    // HACK: ! ----- !
+    //
+    // g_pipeline.vertex_trasform = [](std::vector<Vertex> &, const glm::dmat4
+    // &) {
+    // };
+    // g_pipeline.dehomog = Alg::dehomog;
+    // g_pipeline.trasform_to_viewport = Alg::trasform_to_viewport;
+    // g_pipeline.rasterize = Alg::rasterize_triangle;
+    // g_pipeline.set_pixel = Alg::set_pixel;
+
+    // g_image = &m_image;
+    // render_solid(g_solid);
+    // HACK: }
 
     p_texture->bind();
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8,

@@ -8,6 +8,7 @@
 namespace Vis {
 
 struct Pipeline {
+    void (*vertex_trasform)(std::vector<Vertex> &vertices,const glm::dmat4 &matrix);
     void (*dehomog)(std::vector<Vertex> &vertices);
     void (*trasform_to_viewport)(std::vector<Vertex> &vertices,
                                  const Image &image);
