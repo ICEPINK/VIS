@@ -44,12 +44,25 @@ Application::Application(const std::vector<std::string_view> &args) {
 
     ImGui::StyleColorsDark();
 
+    // HACK: Begin
     PerspectiveCameraInfo simulated_camera_info{};
     simulated_camera_info.width = static_cast<double>(m_width);
     simulated_camera_info.height = static_cast<double>(m_height);
     simulated_camera_info.position = {-5.0, 0.0, 0.0};
     m_scene_info.simulated_camera =
         std::make_unique<PerspectiveCamera>(simulated_camera_info);
+    m_scene_info.render_triangle_pipeline.trasform_vertices =
+        [](std::vector<Vertex> &vertices, const glm::dmat4 &matrix) {
+            for (auto &vertex : vertices) {
+                vertex.pos = matrix * vertex.pos;
+            }
+        };
+    m_scene_info.render_triangle_pipeline.trasform_to_viewport =
+        Alg::trasform_to_viewport;
+    m_scene_info.render_triangle_pipeline.rasterize = Alg::rasterize_triangle;
+    m_scene_info.render_triangle_pipeline.set_pixel = Alg::set_pixel_no_depth;
+    m_scene_info.render_triangle_pipeline.dehomog = Alg::dehomog_all;
+    // HACK: End
 }
 
 [[nodiscard]] auto
@@ -128,7 +141,7 @@ auto Application::run() -> void {
 auto Application::render(std::vector<Vertex> &vertices,
                          const Pipeline &pipeline,
                          const glm::dmat4 &matrix) -> void {
-    pipeline.vertex_trasform(vertices, matrix);
+    pipeline.trasform_vertices(vertices, matrix);
     pipeline.dehomog(vertices);
     pipeline.trasform_to_viewport(vertices, m_image);
     pipeline.rasterize(vertices, m_image, pipeline.set_pixel);
@@ -191,22 +204,11 @@ auto Application::render_image() -> void {
     }
     m_image.clear({0.0, 0.0, 0.0, 1.0});
 
-    // HACK: {
+    // HACK: Begin
     m_scene_info.simulated_camera->set_width(m_panel_width);
     m_scene_info.simulated_camera->set_height(m_panel_height);
-    m_scene_info.render_triangle_pipeline.vertex_trasform =
-        [](std::vector<Vertex> &vertices, const glm::dmat4 &matrix) {
-            for (auto &vertex : vertices) {
-                vertex.pos = matrix * vertex.pos;
-            }
-        };
-    m_scene_info.render_triangle_pipeline.trasform_to_viewport =
-        Alg::trasform_to_viewport;
-    m_scene_info.render_triangle_pipeline.rasterize = Alg::rasterize_triangle;
-    m_scene_info.render_triangle_pipeline.set_pixel = Alg::set_pixel;
-    m_scene_info.render_triangle_pipeline.dehomog = Alg::dehomog;
     render_solid(m_scene_info.simulated_solid);
-    // HACK: }
+    // HACK: End
 
     p_texture->bind();
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8,
@@ -365,6 +367,27 @@ auto Application::make_gui(bool show_debug) -> void {
     ImGui::SeparatorText("Test variables");
     ImGui::Text("test_blue: %f", test_blue);
     ImGui::End();
+
+    ImGui::Begin("Settings");
+    if (ImGui::CollapsingHeader("Render triangle pipeline")) {
+        constexpr std::array<const char *, 2> dehomog_text = {
+            "dehomog_all",
+            "dehomog_pos",
+        };
+        enum class Dehomog { DEHOMOG_ALL, DEHOMOG_POS };
+        static int dehomog{static_cast<int>(Dehomog::DEHOMOG_ALL)};
+        ImGui::Combo("Dehomog", &dehomog, dehomog_text.data(),
+                     static_cast<int>(dehomog_text.size()));
+        switch (static_cast<Dehomog>(dehomog)) {
+        case Dehomog::DEHOMOG_ALL: {
+            m_scene_info.render_triangle_pipeline.dehomog = Alg::dehomog_all;
+        } break;
+        case Dehomog::DEHOMOG_POS: {
+            m_scene_info.render_triangle_pipeline.dehomog = Alg::dehomog_pos;
+        } break;
+        }
+        ImGui::End();
+    }
 
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, {0.0, 0.0});
     ImGui::Begin("Viewport");

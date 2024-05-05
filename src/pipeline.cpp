@@ -3,11 +3,18 @@
 namespace Vis {
 namespace Alg {
 
-auto dehomog(std::vector<Vertex> &vertices) -> void {
+auto dehomog_all(std::vector<Vertex> &vertices) -> void {
     for (auto &vertex : vertices) {
         const auto w = vertex.pos.w;
-        vertex.pos = {vertex.pos.x / w, vertex.pos.y / w, vertex.pos.z / w,
-                      1.0};
+        vertex.pos /= w;
+        vertex.col /= w;
+        vertex.one /= w;
+    }
+}
+auto dehomog_pos(std::vector<Vertex> &vertices) -> void {
+    for (auto &vertex : vertices) {
+        const auto w = vertex.pos.w;
+        vertex.pos /= w;
     }
 }
 
@@ -19,9 +26,22 @@ auto trasform_to_viewport(std::vector<Vertex> &vertices,
     }
 }
 
+// auto rasterize_line(std::vector<Vertex> &vertices, Image &image,
+//                     void (*set_pixel)(Vertex &vertex,
+//                                       Image &image)) -> void {
+//     // TODO: Missing
+// }
+auto rasterize_point(std::vector<Vertex> &vertices, Image &image,
+                     void (*set_pixel)(Vertex &vertex, Image &image)) -> void {
+    for (auto &vertex : vertices) {
+        set_pixel(vertex, image);
+    }
+}
+
 auto rasterize_triangle(std::vector<Vertex> &vertices, Image &image,
-                        void (*set_pixel)(const Vertex &vertex,
+                        void (*set_pixel)(Vertex &vertex,
                                           Image &image)) -> void {
+    // TODO: Review algorithm
     auto width = image.get_width();
     auto height = image.get_height();
 
@@ -111,10 +131,11 @@ auto rasterize_triangle(std::vector<Vertex> &vertices, Image &image,
     }
 };
 
-auto set_pixel(const Vertex &vertex, Image &image) -> void {
+auto set_pixel_no_depth(Vertex &vertex, Image &image) -> void {
     if (vertex.pos.x < 0 || vertex.pos.y < 0) {
         return;
     }
+    vertex.col = vertex.col * 1.0/vertex.one;
     image.set_pixel(static_cast<size_t>(vertex.pos.x),
                     static_cast<size_t>(vertex.pos.y), vertex.col);
 }
