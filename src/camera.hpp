@@ -1,64 +1,58 @@
 #pragma once
-
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
+#include <glm/ext.hpp>
 #include <glm/glm.hpp>
-
-#include "solids/solid.hpp"
-
 namespace Vis {
-
 class Camera {
   public:
-    virtual ~Camera() {}
-
-    virtual glm::mat4 get_view_matrix() const = 0;
-    virtual glm::mat4 get_projection_matrix() const = 0;
-    virtual Solid generate_solid() const = 0;
+    virtual ~Camera() = default;
+    virtual auto get_view() const -> glm::dmat4 = 0;
+    virtual auto get_projection() const -> glm::dmat4 = 0;
+    virtual auto set_width(const double widht) -> void = 0;
+    virtual auto set_height(const double height) -> void = 0;
+    virtual auto move_forward(const double distance) -> void = 0;
+    virtual auto move_backward(const double distance) -> void = 0;
+    virtual auto move_left(const double distance) -> void = 0;
+    virtual auto move_right(const double distance) -> void = 0;
+    virtual auto move_up(const double distance) -> void = 0;
+    virtual auto move_down(const double distance) -> void = 0;
+    virtual auto rotate_up(const double angle) -> void = 0;
+    virtual auto rotate_down(const double angle) -> void = 0;
+    virtual auto rotate_left(const double angle) -> void = 0;
+    virtual auto rotate_right(const double angle) -> void = 0;
 };
-
-struct PerspectiveData {
-    glm::vec3 position;
-    glm::vec2 rotation;
-    float near_plane;
-    float far_plane;
-    float fov;
-    float aspect_ratio;
+struct PerspectiveCameraInfo {
+    double width{1};
+    double height{1};
+    double far_plane{10.0};
+    double fov{1.5};
+    double near_plane{1.0};
+    glm::dvec3 direction{1.0, 0.0, 0.0};
+    glm::dvec3 position{0.0, 0.0, 0.0};
+    glm::dvec3 up{0.0, 0.0, 1.0};
 };
-
 class PerspectiveCamera : public Camera {
-
   public:
-    PerspectiveCamera(const PerspectiveData &data);
-
-    void move_forward(const float distance);
-    void move_backward(const float distance);
-    void move_left(const float distance);
-    void move_right(const float distance);
-    void move_up(const float distance);
-    void move_down(const float distance);
-    void rotate_horizon(const float angle);
-    void rotate_vertical(const float angle);
-    virtual Solid generate_solid() const override;
-
-    virtual glm::mat4 get_view_matrix() const override;
-    virtual glm::mat4 get_projection_matrix() const override;
-
-    void set_position(const glm::vec3 &fov);
-    void set_near_plane(const float near);
-    void set_far_plane(const float far);
-    void set_fov(const float fov);
-    void set_aspect_ratio(const float fov);
+    PerspectiveCamera(const PerspectiveCameraInfo &info);
+    ~PerspectiveCamera() = default;
+    auto get_view() const -> glm::dmat4 override;
+    auto get_projection() const -> glm::dmat4 override;
+    auto set_width(const double widht) -> void override;
+    auto set_height(const double height) -> void override;
+    auto move_forward(const double distance) -> void override;
+    auto move_backward(const double distance) -> void override;
+    auto move_left(const double distance) -> void override;
+    auto move_right(const double distance) -> void override;
+    auto move_up(const double distance) -> void override;
+    auto move_down(const double distance) -> void override;
+    auto rotate_up(const double angle) -> void override;
+    auto rotate_down(const double angle) -> void override;
+    auto rotate_left(const double angle) -> void override;
+    auto rotate_right(const double angle) -> void override;
 
   private:
-    glm::vec3 calculate_direction() const;
-
-  private:
-    PerspectiveData m_data;
-    glm::vec3 m_up_direction;
-    glm::vec3 m_look_direction;
+    PerspectiveCameraInfo m_info;
 };
-
-struct OrthographicData {};
-class OrthographicCamera : public Camera {};
-
+// TODO: Orthogonal Camera
+// class OrthogonalCamera : public Camera {};
 } // namespace Vis

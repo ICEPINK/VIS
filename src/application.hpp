@@ -1,5 +1,6 @@
 #pragma once
 // src includes
+#include "camera.hpp"
 #include "gui.hpp"
 #include "image.hpp"
 #include "pipeline.hpp"
@@ -15,111 +16,6 @@
 #include <string_view>
 #include <vector>
 namespace Vis {
-// HACK: {
-class Camera {
-  public:
-    virtual ~Camera() = default;
-    virtual auto get_view() const -> glm::dmat4 = 0;
-    virtual auto get_projection() const -> glm::dmat4 = 0;
-    virtual auto set_width(const double widht) -> void = 0;
-    virtual auto set_height(const double height) -> void = 0;
-    virtual auto move_forward(const double distance) -> void = 0;
-    virtual auto move_backward(const double distance) -> void = 0;
-    virtual auto move_left(const double distance) -> void = 0;
-    virtual auto move_right(const double distance) -> void = 0;
-    virtual auto move_up(const double distance) -> void = 0;
-    virtual auto move_down(const double distance) -> void = 0;
-    virtual auto rotate_up(const double angle) -> void = 0;
-    virtual auto rotate_down(const double angle) -> void = 0;
-    virtual auto rotate_left(const double angle) -> void = 0;
-    virtual auto rotate_right(const double angle) -> void = 0;
-};
-
-struct PerspectiveCameraInfo {
-    double width{1};
-    double height{1};
-    double far_plane{10.0};
-    double fov{1.5};
-    double near_plane{1.0};
-    glm::dvec3 direction{1.0, 0.0, 0.0};
-    glm::dvec3 position{0.0, 0.0, 0.0};
-    glm::dvec3 up{0.0, 0.0, 1.0};
-};
-
-class PerspectiveCamera : public Camera {
-  public:
-    PerspectiveCamera(const PerspectiveCameraInfo &info) : m_info(info) {}
-    ~PerspectiveCamera() = default;
-    auto get_view() const -> glm::dmat4 override {
-        return glm::lookAt(m_info.position, m_info.direction + m_info.position,
-                           m_info.up);
-    }
-    auto get_projection() const -> glm::dmat4 override {
-        return glm::perspective(m_info.fov, m_info.width / m_info.height,
-                                m_info.near_plane, m_info.far_plane);
-    }
-    auto set_width(const double widht) -> void override {
-        m_info.width = widht;
-    }
-    auto set_height(const double height) -> void override {
-        m_info.height = height;
-    }
-    auto move_forward(const double distance) -> void override {
-        m_info.position = m_info.position + m_info.direction * distance;
-    }
-    auto move_backward(const double distance) -> void override {
-        m_info.position = m_info.position - m_info.direction * distance;
-    }
-    auto move_left(const double distance) -> void override {
-        m_info.position =
-            m_info.position -
-            glm::normalize(glm::cross(m_info.direction, m_info.up)) * distance;
-    }
-    auto move_right(const double distance) -> void override {
-        m_info.position =
-            m_info.position +
-            glm::normalize(glm::cross(m_info.direction, m_info.up)) * distance;
-    }
-    auto move_up(const double distance) -> void override {
-        m_info.position = m_info.position + m_info.up * distance;
-    }
-    auto move_down(const double distance) -> void override {
-        m_info.position = m_info.position - m_info.up * distance;
-    }
-    auto rotate_up(const double angle) -> void override {
-        glm::dquat rotation = glm::angleAxis(
-            angle, glm::normalize(glm::cross(m_info.direction, m_info.up)));
-        auto new_direction = rotation * m_info.direction;
-        // WARN: Beware of big angles
-        if (new_direction.z < 0.99999 && new_direction.z > -0.99999) {
-            m_info.direction = new_direction;
-        }
-    }
-    auto rotate_down(const double angle) -> void override {
-        glm::dquat rotation = glm::angleAxis(
-            -angle, glm::normalize(glm::cross(m_info.direction, m_info.up)));
-        auto new_direction = rotation * m_info.direction;
-        // WARN: Beware of big angles
-        if (new_direction.z < 0.99999 && new_direction.z > -0.99999) {
-            m_info.direction = new_direction;
-        }
-    }
-    auto rotate_left(const double angle) -> void override {
-        glm::dquat rotation = glm::angleAxis(angle, m_info.up);
-        m_info.direction = rotation * m_info.direction;
-    }
-    auto rotate_right(const double angle) -> void override {
-        glm::dquat rotation = glm::angleAxis(-angle, m_info.up);
-        m_info.direction = rotation * m_info.direction;
-    }
-
-  private:
-    PerspectiveCameraInfo m_info;
-};
-
-// TODO: Orthogonal Camera
-// class OrthogonalCamera : public Camera {};
-
 struct SceneInfo {
     Solid simulated_solid{Solid::Cube()};
     bool render_axis{true};
@@ -132,8 +28,6 @@ struct SceneInfo {
     Pipeline render_line_pipeline{};
     Pipeline render_point_pipeline{};
 };
-// HACK: }
-
 class Application {
   public:
     Application(const std::vector<std::string_view> &args = {});

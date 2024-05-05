@@ -1,16 +1,14 @@
 #include "application.hpp"
-
+// src includes
 #include "glad.hpp"
 #include "utils/timer.hpp"
-
+// lib includes
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/ext.hpp>
 #include <glm/glm.hpp>
-
+// std includes
 #include <iostream>
-
 namespace Vis {
-
 Application::Application(const std::vector<std::string_view> &args) {
     if (handle_args(args)) {
         m_exit = true;

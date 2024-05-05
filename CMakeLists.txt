@@ -28,25 +28,27 @@ set(P_SOURCE_FILES
     "./src/gui.cpp"
     "./src/image.cpp"
     "./src/main.cpp"
+    "./src/perspective_camera.cpp"
     "./src/pipeline.cpp"
+    "./src/solids/solid.cpp"
     "./src/texture.cpp"
     "./src/window.cpp"
-    "./src/solids/solid.cpp"
     )
 
 set(P_HEADER_FILES
     "./src/application.hpp"
+    "./src/camera.hpp"
     "./src/glad.hpp"
     "./src/glfw.hpp"
     "./src/gui.hpp"
     "./src/image.hpp"
     "./src/main.hpp"
     "./src/pipeline.hpp"
+    "./src/solids/solid.hpp"
     "./src/texture.hpp"
     "./src/utils/timer.hpp"
     "./src/utils/vertex.hpp"
     "./src/window.hpp"
-    "./src/solids/solid.hpp"
     )
 
 add_executable(${PROJECT_NAME} ${P_SOURCE_FILES})
