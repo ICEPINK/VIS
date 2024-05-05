@@ -47,8 +47,8 @@ Application::Application(const std::vector<std::string_view> &args) {
     ImGui::StyleColorsDark();
 
     PerspectiveCameraInfo simulated_camera_info{};
-    simulated_camera_info.aspect_ratio =
-        m_width / static_cast<double>(m_height);
+    simulated_camera_info.width = m_width;
+    simulated_camera_info.height = m_height;
     simulated_camera_info.position = {-5.0, 0.0, 0.0};
     m_scene_info.simulated_camera =
         std::make_unique<PerspectiveCamera>(simulated_camera_info);
@@ -194,8 +194,8 @@ auto Application::render_image() -> void {
     m_image.clear({0.0, 0.0, 0.0, 1.0});
 
     // HACK: {
-    ((PerspectiveCamera *)&(*m_scene_info.simulated_camera))
-        ->set_aspect_ratio(m_panel_width/ static_cast<double>(m_panel_height));
+    m_scene_info.simulated_camera->set_width(m_panel_width);
+    m_scene_info.simulated_camera->set_height(m_panel_height);
     m_scene_info.render_triangle_pipeline.vertex_trasform =
         [](std::vector<Vertex> &vertices, const glm::dmat4 &matrix) {
             for (auto &vertex : vertices) {

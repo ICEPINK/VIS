@@ -12,7 +12,6 @@
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/ext/quaternion_trigonometric.hpp>
 // std includes
-#include <iostream>
 #include <string_view>
 #include <vector>
 namespace Vis {
@@ -20,8 +19,10 @@ namespace Vis {
 class Camera {
   public:
     virtual ~Camera() = default;
-    virtual auto get_view() -> glm::dmat4 = 0;
-    virtual auto get_projection() -> glm::dmat4 = 0;
+    virtual auto get_view() const -> glm::dmat4 = 0;
+    virtual auto get_projection() const -> glm::dmat4 = 0;
+    virtual auto set_width(const double widht) -> void = 0;
+    virtual auto set_height(const double height) -> void = 0;
     virtual auto move_forward(const double distance) -> void = 0;
     virtual auto move_backward(const double distance) -> void = 0;
     virtual auto move_left(const double distance) -> void = 0;
@@ -35,7 +36,8 @@ class Camera {
 };
 
 struct PerspectiveCameraInfo {
-    double aspect_ratio{1.0};
+    double width{1};
+    double height{1};
     double far_plane{10.0};
     double fov{1.5};
     double near_plane{1.0};
@@ -48,17 +50,20 @@ class PerspectiveCamera : public Camera {
   public:
     PerspectiveCamera(const PerspectiveCameraInfo &info) : m_info(info) {}
     ~PerspectiveCamera() = default;
-    auto get_view() -> glm::dmat4 override {
+    auto get_view() const -> glm::dmat4 override {
         return glm::lookAt(m_info.position, m_info.direction + m_info.position,
                            m_info.up);
     }
-    auto get_projection() -> glm::dmat4 override {
-        return glm::perspective(m_info.fov, m_info.aspect_ratio,
+    auto get_projection() const -> glm::dmat4 override {
+        return glm::perspective(m_info.fov, m_info.width / m_info.height,
                                 m_info.near_plane, m_info.far_plane);
     }
-    auto set_aspect_ratio(double aspect_ratio) -> void {
-        m_info.aspect_ratio = aspect_ratio;
-    };
+    auto set_width(const double widht) -> void override {
+        m_info.width = widht;
+    }
+    auto set_height(const double height) -> void override {
+        m_info.height = height;
+    }
     auto move_forward(const double distance) -> void override {
         m_info.position = m_info.position + m_info.direction * distance;
     }
@@ -66,12 +71,14 @@ class PerspectiveCamera : public Camera {
         m_info.position = m_info.position - m_info.direction * distance;
     }
     auto move_left(const double distance) -> void override {
-        m_info.position = m_info.position -
-                          glm::cross(m_info.direction, m_info.up) * distance;
+        m_info.position =
+            m_info.position -
+            glm::normalize(glm::cross(m_info.direction, m_info.up)) * distance;
     }
     auto move_right(const double distance) -> void override {
-        m_info.position = m_info.position +
-                          glm::cross(m_info.direction, m_info.up) * distance;
+        m_info.position =
+            m_info.position +
+            glm::normalize(glm::cross(m_info.direction, m_info.up)) * distance;
     }
     auto move_up(const double distance) -> void override {
         m_info.position = m_info.position + m_info.up * distance;
