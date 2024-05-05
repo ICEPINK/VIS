@@ -45,8 +45,8 @@ Application::Application(const std::vector<std::string_view> &args) {
     ImGui::StyleColorsDark();
 
     PerspectiveCameraInfo simulated_camera_info{};
-    simulated_camera_info.width = m_width;
-    simulated_camera_info.height = m_height;
+    simulated_camera_info.width = static_cast<double>(m_width);
+    simulated_camera_info.height = static_cast<double>(m_height);
     simulated_camera_info.position = {-5.0, 0.0, 0.0};
     m_scene_info.simulated_camera =
         std::make_unique<PerspectiveCamera>(simulated_camera_info);
