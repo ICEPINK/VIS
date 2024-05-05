@@ -20,7 +20,7 @@ auto Glad::print_gl_message([[maybe_unused]] GLenum source,
                             [[maybe_unused]] const void *userParam) -> void {
     switch (type) {
     case GL_DEBUG_TYPE_ERROR:
-        std::cout << "OpenGL (ERROR): " << message << '\n';
+        std::cout << "OpenGL(Error): " << message << '\n';
         break;
     case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
         // std::cout << "OpenGL (DEPRECATED_BEHAVIOR): " << message << '\n';

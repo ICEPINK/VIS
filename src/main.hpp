@@ -8,16 +8,16 @@ namespace Vis {
     try {
         throw;
     } catch (const std::runtime_error &e) {
-        std::cout << "ERROR: " << e.what() << '\n';
+        std::cout << "Error: " << e.what() << '\n';
     } catch (const std::out_of_range &e) {
-        std::cout << "ERROR: " << e.what() << " out of range!" << '\n';
+        std::cout << "Error: " << e.what() << " out of range!" << '\n';
     } catch (const std::exception &e) {
-        std::cout << "ERROR: " << e.what() << '\n';
+        std::cout << "Error: " << e.what() << '\n';
     } catch (const int &e) {
-        std::cout << "ERROR: Int exception (" << e << ")!\n";
+        std::cout << "Error: Int exception (" << e << ")!\n";
         return e;
     } catch (...) {
-        std::cout << "ERROR: Not handled!!!\n";
+        std::cout << "Error: Not handled!!!\n";
     }
     return EXIT_FAILURE;
 }

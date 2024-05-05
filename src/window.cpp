@@ -17,10 +17,10 @@ Window::Window(const WindowInfo &info, std::shared_ptr<Glfw> glfw)
 
     if (!p_window) {
         if (!(info.width > 0)) {
-            std::cout << "WARN: Window width must be greater than zero.\n";
+            std::cout << "Warning: Window width must be greater than zero.\n";
         }
         if (!(info.height > 0)) {
-            std::cout << "WARN: Window height must be greater than zero.\n";
+            std::cout << "Warning: Window height must be greater than zero.\n";
         }
         throw std::runtime_error("Window creation failed!");
     }
