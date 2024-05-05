@@ -72,6 +72,9 @@ struct SceneInfo {
     glm::dmat4 simulated_model_matrix{1.0};
     std::unique_ptr<Camera> camera{nullptr};
     std::unique_ptr<Camera> simulated_camera{nullptr};
+    Pipeline render_triangle_pipeline{};
+    Pipeline render_line_pipeline{};
+    Pipeline render_point_pipeline{};
 };
 // HACK: }
 

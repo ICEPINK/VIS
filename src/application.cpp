@@ -130,53 +130,52 @@ auto Application::render(std::vector<Vertex> &vertices,
 }
 
 auto Application::render_solid([[maybe_unused]] const Solid &solid) -> void {
-    // HACK: {
-
-    // NOTE: model matrix
-    // NOTE: camera
-    // NOTE: -> view matrix
-    // NOTE: -> proj matrix
-    // NOTE: multiply matrices (proj * view * model * solid)
-    // NOTE: divide solid by topology layouts
-    // NOTE: setup current pipeline
-
-    Pipeline pipeline{};
-    pipeline.vertex_trasform = [](std::vector<Vertex> &vertices,
-                                  const glm::dmat4 &matrix) {
-        for (auto &vertex : vertices) {
-            vertex.pos = matrix * vertex.pos;
-        }
-    };
-    pipeline.trasform_to_viewport = Alg::trasform_to_viewport;
-    pipeline.rasterize = Alg::rasterize_triangle;
-    pipeline.set_pixel = Alg::set_pixel;
-    pipeline.dehomog = Alg::dehomog;
     auto matrix = m_scene_info.simulated_camera->get_projection() *
                   m_scene_info.simulated_camera->get_view() *
                   m_scene_info.model_matrix * solid.matrix;
     for (const auto &layout : solid.layout) {
         switch (layout.topology) {
         case Topology::Point: {
-            // TODO: rasterize points
+            constexpr size_t vertices_per_primitie = 1;
+            for (size_t i = layout.start;
+                 i < layout.start + layout.count * vertices_per_primitie;
+                 i += vertices_per_primitie) {
+                std::vector<Vertex> point;
+                point.reserve(vertices_per_primitie);
+                for (size_t j = 0; j < vertices_per_primitie; ++j) {
+                    point.push_back(solid.vertices[solid.indices[i + j]]);
+                }
+                render(point, m_scene_info.render_point_pipeline, matrix);
+            }
         } break;
         case Topology::Line: {
-            // TODO: rasterize lines
+            constexpr size_t vertices_per_primitie = 2;
+            for (size_t i = layout.start;
+                 i < layout.start + layout.count * vertices_per_primitie;
+                 i += vertices_per_primitie) {
+                std::vector<Vertex> line;
+                line.reserve(vertices_per_primitie);
+                for (size_t j = 0; j < vertices_per_primitie; ++j) {
+                    line.push_back(solid.vertices[solid.indices[i + j]]);
+                }
+                render(line, m_scene_info.render_line_pipeline, matrix);
+            }
         } break;
         case Topology::Triangle: {
-            for (size_t i = layout.start; i < layout.start + layout.count * 3;
-                 i += 3) {
+            constexpr size_t vertices_per_primitie = 3;
+            for (size_t i = layout.start;
+                 i < layout.start + layout.count * vertices_per_primitie;
+                 i += vertices_per_primitie) {
                 std::vector<Vertex> triangle;
-                triangle.reserve(3);
-                triangle.push_back(solid.vertices[solid.indices[i]]);
-                triangle.push_back(solid.vertices[solid.indices[i + 1]]);
-                triangle.push_back(solid.vertices[solid.indices[i + 2]]);
-                // FIX: replace {} with actual pipeline!!!
-                render(triangle, pipeline, matrix);
+                triangle.reserve(vertices_per_primitie);
+                for (size_t j = 0; j < vertices_per_primitie; ++j) {
+                    triangle.push_back(solid.vertices[solid.indices[i + j]]);
+                }
+                render(triangle, m_scene_info.render_triangle_pipeline, matrix);
             }
         } break;
         }
     }
-    // HACK: }
 }
 
 auto Application::render_image() -> void {
@@ -189,6 +188,17 @@ auto Application::render_image() -> void {
     m_image.clear({0.0, 0.0, 0.0, 1.0});
 
     // HACK: {
+    m_scene_info.render_triangle_pipeline.vertex_trasform =
+        [](std::vector<Vertex> &vertices, const glm::dmat4 &matrix) {
+            for (auto &vertex : vertices) {
+                vertex.pos = matrix * vertex.pos;
+            }
+        };
+    m_scene_info.render_triangle_pipeline.trasform_to_viewport =
+        Alg::trasform_to_viewport;
+    m_scene_info.render_triangle_pipeline.rasterize = Alg::rasterize_triangle;
+    m_scene_info.render_triangle_pipeline.set_pixel = Alg::set_pixel;
+    m_scene_info.render_triangle_pipeline.dehomog = Alg::dehomog;
     PerspectiveCameraInfo info{};
     info.aspect_ratio = m_width / static_cast<double>(m_height);
     info.position = {-5.0, 0.0, 0.0};
