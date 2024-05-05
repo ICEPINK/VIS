@@ -47,8 +47,6 @@ Application::Application(const std::vector<std::string_view> &args) {
     ImGui::StyleColorsDark();
 }
 
-Application::~Application() {}
-
 [[nodiscard]] auto
 Application::handle_args(const std::vector<std::string_view> &args) -> bool {
     [[maybe_unused]] size_t i = 0;
@@ -117,7 +115,6 @@ auto Application::run() -> void {
         make_gui(true);
         render_image();
 
-        glClear(GL_COLOR_BUFFER_BIT);
         p_gui->render();
         p_window->swap_buffers();
     }
@@ -132,7 +129,7 @@ auto Application::render(std::vector<Vertex> &vertices,
     pipeline.rasterize(vertices, m_image, pipeline.set_pixel);
 }
 
-auto Application::render_solid(const Solid &solid) -> void {
+auto Application::render_solid([[maybe_unused]] const Solid &solid) -> void {
     // HACK: {
 
     // NOTE: model matrix
@@ -143,6 +140,42 @@ auto Application::render_solid(const Solid &solid) -> void {
     // NOTE: divide solid by topology layouts
     // NOTE: setup current pipeline
 
+    Pipeline pipeline{};
+    pipeline.vertex_trasform = [](std::vector<Vertex> &vertices,
+                                  const glm::dmat4 &matrix) {
+        for (auto &vertex : vertices) {
+            vertex.pos = matrix * vertex.pos;
+        }
+    };
+    pipeline.trasform_to_viewport = Alg::trasform_to_viewport;
+    pipeline.rasterize = Alg::rasterize_triangle;
+    pipeline.set_pixel = Alg::set_pixel;
+    pipeline.dehomog = Alg::dehomog;
+    auto matrix = m_scene_info.simulated_camera->get_projection() *
+                  m_scene_info.simulated_camera->get_view() *
+                  m_scene_info.model_matrix * solid.matrix;
+    for (const auto &layout : solid.layout) {
+        switch (layout.topology) {
+        case Topology::Point: {
+            // TODO: rasterize points
+        } break;
+        case Topology::Line: {
+            // TODO: rasterize lines
+        } break;
+        case Topology::Triangle: {
+            for (size_t i = layout.start; i < layout.start + layout.count * 3;
+                 i += 3) {
+                std::vector<Vertex> triangle;
+                triangle.reserve(3);
+                triangle.push_back(solid.vertices[solid.indices[i]]);
+                triangle.push_back(solid.vertices[solid.indices[i + 1]]);
+                triangle.push_back(solid.vertices[solid.indices[i + 2]]);
+                // FIX: replace {} with actual pipeline!!!
+                render(triangle, pipeline, matrix);
+            }
+        } break;
+        }
+    }
     // HACK: }
 }
 
@@ -156,7 +189,11 @@ auto Application::render_image() -> void {
     m_image.clear({0.0, 0.0, 0.0, 1.0});
 
     // HACK: {
-    render_solid(*m_scene_info.simulated_solid);
+    PerspectiveCameraInfo info{};
+    info.aspect_ratio = m_width / static_cast<double>(m_height);
+    info.position = {-5.0, 0.0, 0.0};
+    m_scene_info.simulated_camera = std::make_unique<PerspectiveCamera>(info);
+    render_solid(m_scene_info.simulated_solid);
     // HACK: ! ----- !
     //
     // Pipeline simulate_point;
@@ -180,7 +217,8 @@ auto Application::render_image() -> void {
     //
     // HACK: ! ----- !
     //
-    // g_pipeline.vertex_trasform = [](std::vector<Vertex> &, const glm::dmat4
+    // g_pipeline.vertex_trasform = [](std::vector<Vertex> &, const
+    // glm::dmat4
     // &) {
     // };
     // g_pipeline.dehomog = Alg::dehomog;

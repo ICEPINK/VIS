@@ -26,7 +26,7 @@ class Timer {
         m_start = std::chrono::high_resolution_clock::now();
     }
     [[nodiscard]] auto duration() -> double {
-        const auto end{std::chrono::steady_clock::now()};
+        const auto end{std::chrono::high_resolution_clock::now()};
         std::chrono::duration<double> duration{end - m_start};
         return duration.count();
     }

@@ -48,11 +48,15 @@ function run()
 end
 -- Handle Args -----------------------------------------------------------------
 print('')
+if in_args('--release') then
+    g_build_type = 'Release'
+end
 if in_args('--debug') then
     g_build_type = 'Debug'
 end
-if in_args('--release') then
-    g_build_type = 'Release'
+if in_args('--run-only') then
+    if not run() then return end
+    return
 end
 if in_args('--run') then
     if not setup() then return end
