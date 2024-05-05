@@ -35,9 +35,9 @@ struct Vertex {
 
     constexpr inline static Vertex interpolate(const double t, const Vertex &a,
                                                const Vertex &b) {
-        if (t < 0.0) {
+        if (t <= 0.0) {
             return a;
-        } else if (t > 1.0) {
+        } else if (t >= 1.0) {
             return b;
         } else {
             return (a * (1 - t)) + (b * t);
