@@ -1,34 +1,37 @@
 #pragma once
-
+// src includes
 #include "gui.hpp"
 #include "image.hpp"
 #include "pipeline.hpp"
 #include "solids/solid.hpp"
 #include "texture.hpp"
 #include "window.hpp"
-
-#include "glm/ext/matrix_clip_space.hpp"
-#include "glm/ext/matrix_transform.hpp"
-
+// lib includes
+#include <glm/ext.hpp>
+#include <glm/ext/matrix_clip_space.hpp>
+#include <glm/ext/matrix_transform.hpp>
+#include <glm/ext/quaternion_trigonometric.hpp>
+// std includes
+#include <iostream>
 #include <string_view>
 #include <vector>
-
 namespace Vis {
-
 // HACK: {
 class Camera {
   public:
     virtual ~Camera() = default;
     virtual auto get_view() -> glm::dmat4 = 0;
     virtual auto get_projection() -> glm::dmat4 = 0;
-
-    // TODO: virtual moves for Camera
-    // virtual auto move_forward() -> void = 0;
-    // virtual auto move_back() -> void = 0;
-    // virtual auto move_left() -> void = 0;
-    // virtual auto move_right() -> void = 0;
-    // virtual auto move_up() -> void = 0;
-    // virtual auto move_down() -> void = 0;
+    virtual auto move_forward(const double distance) -> void = 0;
+    virtual auto move_backward(const double distance) -> void = 0;
+    virtual auto move_left(const double distance) -> void = 0;
+    virtual auto move_right(const double distance) -> void = 0;
+    virtual auto move_up(const double distance) -> void = 0;
+    virtual auto move_down(const double distance) -> void = 0;
+    virtual auto rotate_up(const double angle) -> void = 0;
+    virtual auto rotate_down(const double angle) -> void = 0;
+    virtual auto rotate_left(const double angle) -> void = 0;
+    virtual auto rotate_right(const double angle) -> void = 0;
 };
 
 struct PerspectiveCameraInfo {
@@ -46,8 +49,8 @@ class PerspectiveCamera : public Camera {
     PerspectiveCamera(const PerspectiveCameraInfo &info) : m_info(info) {}
     ~PerspectiveCamera() = default;
     auto get_view() -> glm::dmat4 override {
-        // WARN: Beware of direction
-        return glm::lookAt(m_info.position, m_info.direction, m_info.up);
+        return glm::lookAt(m_info.position, m_info.direction + m_info.position,
+                           m_info.up);
     }
     auto get_projection() -> glm::dmat4 override {
         return glm::perspective(m_info.fov, m_info.aspect_ratio,
@@ -56,6 +59,52 @@ class PerspectiveCamera : public Camera {
     auto set_aspect_ratio(double aspect_ratio) -> void {
         m_info.aspect_ratio = aspect_ratio;
     };
+    auto move_forward(const double distance) -> void override {
+        m_info.position = m_info.position + m_info.direction * distance;
+    }
+    auto move_backward(const double distance) -> void override {
+        m_info.position = m_info.position - m_info.direction * distance;
+    }
+    auto move_left(const double distance) -> void override {
+        m_info.position = m_info.position -
+                          glm::cross(m_info.direction, m_info.up) * distance;
+    }
+    auto move_right(const double distance) -> void override {
+        m_info.position = m_info.position +
+                          glm::cross(m_info.direction, m_info.up) * distance;
+    }
+    auto move_up(const double distance) -> void override {
+        m_info.position = m_info.position + m_info.up * distance;
+    }
+    auto move_down(const double distance) -> void override {
+        m_info.position = m_info.position - m_info.up * distance;
+    }
+    auto rotate_up(const double angle) -> void override {
+        glm::dquat rotation = glm::angleAxis(
+            angle, glm::normalize(glm::cross(m_info.direction, m_info.up)));
+        auto new_direction = rotation * m_info.direction;
+        // WARN: Beware of big angles
+        if (new_direction.z < 0.99999 && new_direction.z > -0.99999) {
+            m_info.direction = new_direction;
+        }
+    }
+    auto rotate_down(const double angle) -> void override {
+        glm::dquat rotation = glm::angleAxis(
+            -angle, glm::normalize(glm::cross(m_info.direction, m_info.up)));
+        auto new_direction = rotation * m_info.direction;
+        // WARN: Beware of big angles
+        if (new_direction.z < 0.99999 && new_direction.z > -0.99999) {
+            m_info.direction = new_direction;
+        }
+    }
+    auto rotate_left(const double angle) -> void override {
+        glm::dquat rotation = glm::angleAxis(angle, m_info.up);
+        m_info.direction = rotation * m_info.direction;
+    }
+    auto rotate_right(const double angle) -> void override {
+        glm::dquat rotation = glm::angleAxis(-angle, m_info.up);
+        m_info.direction = rotation * m_info.direction;
+    }
 
   private:
     PerspectiveCameraInfo m_info;

@@ -23,8 +23,8 @@ Application::Application(const std::vector<std::string_view> &args) {
     p_glfw->window_hint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     p_glfw->window_hint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
 
-    const WindowInfo info{m_width, m_height, m_title};
-    p_window = std::make_unique<Window>(info, p_glfw);
+    const WindowInfo window_info{m_width, m_height, m_title};
+    p_window = std::make_unique<Window>(window_info, p_glfw);
     p_window->make_context_current();
 
     Glad::load_gl_loader((GLADloadproc)p_glfw->get_proc_address());
@@ -45,6 +45,13 @@ Application::Application(const std::vector<std::string_view> &args) {
     io.ConfigDockingWithShift = true;
 
     ImGui::StyleColorsDark();
+
+    PerspectiveCameraInfo simulated_camera_info{};
+    simulated_camera_info.aspect_ratio =
+        m_width / static_cast<double>(m_height);
+    simulated_camera_info.position = {-5.0, 0.0, 0.0};
+    m_scene_info.simulated_camera =
+        std::make_unique<PerspectiveCamera>(simulated_camera_info);
 }
 
 [[nodiscard]] auto
@@ -184,10 +191,11 @@ auto Application::render_image() -> void {
         m_image.resize(static_cast<size_t>(m_panel_width),
                        static_cast<size_t>(m_panel_height));
     }
-
     m_image.clear({0.0, 0.0, 0.0, 1.0});
 
     // HACK: {
+    ((PerspectiveCamera *)&(*m_scene_info.simulated_camera))
+        ->set_aspect_ratio(m_panel_width/ static_cast<double>(m_panel_height));
     m_scene_info.render_triangle_pipeline.vertex_trasform =
         [](std::vector<Vertex> &vertices, const glm::dmat4 &matrix) {
             for (auto &vertex : vertices) {
@@ -199,45 +207,7 @@ auto Application::render_image() -> void {
     m_scene_info.render_triangle_pipeline.rasterize = Alg::rasterize_triangle;
     m_scene_info.render_triangle_pipeline.set_pixel = Alg::set_pixel;
     m_scene_info.render_triangle_pipeline.dehomog = Alg::dehomog;
-    PerspectiveCameraInfo info{};
-    info.aspect_ratio = m_width / static_cast<double>(m_height);
-    info.position = {-5.0, 0.0, 0.0};
-    m_scene_info.simulated_camera = std::make_unique<PerspectiveCamera>(info);
     render_solid(m_scene_info.simulated_solid);
-    // HACK: ! ----- !
-    //
-    // Pipeline simulate_point;
-    // Pipeline simulate_line;
-    // Pipeline simulate_triangle;
-    // Pipeline render_point;
-    // Pipeline render_line;
-    // Pipeline render_triangle;
-    // Pipeline default_point;
-    // Pipeline default_line;
-    // Pipeline default_triangle;
-    // if (m_alt_mode) {
-    //     render_solid(g_solid);
-    // } else {
-    //     // simulate_solid(g_solid);
-
-    //     render_solid(g_solid);
-    //     render_solid(g_solid);
-    //     render_solid(g_solid);
-    // }
-    //
-    // HACK: ! ----- !
-    //
-    // g_pipeline.vertex_trasform = [](std::vector<Vertex> &, const
-    // glm::dmat4
-    // &) {
-    // };
-    // g_pipeline.dehomog = Alg::dehomog;
-    // g_pipeline.trasform_to_viewport = Alg::trasform_to_viewport;
-    // g_pipeline.rasterize = Alg::rasterize_triangle;
-    // g_pipeline.set_pixel = Alg::set_pixel;
-
-    // g_image = &m_image;
-    // render_solid(g_solid);
     // HACK: }
 
     p_texture->bind();
@@ -263,6 +233,8 @@ auto Application::handle_input() -> void {
     if (key_left_alt == GLFW_PRESS) {
         if (!s_alt_mode_lock) {
             m_alt_mode = !m_alt_mode;
+            m_mouse_pos_x = 0.0;
+            m_mouse_pos_y = 0.0;
         }
         s_alt_mode_lock = true;
     }
@@ -278,25 +250,69 @@ auto Application::handle_input() -> void {
     }
 
     if (m_alt_mode) {
-
         int key;
         key = p_window->get_key(GLFW_KEY_W);
         if (key == GLFW_PRESS || key == GLFW_REPEAT) {
-            test_blue += 0.01;
-            if (test_blue > 1.0) {
-                test_blue = 1.0;
-            }
+            m_scene_info.simulated_camera->move_forward(0.02);
         }
         key = p_window->get_key(GLFW_KEY_S);
         if (key == GLFW_PRESS || key == GLFW_REPEAT) {
-            test_blue -= 0.01;
-            if (test_blue < 0.0) {
-                test_blue = 0.0;
+            m_scene_info.simulated_camera->move_backward(0.02);
+        }
+        key = p_window->get_key(GLFW_KEY_A);
+        if (key == GLFW_PRESS || key == GLFW_REPEAT) {
+            m_scene_info.simulated_camera->move_left(0.02);
+        }
+        key = p_window->get_key(GLFW_KEY_D);
+        if (key == GLFW_PRESS || key == GLFW_REPEAT) {
+            m_scene_info.simulated_camera->move_right(0.02);
+        }
+        key = p_window->get_key(GLFW_KEY_SPACE);
+        if (key == GLFW_PRESS || key == GLFW_REPEAT) {
+            m_scene_info.simulated_camera->move_up(0.02);
+        }
+        key = p_window->get_key(GLFW_KEY_LEFT_CONTROL);
+        if (key == GLFW_PRESS || key == GLFW_REPEAT) {
+            m_scene_info.simulated_camera->move_down(0.02);
+        }
+        key = p_window->get_key(GLFW_KEY_Q);
+        if (key == GLFW_PRESS || key == GLFW_REPEAT) {
+            m_scene_info.simulated_camera->rotate_left(0.01);
+        }
+        key = p_window->get_key(GLFW_KEY_E);
+        if (key == GLFW_PRESS || key == GLFW_REPEAT) {
+            m_scene_info.simulated_camera->rotate_right(0.01);
+        }
+        key = p_window->get_key(GLFW_KEY_Y);
+        if (key == GLFW_PRESS || key == GLFW_REPEAT) {
+            m_scene_info.simulated_camera->rotate_up(0.01);
+        }
+        key = p_window->get_key(GLFW_KEY_Z);
+        if (key == GLFW_PRESS || key == GLFW_REPEAT) {
+            m_scene_info.simulated_camera->rotate_down(0.01);
+        }
+        if (m_mouse_pos_y < 0.0) {
+            for (auto i = 0.0; i < -m_mouse_pos_y; ++i) {
+                m_scene_info.simulated_camera->rotate_up(1 / 500.0);
             }
         }
-
-        m_mouse_pos_x = 0;
-        m_mouse_pos_y = 0;
+        if (m_mouse_pos_y > 0.0) {
+            for (auto i = 0.0; i < m_mouse_pos_y; ++i) {
+                m_scene_info.simulated_camera->rotate_down(1 / 500.0);
+            }
+        }
+        if (m_mouse_pos_x < 0.0) {
+            for (auto i = 0.0; i < -m_mouse_pos_x; ++i) {
+                m_scene_info.simulated_camera->rotate_left(1 / 500.0);
+            }
+        }
+        if (m_mouse_pos_x > 0.0) {
+            for (auto i = 0.0; i < m_mouse_pos_x; ++i) {
+                m_scene_info.simulated_camera->rotate_right(1 / 500.0);
+            }
+        }
+        m_mouse_pos_x = 0.0;
+        m_mouse_pos_y = 0.0;
         p_window->set_cursor_pos(m_mouse_pos_x, m_mouse_pos_y);
     }
 }
