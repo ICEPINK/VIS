@@ -2,7 +2,6 @@
 
 #include "window.hpp"
 
-#define GLFW_INCLUDE_NONE
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>

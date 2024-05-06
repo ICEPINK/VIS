@@ -1,5 +1,4 @@
 #include "application.hpp"
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include "glad.hpp"
 #include "utils/timer.hpp"
 #include <glm/ext.hpp>
