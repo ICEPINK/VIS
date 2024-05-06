@@ -21,13 +21,13 @@ enum class FastClipTriangleEnum { FAST_CLIP_TRIANGLE };
 enum class ClipAfterDehomogPointEnum { CLIP_AFTER_DEHOMOG_NONE };
 ////////////////////////////////////////////////////////////////////////////////
 enum class ClipAfterDehomogLineEnum {
-    CLIP_AFTER_DEHOMOG_NONE,
-    CLIP_AFTER_DEHOMOG_LINE
+  CLIP_AFTER_DEHOMOG_NONE,
+  CLIP_AFTER_DEHOMOG_LINE
 };
 ////////////////////////////////////////////////////////////////////////////////
 enum class ClipAfterDehomogTriangleEnum {
-    CLIP_AFTER_DEHOMOG_NONE,
-    CLIP_AFTER_DEHOMOG_TRIANGLE
+  CLIP_AFTER_DEHOMOG_NONE,
+  CLIP_AFTER_DEHOMOG_TRIANGLE
 };
 ////////////////////////////////////////////////////////////////////////////////
 enum class ClipBeforeDehomogPointEnum {};
@@ -45,26 +45,26 @@ enum class RasterizationLineEnum { RASTERIZATION_LINE_DDA };
 enum class RasterizationTriangleEnum { RASTERIZATION_TRIANGLE_FILL };
 ////////////////////////////////////////////////////////////////////////////////
 enum class TrasformVerticesByMetrixEnum {
-    TRASFORM_VERTICES_BY_MATRIX_POSITION
+  TRASFORM_VERTICES_BY_MATRIX_POSITION
 };
 ////////////////////////////////////////////////////////////////////////////////
 enum class TrasformVerticesOntoViewportEnum { TRASFORM_VERTICES_ONTO_VIEWPORT };
 ////////////////////////////////////////////////////////////////////////////////
 struct SceneInfo {
-    ColorRGBA32f clear_color{0.02, 0.02, 0.02, 1.0};
-    std::chrono::duration<double> last_render{0};
-    glm::mat4 model_matrix{glm::mat4(1.0)};
-    std::unique_ptr<PerspectiveCamera> camera;
-    std::unique_ptr<PerspectiveCamera> simulated_camera;
-    PipelineData pipeline_triangle_data;
-    PipelineData pipeline_line_data;
-    PipelineData pipeline_point_data;
-    PipelineData pipeline_simulated_triangle_data;
-    PipelineData pipeline_simulated_line_data;
-    PipelineData pipeline_simulated_point_data;
-    SetPixelEnum set_pixel_setting;
-    bool scene_settings_changed{false};
-    bool simulated{true};
+  ColorRGBA32f clear_color{0.02, 0.02, 0.02, 1.0};
+  std::chrono::duration<double> last_render{0};
+  glm::mat4 model_matrix{glm::mat4(1.0)};
+  std::unique_ptr<PerspectiveCamera> camera;
+  std::unique_ptr<PerspectiveCamera> simulated_camera;
+  PipelineData pipeline_triangle_data;
+  PipelineData pipeline_line_data;
+  PipelineData pipeline_point_data;
+  PipelineData pipeline_simulated_triangle_data;
+  PipelineData pipeline_simulated_line_data;
+  PipelineData pipeline_simulated_point_data;
+  SetPixelEnum set_pixel_setting;
+  bool scene_settings_changed{false};
+  bool simulated{true};
 };
 ////////////////////////////////////////////////////////////////////////////////
 } // namespace Vis

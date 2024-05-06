@@ -7,16 +7,16 @@ namespace Vis {
 enum class GpuApiType { OpenGL };
 
 class GpuApi {
-  public:
-    GpuApi(GpuApiType type);
-    ~GpuApi();
+public:
+  GpuApi(GpuApiType type);
+  ~GpuApi();
 
-    void init(void (*(*proc_address)(const char *))(void));
+  void init(void (*(*proc_address)(const char *))(void));
 
-    GpuApiType get_api_type() const;
+  GpuApiType get_api_type() const;
 
-  private:
-    GpuApiType m_gpu_api_type;
+private:
+  GpuApiType m_gpu_api_type;
 };
 
 } // namespace Vis
