@@ -1,12 +1,9 @@
 #include "application.hpp"
-// src includes
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include "glad.hpp"
 #include "utils/timer.hpp"
-// lib includes
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/ext.hpp>
 #include <glm/glm.hpp>
-// std includes
 #include <array>
 #include <iostream>
 namespace Vis {
