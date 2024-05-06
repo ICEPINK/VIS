@@ -43,7 +43,7 @@ auto PerspectiveCamera::rotate_up(const double angle) -> void {
         angle, glm::normalize(glm::cross(m_info.direction, m_info.up)));
     auto new_direction = rotation * m_info.direction;
     // WARN: Beware of big angles
-    if (new_direction.z < 0.99999 && new_direction.z > -0.99999) {
+    if (new_direction.z < 0.999 && new_direction.z > -0.999) {
         m_info.direction = new_direction;
     }
 }
@@ -52,7 +52,7 @@ auto PerspectiveCamera::rotate_down(const double angle) -> void {
         -angle, glm::normalize(glm::cross(m_info.direction, m_info.up)));
     auto new_direction = rotation * m_info.direction;
     // WARN: Beware of big angles
-    if (new_direction.z < 0.99999 && new_direction.z > -0.99999) {
+    if (new_direction.z < 0.999 && new_direction.z > -0.999) {
         m_info.direction = new_direction;
     }
 }
