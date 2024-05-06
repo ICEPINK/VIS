@@ -37,11 +37,11 @@ struct Vertex {
                                                const Vertex &b) {
         if (t <= 0.0) {
             return a;
-        } else if (t >= 1.0) {
-            return b;
-        } else {
-            return (a * (1 - t)) + (b * t);
         }
+        if (t >= 1.0) {
+            return b;
+        }
+        return (a * (1 - t)) + (b * t);
     }
 };
 
