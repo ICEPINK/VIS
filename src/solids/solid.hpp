@@ -25,6 +25,7 @@ struct Solid {
     glm::dmat4 matrix{1.0};
 
     static auto Cube(const std::string_view name = "") -> Solid;
+    static auto Axis(const std::string_view name = "") -> Solid;
 };
 
 } // namespace Vis

@@ -15,4 +15,14 @@ auto Solid::Cube(const std::string_view name) -> Solid {
             {{Topology::Triangle, 0, 12}},
             {1.0}};
 }
+auto Solid::Axis(const std::string_view name) -> Solid {
+    return {{name.data()},
+            {Vertex({0.0, 0.0, 0.0, 1.0}, {1.0, 1.0, 1.0, 1.0}),
+             Vertex({1.0, 0.0, 0.0, 1.0}, {1.0, 0.0, 0.0, 1.0}),
+             Vertex({0.0, 1.0, 0.0, 1.0}, {0.0, 1.0, 0.0, 1.0}),
+             Vertex({0.0, 0.0, 1.0, 1.0}, {0.0, 0.0, 1.0, 1.0})},
+            {1, 0, 2, 0, 3, 0},
+            {{Topology::Line, 0, 3}},
+            {1.0}};
+}
 } // namespace Vis
