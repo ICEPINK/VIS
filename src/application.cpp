@@ -7,6 +7,7 @@
 #include <glm/ext.hpp>
 #include <glm/glm.hpp>
 // std includes
+#include <array>
 #include <iostream>
 namespace Vis {
 Application::Application(const std::vector<std::string_view> &args) {
@@ -51,17 +52,25 @@ Application::Application(const std::vector<std::string_view> &args) {
     simulated_camera_info.position = {-5.0, 0.0, 0.0};
     m_scene_info.simulated_camera =
         std::make_unique<PerspectiveCamera>(simulated_camera_info);
-    m_scene_info.render_triangle_pipeline.trasform_vertices =
-        [](std::vector<Vertex> &vertices, const glm::dmat4 &matrix) {
-            for (auto &vertex : vertices) {
-                vertex.pos = matrix * vertex.pos;
-            }
-        };
+    static constexpr auto matrix_trasform = [](std::vector<Vertex> &vertices,
+                                               const glm::dmat4 &matrix) {
+        for (auto &vertex : vertices) {
+            vertex.pos = matrix * vertex.pos;
+        }
+    };
+    m_scene_info.render_triangle_pipeline.trasform_vertices = matrix_trasform;
     m_scene_info.render_triangle_pipeline.trasform_to_viewport =
         Alg::trasform_to_viewport;
     m_scene_info.render_triangle_pipeline.rasterize = Alg::rasterize_triangle;
     m_scene_info.render_triangle_pipeline.set_pixel = Alg::set_pixel_no_depth;
     m_scene_info.render_triangle_pipeline.dehomog = Alg::dehomog_all;
+
+    m_scene_info.render_line_pipeline.trasform_vertices = matrix_trasform;
+    m_scene_info.render_line_pipeline.trasform_to_viewport =
+        Alg::trasform_to_viewport;
+    m_scene_info.render_line_pipeline.rasterize = Alg::rasterize_line;
+    m_scene_info.render_line_pipeline.set_pixel = Alg::set_pixel_no_depth;
+    m_scene_info.render_line_pipeline.dehomog = Alg::dehomog_all;
     // HACK: End
 }
 
@@ -208,6 +217,7 @@ auto Application::render_image() -> void {
     m_scene_info.simulated_camera->set_width(m_panel_width);
     m_scene_info.simulated_camera->set_height(m_panel_height);
     render_solid(m_scene_info.simulated_solid);
+    render_solid(Solid::Axis());
     // HACK: End
 
     p_texture->bind();
@@ -370,24 +380,50 @@ auto Application::make_gui(bool show_debug) -> void {
 
     ImGui::Begin("Settings");
     if (ImGui::CollapsingHeader("Render triangle pipeline")) {
-        constexpr std::array<const char *, 2> dehomog_text = {
-            "dehomog_all",
-            "dehomog_pos",
-        };
-        enum class Dehomog { DEHOMOG_ALL, DEHOMOG_POS };
-        static int dehomog{static_cast<int>(Dehomog::DEHOMOG_ALL)};
-        ImGui::Combo("Dehomog", &dehomog, dehomog_text.data(),
-                     static_cast<int>(dehomog_text.size()));
-        switch (static_cast<Dehomog>(dehomog)) {
-        case Dehomog::DEHOMOG_ALL: {
-            m_scene_info.render_triangle_pipeline.dehomog = Alg::dehomog_all;
-        } break;
-        case Dehomog::DEHOMOG_POS: {
-            m_scene_info.render_triangle_pipeline.dehomog = Alg::dehomog_pos;
-        } break;
+        {
+            enum class Dehomog { DEHOMOG_ALL, DEHOMOG_POS };
+            constexpr std::array<const char *, 2> dehomog_text = {
+                "dehomog_all", "dehomog_pos"};
+            static int dehomog{static_cast<int>(Dehomog::DEHOMOG_ALL)};
+            auto change = ImGui::Combo("Dehomog", &dehomog, dehomog_text.data(),
+                                       static_cast<int>(dehomog_text.size()));
+            if (change) {
+                switch (static_cast<Dehomog>(dehomog)) {
+                case Dehomog::DEHOMOG_ALL: {
+                    m_scene_info.render_triangle_pipeline.dehomog =
+                        Alg::dehomog_all;
+                } break;
+                case Dehomog::DEHOMOG_POS: {
+                    m_scene_info.render_triangle_pipeline.dehomog =
+                        Alg::dehomog_pos;
+                } break;
+                }
+            }
         }
-        ImGui::End();
     }
+    if (ImGui::CollapsingHeader("Render line pipeline")) {
+        {
+            enum class Dehomog { DEHOMOG_ALL, DEHOMOG_POS };
+            constexpr std::array<const char *, 2> dehomog_text = {
+                "dehomog_all", "dehomog_pos"};
+            static int dehomog{static_cast<int>(Dehomog::DEHOMOG_ALL)};
+            auto change = ImGui::Combo("Dehomog", &dehomog, dehomog_text.data(),
+                                       static_cast<int>(dehomog_text.size()));
+            if (change) {
+                switch (static_cast<Dehomog>(dehomog)) {
+                case Dehomog::DEHOMOG_ALL: {
+                    m_scene_info.render_line_pipeline.dehomog =
+                        Alg::dehomog_all;
+                } break;
+                case Dehomog::DEHOMOG_POS: {
+                    m_scene_info.render_line_pipeline.dehomog =
+                        Alg::dehomog_pos;
+                } break;
+                }
+            }
+        }
+    }
+    ImGui::End();
 
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, {0.0, 0.0});
     ImGui::Begin("Viewport");
