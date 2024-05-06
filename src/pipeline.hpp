@@ -18,7 +18,7 @@ struct Pipeline {
 namespace Alg {
 auto dehomog_all(std::vector<Vertex> &vertices) -> void;
 auto dehomog_pos(std::vector<Vertex> &vertices) -> void;
-// auto rasterize_line(std::vector<Vertex> &vertices, Image &image, void (*set_pixel)(Vertex &vertex, Image &image)) -> void;
+auto rasterize_line(std::vector<Vertex> &vertices, Image &image, void (*set_pixel)(Vertex &vertex, Image &image)) -> void;
 auto rasterize_point(std::vector<Vertex> &vertices, Image &image, void (*set_pixel)(Vertex &vertex, Image &image)) -> void;
 auto rasterize_triangle(std::vector<Vertex> &vertices, Image &image, void (*set_pixel)(Vertex &vertex, Image &image)) -> void;
 auto set_pixel_no_depth(Vertex &vertex, Image &image) -> void;
