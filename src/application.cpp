@@ -1,8 +1,8 @@
 #include "application.hpp"
 #include "glad.hpp"
 #include "utils/timer.hpp"
-#include <glm/glm.hpp>
 #include <glm/ext.hpp>
+#include <glm/glm.hpp>
 #include <array>
 #include <iostream>
 namespace Vis {

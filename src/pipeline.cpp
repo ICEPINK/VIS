@@ -144,12 +144,15 @@ auto dehomog_all(std::vector<Vertex> &vertices) -> void {
     vertex.one /= w;
   }
 }
+
+auto dehomog_none(std::vector<Vertex> &) -> void {}
 auto dehomog_pos(std::vector<Vertex> &vertices) -> void {
   for (auto &vertex : vertices) {
     const auto w = vertex.pos.w;
     vertex.pos /= w;
   }
 }
+auto trasform_to_none(std::vector<Vertex> &, const Image &) -> void {}
 auto trasform_to_viewport(std::vector<Vertex> &vertices,
                           const Image &image) -> void {
   for (auto &vertex : vertices) {
@@ -202,6 +205,8 @@ auto rasterize_line(std::vector<Vertex> &vertices, Image &image,
     }
   }
 }
+auto rasterize_none(std::vector<Vertex> &, Image &,
+                    void (*)(Vertex &, Image &)) -> void {}
 auto rasterize_point(std::vector<Vertex> &vertices, Image &image,
                      void (*set_pixel)(Vertex &vertex, Image &image)) -> void {
   for (auto &vertex : vertices) {
@@ -292,6 +297,7 @@ auto rasterize_triangle(std::vector<Vertex> &vertices, Image &image,
     }
   }
 }
+auto set_pixel_none(Vertex &, Image &) -> void {}
 auto set_pixel_rgba_no_depth(Vertex &vertex, Image &image) -> void {
   if (vertex.pos.x < 0 || vertex.pos.y < 0) {
     return;
