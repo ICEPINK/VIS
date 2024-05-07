@@ -1,6 +1,56 @@
 #include "pipeline.hpp"
 namespace Vis {
 namespace Alg {
+auto clip_before_dehemog_line(std::vector<Vertex> &) -> void {}
+auto clip_before_dehemog_none(std::vector<Vertex> &) -> void {}
+auto clip_before_dehemog_triangle(std::vector<Vertex> &vertices) -> void {
+  if (vertices.size() % 3 != 0) {
+    return;
+  }
+  std::vector<Vertex> new_vertices;
+  new_vertices.reserve(vertices.size() * 2);
+  for (size_t i = 0; i < vertices.size(); i += 3) {
+    auto &v1 = vertices[i];
+    auto &v2 = vertices[i + 1];
+    auto &v3 = vertices[i + 2];
+    if (v1.pos.z > 0 && v2.pos.z > 0 && v3.pos.z > 0) {
+      new_vertices.push_back(v1);
+      new_vertices.push_back(v2);
+      new_vertices.push_back(v3);
+      continue;
+    }
+    if (v1.pos.z > v2.pos.z) {
+      std::swap(v1, v2);
+    }
+    if (v2.pos.z > v3.pos.z) {
+      std::swap(v2, v3);
+    }
+    if (v1.pos.z > v2.pos.z) {
+      std::swap(v1, v2);
+    }
+    if (v2.pos.z <= 0) {
+      const double t_32 = (0 - v3.pos.z) / (v2.pos.z - v3.pos.z);
+      v2 = Vertex::interpolate(t_32, v3, v2);
+      const double t_31 = (0 - v3.pos.z) / (v1.pos.z - v3.pos.z);
+      v1 = Vertex::interpolate(t_31, v3, v1);
+      new_vertices.push_back(v1);
+      new_vertices.push_back(v2);
+      new_vertices.push_back(v3);
+    } else {
+      const double t_21 = (0 - v2.pos.z) / (v1.pos.z - v2.pos.z);
+      auto v21 = Vertex::interpolate(t_21, v2, v1);
+      const double t_31 = (0 - v3.pos.z) / (v1.pos.z - v3.pos.z);
+      auto v31 = Vertex::interpolate(t_31, v3, v1);
+      new_vertices.push_back(v21);
+      new_vertices.push_back(v31);
+      new_vertices.push_back(v3);
+      new_vertices.push_back(v2);
+      new_vertices.push_back(v21);
+      new_vertices.push_back(v3);
+    }
+  }
+  vertices = new_vertices;
+}
 auto clip_fast_line(std::vector<Vertex> &vertices) -> void {
   if (vertices.size() % 2 != 0) {
     return;
