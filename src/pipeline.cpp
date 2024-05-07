@@ -45,7 +45,7 @@ auto rasterize_line(std::vector<Vertex> &vertices, Image &image,
         if (std::isnan(vertex.pos.x)) {
           continue;
         }
-        vertex.pos.x = x;
+        vertex.pos.x = static_cast<double>(x);
         set_pixel(vertex, image);
       }
     } else {
@@ -61,7 +61,7 @@ auto rasterize_line(std::vector<Vertex> &vertices, Image &image,
         if (std::isnan(vertex.pos.x)) {
           continue;
         }
-        vertex.pos.y = y;
+        vertex.pos.y = static_cast<double>(y);
         set_pixel(vertex, image);
       }
     }
@@ -157,13 +157,45 @@ auto rasterize_triangle(std::vector<Vertex> &vertices, Image &image,
     }
   }
 }
-auto set_pixel_no_depth(Vertex &vertex, Image &image) -> void {
+auto set_pixel_rgba_no_depth(Vertex &vertex, Image &image) -> void {
   if (vertex.pos.x < 0 || vertex.pos.y < 0) {
     return;
   }
-  vertex.col = vertex.col * 1.0 / vertex.one;
-  image.set_pixel(static_cast<size_t>(vertex.pos.x),
-                  static_cast<size_t>(vertex.pos.y), vertex.col);
+  size_t x{static_cast<size_t>(vertex.pos.x)};
+  size_t y{static_cast<size_t>(vertex.pos.y)};
+  image.set_pixel(x, y, vertex.col * 1.0 / vertex.one);
+}
+auto set_pixel_rgba_depth(Vertex &vertex, Image &image) -> void {
+  if (vertex.pos.x < 0 || vertex.pos.y < 0) {
+    return;
+  }
+  size_t x{static_cast<size_t>(vertex.pos.x)};
+  size_t y{static_cast<size_t>(vertex.pos.y)};
+  if (vertex.pos.z > image.get_depth(x, y)) {
+    return;
+  }
+  image.set_depth(x, y, vertex.pos.z);
+  image.set_pixel(x, y, vertex.col * 1.0 / vertex.one);
+}
+auto set_pixel_w_depth(Vertex &vertex, Image &image) -> void {
+  if (vertex.pos.x < 0 || vertex.pos.y < 0) {
+    return;
+  }
+  size_t x{static_cast<size_t>(vertex.pos.x)};
+  size_t y{static_cast<size_t>(vertex.pos.y)};
+  if (vertex.pos.z > image.get_depth(x, y)) {
+    return;
+  }
+  image.set_depth(x, y, vertex.pos.z);
+  image.set_pixel(x, y, {vertex.pos.z, vertex.pos.z, vertex.pos.z, 1.0});
+}
+auto set_pixel_w_no_depth(Vertex &vertex, Image &image) -> void {
+  if (vertex.pos.x < 0 || vertex.pos.y < 0) {
+    return;
+  }
+  size_t x{static_cast<size_t>(vertex.pos.x)};
+  size_t y{static_cast<size_t>(vertex.pos.y)};
+  image.set_pixel(x, y, {vertex.pos.z, vertex.pos.z, vertex.pos.z, 1.0});
 }
 } // namespace Alg
 } // namespace Vis

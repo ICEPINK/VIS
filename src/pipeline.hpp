@@ -28,7 +28,10 @@ auto rasterize_point(std::vector<Vertex> &vertices, Image &image,
 auto rasterize_triangle(std::vector<Vertex> &vertices, Image &image,
                         void (*set_pixel)(Vertex &vertex,
                                           Image &image)) -> void;
-auto set_pixel_no_depth(Vertex &vertex, Image &image) -> void;
+auto set_pixel_rgba_no_depth(Vertex &vertex, Image &image) -> void;
+auto set_pixel_rgba_depth(Vertex &vertex, Image &image) -> void;
+auto set_pixel_w_depth(Vertex &vertex, Image &image) -> void;
+auto set_pixel_w_no_depth(Vertex &vertex, Image &image) -> void;
 auto trasform_to_viewport(std::vector<Vertex> &vertices,
                           const Image &image) -> void;
 } // namespace Alg
