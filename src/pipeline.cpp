@@ -1,6 +1,70 @@
 #include "pipeline.hpp"
 namespace Vis {
 namespace Alg {
+auto clip_fast_line(std::vector<Vertex> &vertices) -> void {
+  if (vertices.size() % 2 != 0) {
+    return;
+  }
+  std::vector<Vertex> new_vertices;
+  new_vertices.reserve(vertices.size());
+  for (size_t i = 0; i < vertices.size(); i += 2) {
+    const auto &v1 = vertices[i];
+    const auto &v2 = vertices[i + 1];
+    if ((v1.pos.x < -v1.pos.w && v2.pos.x < -v2.pos.w) ||
+        (v1.pos.x > v1.pos.w && v2.pos.x > v2.pos.w) ||
+        (v1.pos.y < -v1.pos.w && v2.pos.y < -v2.pos.w) ||
+        (v1.pos.y > v1.pos.w && v2.pos.y > v2.pos.w) ||
+        (v1.pos.z < 0 && v2.pos.z < 0) ||
+        (v1.pos.z > v1.pos.w && v2.pos.z > v2.pos.w)) {
+      continue;
+    }
+    new_vertices.push_back(v1);
+    new_vertices.push_back(v2);
+  }
+  vertices = new_vertices;
+}
+auto clip_fast_none(std::vector<Vertex> &) -> void {}
+auto clip_fast_point(std::vector<Vertex> &vertices) -> void {
+  std::vector<Vertex> new_vertices;
+  new_vertices.reserve(vertices.size());
+  for (size_t i = 0; i < vertices.size(); ++i) {
+    const auto &v1 = vertices[i];
+    if ((v1.pos.x < -v1.pos.w) || (v1.pos.x > v1.pos.w) ||
+        (v1.pos.y < -v1.pos.w) || (v1.pos.y > v1.pos.w) || (v1.pos.z < 0) ||
+        (v1.pos.z > v1.pos.w)) {
+      continue;
+    }
+    new_vertices.push_back(v1);
+    new_vertices.push_back(v2);
+  }
+  vertices = new_vertices;
+}
+auto clip_fast_triangle(std::vector<Vertex> &vertices) -> void {
+  if (vertices.size() % 3 != 0) {
+    return;
+  }
+  std::vector<Vertex> new_vertices;
+  new_vertices.reserve(vertices.size());
+  for (size_t i = 0; i < vertices.size(); i += 3) {
+    const auto &v1 = vertices[i];
+    const auto &v2 = vertices[i + 1];
+    const auto &v3 = vertices[i + 2];
+    if ((v1.pos.x < -v1.pos.w && v2.pos.x < -v2.pos.w &&
+         v3.pos.x < -v3.pos.w) ||
+        (v1.pos.x > v1.pos.w && v2.pos.x > v2.pos.w && v3.pos.x > v3.pos.w) ||
+        (v1.pos.y < -v1.pos.w && v2.pos.y < -v2.pos.w &&
+         v3.pos.y < -v3.pos.w) ||
+        (v1.pos.y > v1.pos.w && v2.pos.y > v2.pos.w && v3.pos.y > v3.pos.w) ||
+        (v1.pos.z < 0 && v2.pos.z < 0 && v3.pos.z < 0) ||
+        (v1.pos.z > v1.pos.w && v2.pos.z > v2.pos.w && v3.pos.z > v3.pos.w)) {
+      continue;
+    }
+    new_vertices.push_back(v1);
+    new_vertices.push_back(v2);
+    new_vertices.push_back(v3);
+  }
+  vertices = new_vertices;
+}
 auto dehomog_all(std::vector<Vertex> &vertices) -> void {
   for (auto &vertex : vertices) {
     const auto w = vertex.pos.w;

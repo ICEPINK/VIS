@@ -59,6 +59,7 @@ Application::Application(const std::vector<std::string_view> &args) {
   m_scene_info.render_triangle_pipeline.rasterize = Alg::rasterize_triangle;
   m_scene_info.render_triangle_pipeline.set_pixel = Alg::set_pixel_rgba_depth;
   m_scene_info.render_triangle_pipeline.dehomog = Alg::dehomog_all;
+  m_scene_info.render_triangle_pipeline.clip_fast = Alg::clip_fast_triangle;
 
   m_scene_info.render_line_pipeline.trasform_vertices = matrix_trasform;
   m_scene_info.render_line_pipeline.trasform_to_viewport =
@@ -66,6 +67,7 @@ Application::Application(const std::vector<std::string_view> &args) {
   m_scene_info.render_line_pipeline.rasterize = Alg::rasterize_line;
   m_scene_info.render_line_pipeline.set_pixel = Alg::set_pixel_rgba_depth;
   m_scene_info.render_line_pipeline.dehomog = Alg::dehomog_all;
+  m_scene_info.render_line_pipeline.clip_fast = Alg::clip_fast_line;
   // HACK: End
 }
 [[nodiscard]] auto
@@ -145,6 +147,7 @@ auto Application::render(std::vector<Vertex> &vertices,
                          const Pipeline &pipeline,
                          const glm::dmat4 &matrix) -> void {
   pipeline.trasform_vertices(vertices, matrix);
+  pipeline.clip_fast(vertices);
   pipeline.dehomog(vertices);
   pipeline.trasform_to_viewport(vertices, m_image);
   pipeline.rasterize(vertices, m_image, pipeline.set_pixel);
@@ -373,6 +376,25 @@ auto Application::make_gui(bool show_debug) -> void {
   ImGui::Begin("Settings");
   if (ImGui::CollapsingHeader("Render triangle pipeline")) {
     {
+      enum class ClipFast { CLIP_FAST_TRIANGLE, CLIP_FAST_NONE };
+      constexpr std::array<const char *, 2> clip_fast_text = {
+          "clip_fast_triangle", "clip_fast_none"};
+      static int clip_fast{static_cast<int>(ClipFast::CLIP_FAST_TRIANGLE)};
+      auto change = ImGui::Combo("Clip Fast", &clip_fast, clip_fast_text.data(),
+                                 static_cast<int>(clip_fast_text.size()));
+      if (change) {
+        switch (static_cast<ClipFast>(clip_fast)) {
+        case ClipFast::CLIP_FAST_TRIANGLE: {
+          m_scene_info.render_triangle_pipeline.clip_fast =
+              Alg::clip_fast_triangle;
+        } break;
+        case ClipFast::CLIP_FAST_NONE: {
+          m_scene_info.render_triangle_pipeline.clip_fast = Alg::clip_fast_none;
+        } break;
+        }
+      }
+    }
+    {
       enum class Dehomog { DEHOMOG_ALL, DEHOMOG_POS };
       constexpr std::array<const char *, 2> dehomog_text = {"dehomog_all",
                                                             "dehomog_pos"};
@@ -427,6 +449,24 @@ auto Application::make_gui(bool show_debug) -> void {
   }
   if (ImGui::CollapsingHeader("Render line pipeline")) {
     {
+      enum class ClipFast { CLIP_FAST_LINE, CLIP_FAST_NONE };
+      constexpr std::array<const char *, 2> clip_fast_text = {"clip_fast_line",
+                                                              "clip_fast_none"};
+      static int clip_fast{static_cast<int>(ClipFast::CLIP_FAST_LINE)};
+      auto change = ImGui::Combo("Clip Fast", &clip_fast, clip_fast_text.data(),
+                                 static_cast<int>(clip_fast_text.size()));
+      if (change) {
+        switch (static_cast<ClipFast>(clip_fast)) {
+        case ClipFast::CLIP_FAST_LINE: {
+          m_scene_info.render_line_pipeline.clip_fast = Alg::clip_fast_line;
+        } break;
+        case ClipFast::CLIP_FAST_NONE: {
+          m_scene_info.render_line_pipeline.clip_fast = Alg::clip_fast_none;
+        } break;
+        }
+      }
+    }
+    {
       enum class Dehomog { DEHOMOG_ALL, DEHOMOG_POS };
       constexpr std::array<const char *, 2> dehomog_text = {"dehomog_all",
                                                             "dehomog_pos"};
@@ -468,8 +508,7 @@ auto Application::make_gui(bool show_debug) -> void {
               Alg::set_pixel_rgba_no_depth;
         } break;
         case SetPixel::SET_PIXEL_W_DEPTH: {
-          m_scene_info.render_line_pipeline.set_pixel =
-              Alg::set_pixel_w_depth;
+          m_scene_info.render_line_pipeline.set_pixel = Alg::set_pixel_w_depth;
         } break;
         case SetPixel::SET_PIXEL_W_NO_DEPTH: {
           m_scene_info.render_line_pipeline.set_pixel =
