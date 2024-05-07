@@ -35,7 +35,6 @@ auto clip_fast_point(std::vector<Vertex> &vertices) -> void {
       continue;
     }
     new_vertices.push_back(v1);
-    new_vertices.push_back(v2);
   }
   vertices = new_vertices;
 }
