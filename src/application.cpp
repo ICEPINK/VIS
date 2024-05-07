@@ -63,6 +63,8 @@ Application::Application(const std::vector<std::string_view> &args) {
   m_scene_info.render_triangle_pipeline.clip_fast = Alg::clip_fast_triangle;
   m_scene_info.render_triangle_pipeline.clip_before_dehemog =
       Alg::clip_before_dehemog_triangle;
+  m_scene_info.render_triangle_pipeline.clip_after_dehomog =
+      Alg::clip_after_dehemog_none;
 
   m_scene_info.render_line_pipeline.trasform_vertices = matrix_trasform;
   m_scene_info.render_line_pipeline.trasform_to_viewport =
@@ -73,6 +75,8 @@ Application::Application(const std::vector<std::string_view> &args) {
   m_scene_info.render_line_pipeline.clip_fast = Alg::clip_fast_line;
   m_scene_info.render_line_pipeline.clip_before_dehemog =
       Alg::clip_before_dehemog_line;
+  m_scene_info.render_line_pipeline.clip_after_dehomog =
+      Alg::clip_after_dehemog_none;
   // HACK: End
 }
 [[nodiscard]] auto
@@ -155,6 +159,7 @@ auto Application::render(std::vector<Vertex> &vertices,
   pipeline.clip_fast(vertices);
   pipeline.clip_before_dehemog(vertices);
   pipeline.dehomog(vertices);
+  pipeline.clip_after_dehomog(vertices);
   pipeline.trasform_to_viewport(vertices, m_image);
   pipeline.rasterize(vertices, m_image, pipeline.set_pixel);
 }

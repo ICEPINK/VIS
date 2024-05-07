@@ -19,6 +19,7 @@ struct Pipeline {
                             const glm::dmat4 &matrix);
 };
 namespace Alg {
+auto clip_after_dehemog_none(std::vector<Vertex> &vertices) -> void;
 auto clip_before_dehemog_line(std::vector<Vertex> &vertices) -> void;
 auto clip_before_dehemog_none(std::vector<Vertex> &vertices) -> void;
 auto clip_before_dehemog_triangle(std::vector<Vertex> &vertices) -> void;

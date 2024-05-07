@@ -1,6 +1,7 @@
 #include "pipeline.hpp"
 namespace Vis {
 namespace Alg {
+auto clip_after_dehemog_none(std::vector<Vertex> &) -> void {}
 auto clip_before_dehemog_line(std::vector<Vertex> &vertices) -> void {
   if (vertices.size() % 2 != 0) {
     return;
