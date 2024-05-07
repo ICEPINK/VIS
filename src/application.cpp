@@ -1,8 +1,8 @@
 #include "application.hpp"
 #include "glad.hpp"
 #include "utils/timer.hpp"
-#include <glm/ext.hpp>
 #include <glm/glm.hpp>
+#include <glm/ext.hpp>
 #include <array>
 #include <iostream>
 namespace Vis {
@@ -45,6 +45,7 @@ Application::Application(const std::vector<std::string_view> &args) {
   simulated_camera_info.width = static_cast<double>(m_width);
   simulated_camera_info.height = static_cast<double>(m_height);
   simulated_camera_info.position = {-5.0, 0.0, 0.0};
+  simulated_camera_info.near_plane = 0.1;
   m_scene_info.simulated_camera =
       std::make_unique<PerspectiveCamera>(simulated_camera_info);
   static constexpr auto matrix_trasform = [](std::vector<Vertex> &vertices,

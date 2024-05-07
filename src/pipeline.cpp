@@ -1,7 +1,28 @@
 #include "pipeline.hpp"
 namespace Vis {
 namespace Alg {
-auto clip_before_dehemog_line(std::vector<Vertex> &) -> void {}
+auto clip_before_dehemog_line(std::vector<Vertex> &vertices) -> void {
+  if (vertices.size() % 2 != 0) {
+    return;
+  }
+  std::vector<Vertex> new_vertices;
+  new_vertices.reserve(vertices.size());
+  for (size_t i = 0; i < vertices.size(); i += 2) {
+    auto &v1 = vertices[i];
+    auto &v2 = vertices[i + 1];
+    // WARN: pos.z no dehomo?
+    if (v1.pos.z > v2.pos.z) {
+      std::swap(v1, v2);
+    }
+    if (v1.pos.z <= 0) {
+      const double t_21 = (0 - v2.pos.z) / (v1.pos.z - v2.pos.z);
+      v1 = Vertex::interpolate(t_21, v2, v1);
+    }
+    new_vertices.push_back(v1);
+    new_vertices.push_back(v2);
+  }
+  vertices = new_vertices;
+}
 auto clip_before_dehemog_none(std::vector<Vertex> &) -> void {}
 auto clip_before_dehemog_triangle(std::vector<Vertex> &vertices) -> void {
   if (vertices.size() % 3 != 0) {
@@ -19,6 +40,7 @@ auto clip_before_dehemog_triangle(std::vector<Vertex> &vertices) -> void {
       new_vertices.push_back(v3);
       continue;
     }
+    // WARN: pos.z no dehomo?
     if (v1.pos.z > v2.pos.z) {
       std::swap(v1, v2);
     }
