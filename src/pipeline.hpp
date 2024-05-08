@@ -7,7 +7,7 @@
 namespace Vis {
 struct Pipeline {
   void (*clip_after_dehomog)(std::vector<Vertex> &vertices);
-  void (*clip_before_dehemog)(std::vector<Vertex> &vertices);
+  void (*clip_before_dehomog)(std::vector<Vertex> &vertices);
   void (*clip_fast)(std::vector<Vertex> &vertices);
   void (*dehomog)(std::vector<Vertex> &vertices);
   void (*rasterize)(std::vector<Vertex> &vertices, Image &image,
@@ -19,10 +19,10 @@ struct Pipeline {
                             const glm::dmat4 &matrix);
 };
 namespace Alg {
-auto clip_after_dehemog_none(std::vector<Vertex> &vertices) -> void;
-auto clip_before_dehemog_line(std::vector<Vertex> &vertices) -> void;
-auto clip_before_dehemog_none(std::vector<Vertex> &vertices) -> void;
-auto clip_before_dehemog_triangle(std::vector<Vertex> &vertices) -> void;
+auto clip_after_dehomog_none(std::vector<Vertex> &vertices) -> void;
+auto clip_before_dehomog_line(std::vector<Vertex> &vertices) -> void;
+auto clip_before_dehomog_none(std::vector<Vertex> &vertices) -> void;
+auto clip_before_dehomog_triangle(std::vector<Vertex> &vertices) -> void;
 auto clip_fast_line(std::vector<Vertex> &vertices) -> void;
 auto clip_fast_none(std::vector<Vertex> &) -> void;
 auto clip_fast_point(std::vector<Vertex> &vertices) -> void;

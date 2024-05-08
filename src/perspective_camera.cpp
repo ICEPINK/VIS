@@ -24,13 +24,13 @@ auto PerspectiveCamera::move_backward(const double distance) -> void {
 }
 auto PerspectiveCamera::move_left(const double distance) -> void {
   m_info.position =
-      m_info.position -
-      glm::normalize(glm::cross(m_info.direction, m_info.up)) * distance;
+    m_info.position -
+    glm::normalize(glm::cross(m_info.direction, m_info.up)) * distance;
 }
 auto PerspectiveCamera::move_right(const double distance) -> void {
   m_info.position =
-      m_info.position +
-      glm::normalize(glm::cross(m_info.direction, m_info.up)) * distance;
+    m_info.position +
+    glm::normalize(glm::cross(m_info.direction, m_info.up)) * distance;
 }
 auto PerspectiveCamera::move_up(const double distance) -> void {
   m_info.position = m_info.position + m_info.up * distance;
@@ -40,7 +40,7 @@ auto PerspectiveCamera::move_down(const double distance) -> void {
 }
 auto PerspectiveCamera::rotate_up(const double angle) -> void {
   glm::dquat rotation = glm::angleAxis(
-      angle, glm::normalize(glm::cross(m_info.direction, m_info.up)));
+    angle, glm::normalize(glm::cross(m_info.direction, m_info.up)));
   auto new_direction = rotation * m_info.direction;
   // WARN: Beware of big angles
   if (new_direction.z < 0.999 && new_direction.z > -0.999) {
@@ -49,7 +49,7 @@ auto PerspectiveCamera::rotate_up(const double angle) -> void {
 }
 auto PerspectiveCamera::rotate_down(const double angle) -> void {
   glm::dquat rotation = glm::angleAxis(
-      -angle, glm::normalize(glm::cross(m_info.direction, m_info.up)));
+    -angle, glm::normalize(glm::cross(m_info.direction, m_info.up)));
   auto new_direction = rotation * m_info.direction;
   // WARN: Beware of big angles
   if (new_direction.z < 0.999 && new_direction.z > -0.999) {
@@ -63,5 +63,8 @@ auto PerspectiveCamera::rotate_left(const double angle) -> void {
 auto PerspectiveCamera::rotate_right(const double angle) -> void {
   glm::dquat rotation = glm::angleAxis(-angle, m_info.up);
   m_info.direction = rotation * m_info.direction;
+}
+auto PerspectiveCamera::get_info() const -> PerspectiveCameraInfo {
+  return m_info;
 }
 } // namespace Vis

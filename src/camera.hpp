@@ -48,6 +48,7 @@ public:
   auto rotate_down(const double angle) -> void override;
   auto rotate_left(const double angle) -> void override;
   auto rotate_right(const double angle) -> void override;
+  [[nodiscard]] auto get_info() const -> PerspectiveCameraInfo;
 
 private:
   PerspectiveCameraInfo m_info;

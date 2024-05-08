@@ -20,13 +20,18 @@ struct SceneInfo {
   Solid simulated_solid{Solid::Cube()};
   bool render_axis{true};
   bool render_grid{true};
+  bool simulate{false};
   glm::dmat4 model_matrix{1.0};
   glm::dmat4 simulated_model_matrix{1.0};
   std::unique_ptr<Camera> camera{nullptr};
   std::unique_ptr<Camera> simulated_camera{nullptr};
+  Camera *active_camera{nullptr};
   Pipeline render_triangle_pipeline{};
   Pipeline render_line_pipeline{};
   Pipeline render_point_pipeline{};
+  Pipeline simulate_triangle_pipeline{};
+  Pipeline simulate_line_pipeline{};
+  Pipeline simulate_point_pipeline{};
 };
 class Application {
 public:
@@ -48,6 +53,7 @@ private:
   auto render_solid(const Solid &solid) -> void;
   auto render(std::vector<Vertex> &vertices, const Pipeline &pipeline,
               const glm::dmat4 &matrix) -> void;
+  [[nodiscard]] auto simulate_solid(const Solid &solid) -> Solid;
 
 private:
   std::shared_ptr<Glfw> p_glfw{nullptr};

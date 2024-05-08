@@ -44,10 +44,14 @@ Application::Application(const std::vector<std::string_view> &args) {
   PerspectiveCameraInfo simulated_camera_info{};
   simulated_camera_info.width = static_cast<double>(m_width);
   simulated_camera_info.height = static_cast<double>(m_height);
-  simulated_camera_info.position = {-5.0, 0.0, 0.0};
-  simulated_camera_info.near_plane = 0.1;
+  simulated_camera_info.position = {0.0, 0.0, 0.0};
+  simulated_camera_info.near_plane = 1.0;
+  simulated_camera_info.far_plane = 10.0;
   m_scene_info.simulated_camera =
-      std::make_unique<PerspectiveCamera>(simulated_camera_info);
+    std::make_unique<PerspectiveCamera>(simulated_camera_info);
+  m_scene_info.camera =
+    std::make_unique<PerspectiveCamera>(simulated_camera_info);
+  m_scene_info.active_camera = m_scene_info.simulated_camera.get();
   static constexpr auto matrix_trasform = [](std::vector<Vertex> &vertices,
                                              const glm::dmat4 &matrix) {
     for (auto &vertex : vertices) {
@@ -56,27 +60,39 @@ Application::Application(const std::vector<std::string_view> &args) {
   };
   m_scene_info.render_triangle_pipeline.trasform_vertices = matrix_trasform;
   m_scene_info.render_triangle_pipeline.trasform_to_viewport =
-      Alg::trasform_to_viewport;
+    Alg::trasform_to_viewport;
   m_scene_info.render_triangle_pipeline.rasterize = Alg::rasterize_triangle;
   m_scene_info.render_triangle_pipeline.set_pixel = Alg::set_pixel_rgba_depth;
   m_scene_info.render_triangle_pipeline.dehomog = Alg::dehomog_all;
   m_scene_info.render_triangle_pipeline.clip_fast = Alg::clip_fast_triangle;
-  m_scene_info.render_triangle_pipeline.clip_before_dehemog =
-      Alg::clip_before_dehemog_triangle;
+  m_scene_info.render_triangle_pipeline.clip_before_dehomog =
+    Alg::clip_before_dehomog_triangle;
   m_scene_info.render_triangle_pipeline.clip_after_dehomog =
-      Alg::clip_after_dehemog_none;
+    Alg::clip_after_dehomog_none;
 
   m_scene_info.render_line_pipeline.trasform_vertices = matrix_trasform;
   m_scene_info.render_line_pipeline.trasform_to_viewport =
-      Alg::trasform_to_viewport;
+    Alg::trasform_to_viewport;
   m_scene_info.render_line_pipeline.rasterize = Alg::rasterize_line;
   m_scene_info.render_line_pipeline.set_pixel = Alg::set_pixel_rgba_depth;
   m_scene_info.render_line_pipeline.dehomog = Alg::dehomog_all;
   m_scene_info.render_line_pipeline.clip_fast = Alg::clip_fast_line;
-  m_scene_info.render_line_pipeline.clip_before_dehemog =
-      Alg::clip_before_dehemog_line;
+  m_scene_info.render_line_pipeline.clip_before_dehomog =
+    Alg::clip_before_dehomog_line;
   m_scene_info.render_line_pipeline.clip_after_dehomog =
-      Alg::clip_after_dehemog_none;
+    Alg::clip_after_dehomog_none;
+
+  m_scene_info.simulate_triangle_pipeline.trasform_vertices = matrix_trasform;
+  m_scene_info.simulate_triangle_pipeline.trasform_to_viewport =
+    Alg::trasform_to_none;
+  m_scene_info.simulate_triangle_pipeline.rasterize = Alg::rasterize_none;
+  m_scene_info.simulate_triangle_pipeline.set_pixel = Alg::set_pixel_rgba_depth;
+  m_scene_info.simulate_triangle_pipeline.dehomog = Alg::dehomog_all;
+  m_scene_info.simulate_triangle_pipeline.clip_fast = Alg::clip_fast_triangle;
+  m_scene_info.simulate_triangle_pipeline.clip_before_dehomog =
+    Alg::clip_before_dehomog_triangle;
+  m_scene_info.simulate_triangle_pipeline.clip_after_dehomog =
+    Alg::clip_after_dehomog_none;
   // HACK: End
 }
 [[nodiscard]] auto
@@ -157,16 +173,176 @@ auto Application::render(std::vector<Vertex> &vertices,
                          const glm::dmat4 &matrix) -> void {
   pipeline.trasform_vertices(vertices, matrix);
   pipeline.clip_fast(vertices);
-  pipeline.clip_before_dehemog(vertices);
+  pipeline.clip_before_dehomog(vertices);
   pipeline.dehomog(vertices);
   pipeline.clip_after_dehomog(vertices);
   pipeline.trasform_to_viewport(vertices, m_image);
   pipeline.rasterize(vertices, m_image, pipeline.set_pixel);
 }
-
-auto Application::render_solid([[maybe_unused]] const Solid &solid) -> void {
+auto fnc(Solid &solid, const std::vector<Vertex> &verices) -> auto {}
+auto Application::simulate_solid(const Solid &solid) -> Solid {
+  // NOTE: Rethink matrix
   auto matrix = m_scene_info.simulated_camera->get_projection() *
                 m_scene_info.simulated_camera->get_view() *
+                m_scene_info.model_matrix * solid.matrix;
+  Solid new_solid;
+  new_solid.name = solid.name;
+  for (const auto &layout : solid.layout) {
+    switch (layout.topology) {
+    case Topology::Point: {
+      constexpr size_t vertices_per_primitie = 1;
+      for (size_t i = layout.start;
+           i < layout.start + layout.count * vertices_per_primitie;
+           i += vertices_per_primitie) {
+        std::vector<Vertex> point;
+        point.reserve(vertices_per_primitie);
+        for (size_t j = 0; j < vertices_per_primitie; ++j) {
+          point.push_back(solid.vertices[solid.indices[i + j]]);
+        }
+        render(point, m_scene_info.render_point_pipeline, matrix);
+        const size_t new_size = new_solid.vertices.size() + point.size();
+        new_solid.vertices.reserve(new_size);
+        new_solid.indices.reserve(new_size);
+        if (point.size() % vertices_per_primitie == 0) {
+          if (new_solid.layout.size() > 0 &&
+              new_solid.layout.back().topology == layout.topology) {
+            for (size_t j = 0; j < point.size(); j += vertices_per_primitie) {
+              for (size_t k = 0; k < vertices_per_primitie; ++k) {
+                new_solid.vertices.push_back(point[j + k]);
+                new_solid.indices.push_back(new_solid.indices.size());
+              }
+              ++new_solid.layout.back().count;
+            }
+          } else {
+            new_solid.layout.push_back(
+              {layout.topology, new_solid.vertices.size(), 0});
+            for (size_t j = 0; j < point.size(); j += vertices_per_primitie) {
+              for (size_t k = 0; k < vertices_per_primitie; ++k) {
+                new_solid.vertices.push_back(point[j + k]);
+                new_solid.indices.push_back(new_solid.indices.size());
+              }
+              ++new_solid.layout.back().count;
+            }
+          }
+        }
+      }
+    } break;
+    case Topology::Line: {
+      constexpr size_t vertices_per_primitie = 2;
+      for (size_t i = layout.start;
+           i < layout.start + layout.count * vertices_per_primitie;
+           i += vertices_per_primitie) {
+        std::vector<Vertex> line;
+        line.reserve(vertices_per_primitie);
+        for (size_t j = 0; j < vertices_per_primitie; ++j) {
+          line.push_back(solid.vertices[solid.indices[i + j]]);
+        }
+        render(line, m_scene_info.render_line_pipeline, matrix);
+        const size_t new_size = new_solid.vertices.size() + line.size();
+        new_solid.vertices.reserve(new_size);
+        new_solid.indices.reserve(new_size);
+        if (line.size() % vertices_per_primitie == 0) {
+          if (new_solid.layout.size() > 0 &&
+              new_solid.layout.back().topology == layout.topology) {
+            for (size_t j = 0; j < line.size(); j += vertices_per_primitie) {
+              for (size_t k = 0; k < vertices_per_primitie; ++k) {
+                new_solid.vertices.push_back(line[j + k]);
+                new_solid.indices.push_back(new_solid.indices.size());
+              }
+              ++new_solid.layout.back().count;
+            }
+          } else {
+            new_solid.layout.push_back(
+              {layout.topology, new_solid.vertices.size(), 0});
+            for (size_t j = 0; j < line.size(); j += vertices_per_primitie) {
+              for (size_t k = 0; k < vertices_per_primitie; ++k) {
+                new_solid.vertices.push_back(line[j + k]);
+                new_solid.indices.push_back(new_solid.indices.size());
+              }
+              ++new_solid.layout.back().count;
+            }
+          }
+        }
+      }
+    } break;
+    case Topology::Triangle: {
+      constexpr size_t vertices_per_primitie = 3;
+      for (size_t i = layout.start;
+           i < layout.start + layout.count * vertices_per_primitie;
+           i += vertices_per_primitie) {
+        std::vector<Vertex> triangle;
+        triangle.reserve(vertices_per_primitie);
+        for (size_t j = 0; j < vertices_per_primitie; ++j) {
+          triangle.push_back(solid.vertices[solid.indices[i + j]]);
+        }
+        render(triangle, m_scene_info.simulate_triangle_pipeline, matrix);
+        const size_t new_size = new_solid.vertices.size() + triangle.size();
+        new_solid.vertices.reserve(new_size);
+        new_solid.indices.reserve(new_size);
+        if (triangle.size() % vertices_per_primitie == 0) {
+          if (new_solid.layout.size() > 0 &&
+              new_solid.layout.back().topology == layout.topology) {
+            for (size_t j = 0; j < triangle.size();
+                 j += vertices_per_primitie) {
+              for (size_t k = 0; k < vertices_per_primitie; ++k) {
+                new_solid.vertices.push_back(triangle[j + k]);
+                new_solid.indices.push_back(new_solid.indices.size());
+              }
+              ++new_solid.layout.back().count;
+            }
+          } else {
+            new_solid.layout.push_back(
+              {layout.topology, new_solid.vertices.size(), 0});
+            for (size_t j = 0; j < triangle.size();
+                 j += vertices_per_primitie) {
+              for (size_t k = 0; k < vertices_per_primitie; ++k) {
+                new_solid.vertices.push_back(triangle[j + k]);
+                new_solid.indices.push_back(new_solid.indices.size());
+              }
+              ++new_solid.layout.back().count;
+            }
+          }
+        }
+      }
+    } break;
+    }
+  }
+  return new_solid;
+}
+auto get_camera_model(const PerspectiveCamera &camera) -> Solid {
+  PerspectiveCameraInfo info = camera.get_info();
+  Solid solid{};
+  solid.name = "";
+  solid.matrix = glm::dmat4{1.0};
+  solid.vertices.reserve(9);
+  glm::dvec4 color = {1.0, 1.0, 1.0, 1.0};
+  Vertex v1{};
+  v1.pos = {info.position.x, info.position.y, info.position.z, 1.0};
+  v1.col = color;
+  solid.vertices.push_back(v1);
+  std::array<Vertex, 8> vertices{};
+  vertices[0].pos = {-1.0, -1.0, 0.0, 1.0};
+  vertices[1].pos = {1.0, -1.0, 0.0, 1.0};
+  vertices[2].pos = {-1.0, 1.0, 0.0, 1.0};
+  vertices[3].pos = {1.0, 1.0, 0.0, 1.0};
+  vertices[4].pos = {-1.0, -1.0, 1.0, 1.0};
+  vertices[5].pos = {1.0, -1.0, 1.0, 1.0};
+  vertices[6].pos = {-1.0, 1.0, 1.0, 1.0};
+  vertices[7].pos = {1.0, 1.0, 1.0, 1.0};
+  for (size_t i = 0; i < vertices.size(); ++i) {
+    vertices[i].col = color;
+    vertices[i].pos = glm::inverse(camera.get_view()) *
+                      glm::inverse(camera.get_projection()) * vertices[i].pos;
+    solid.vertices.push_back(vertices[i]);
+  }
+  solid.indices = {0, 5, 0, 6, 0, 7, 0, 8, 1, 2, 2, 4,
+                   4, 3, 3, 1, 5, 6, 6, 8, 8, 7, 7, 5};
+  solid.layout.push_back({Topology::Line, 0, 12});
+  return solid;
+};
+auto Application::render_solid(const Solid &solid) -> void {
+  auto matrix = m_scene_info.active_camera->get_projection() *
+                m_scene_info.active_camera->get_view() *
                 m_scene_info.model_matrix * solid.matrix;
   for (const auto &layout : solid.layout) {
     switch (layout.topology) {
@@ -218,16 +394,24 @@ auto Application::render_image() -> void {
       m_panel_height != m_image.get_height()) {
     m_image.resize(static_cast<size_t>(m_panel_width),
                    static_cast<size_t>(m_panel_height));
+    m_scene_info.active_camera->set_width(m_panel_width);
+    m_scene_info.active_camera->set_height(m_panel_height);
   }
   m_image.clear({0.0, 0.0, 0.0, 1.0});
-
   // HACK: Begin
-  m_scene_info.simulated_camera->set_width(m_panel_width);
-  m_scene_info.simulated_camera->set_height(m_panel_height);
-  render_solid(m_scene_info.simulated_solid);
-  render_solid(Solid::Axis());
+  if (m_scene_info.simulate) {
+    Solid simulated = simulate_solid(m_scene_info.simulated_solid);
+    simulated.matrix =
+      glm::dmat4{glm::inverse(m_scene_info.simulated_camera->get_view()) *
+                 glm::inverse(m_scene_info.simulated_camera->get_projection())};
+    render_solid(simulated);
+    render_solid(get_camera_model(
+      *(PerspectiveCamera *)(m_scene_info.simulated_camera.get())));
+    render_solid(Solid::Axis());
+  } else {
+    render_solid(m_scene_info.simulated_solid);
+  }
   // HACK: End
-
   p_texture->bind();
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, static_cast<GLsizei>(m_panel_width),
                static_cast<GLsizei>(m_panel_height), 0, GL_RGBA,
@@ -236,15 +420,12 @@ auto Application::render_image() -> void {
 
 auto Application::handle_input() -> void {
   p_glfw->poll_events();
-
   int width{};
   int height{};
   p_window->get_window_size(width, height);
   m_width = static_cast<size_t>(width);
   m_height = static_cast<size_t>(height);
-
   p_window->get_cursor_pos(m_mouse_pos_x, m_mouse_pos_y);
-
   static bool s_alt_mode_lock{false};
   auto key_left_alt = p_window->get_key(GLFW_KEY_LEFT_ALT);
   if (key_left_alt == GLFW_PRESS) {
@@ -255,77 +436,74 @@ auto Application::handle_input() -> void {
     }
     s_alt_mode_lock = true;
   }
-
   if (key_left_alt == GLFW_RELEASE) {
     s_alt_mode_lock = false;
   }
-
   if (m_alt_mode) {
     p_window->set_input_mode(GLFW_CURSOR, GLFW_CURSOR_DISABLED);
   } else {
     p_window->set_input_mode(GLFW_CURSOR, GLFW_CURSOR_NORMAL);
   }
-
   if (m_alt_mode) {
     int key;
     key = p_window->get_key(GLFW_KEY_W);
     if (key == GLFW_PRESS || key == GLFW_REPEAT) {
-      m_scene_info.simulated_camera->move_forward(0.02);
+      m_scene_info.active_camera->move_forward(0.02);
     }
     key = p_window->get_key(GLFW_KEY_S);
     if (key == GLFW_PRESS || key == GLFW_REPEAT) {
-      m_scene_info.simulated_camera->move_backward(0.02);
+      m_scene_info.active_camera->move_backward(0.02);
     }
     key = p_window->get_key(GLFW_KEY_A);
     if (key == GLFW_PRESS || key == GLFW_REPEAT) {
-      m_scene_info.simulated_camera->move_left(0.02);
+      m_scene_info.active_camera->move_left(0.02);
     }
     key = p_window->get_key(GLFW_KEY_D);
     if (key == GLFW_PRESS || key == GLFW_REPEAT) {
-      m_scene_info.simulated_camera->move_right(0.02);
+      m_scene_info.active_camera->move_right(0.02);
     }
     key = p_window->get_key(GLFW_KEY_SPACE);
     if (key == GLFW_PRESS || key == GLFW_REPEAT) {
-      m_scene_info.simulated_camera->move_up(0.02);
+      m_scene_info.active_camera->move_up(0.02);
     }
     key = p_window->get_key(GLFW_KEY_LEFT_CONTROL);
     if (key == GLFW_PRESS || key == GLFW_REPEAT) {
-      m_scene_info.simulated_camera->move_down(0.02);
+      m_scene_info.active_camera->move_down(0.02);
     }
     key = p_window->get_key(GLFW_KEY_Q);
     if (key == GLFW_PRESS || key == GLFW_REPEAT) {
-      m_scene_info.simulated_camera->rotate_left(0.01);
+      m_scene_info.active_camera->rotate_left(0.01);
     }
     key = p_window->get_key(GLFW_KEY_E);
     if (key == GLFW_PRESS || key == GLFW_REPEAT) {
-      m_scene_info.simulated_camera->rotate_right(0.01);
+      m_scene_info.active_camera->rotate_right(0.01);
     }
     key = p_window->get_key(GLFW_KEY_Y);
     if (key == GLFW_PRESS || key == GLFW_REPEAT) {
-      m_scene_info.simulated_camera->rotate_up(0.01);
+      m_scene_info.active_camera->rotate_up(0.01);
     }
     key = p_window->get_key(GLFW_KEY_Z);
     if (key == GLFW_PRESS || key == GLFW_REPEAT) {
-      m_scene_info.simulated_camera->rotate_down(0.01);
+      m_scene_info.active_camera->rotate_down(0.01);
     }
     if (m_mouse_pos_y < 0.0) {
       for (auto i = 0.0; i < -m_mouse_pos_y; ++i) {
-        m_scene_info.simulated_camera->rotate_up(1 / 500.0);
+        m_scene_info.active_camera->rotate_up(1 / 500.0);
       }
     }
     if (m_mouse_pos_y > 0.0) {
       for (auto i = 0.0; i < m_mouse_pos_y; ++i) {
-        m_scene_info.simulated_camera->rotate_down(1 / 500.0);
+        m_scene_info.active_camera->rotate_down(1 / 500.0);
       }
     }
     if (m_mouse_pos_x < 0.0) {
       for (auto i = 0.0; i < -m_mouse_pos_x; ++i) {
-        m_scene_info.simulated_camera->rotate_left(1 / 500.0);
+        m_scene_info.active_camera->rotate_left(1 / 500.0);
       }
     }
     if (m_mouse_pos_x > 0.0) {
       for (auto i = 0.0; i < m_mouse_pos_x; ++i) {
-        m_scene_info.simulated_camera->rotate_right(1 / 500.0);
+        m_scene_info.active_camera->rotate_right(1 / 500.0);
       }
     }
     m_mouse_pos_x = 0.0;
@@ -385,11 +563,25 @@ auto Application::make_gui(bool show_debug) -> void {
   ImGui::End();
 
   ImGui::Begin("Settings");
+  {
+    auto change = ImGui::Checkbox("Simulate", &m_scene_info.simulate);
+    if (change) {
+      if (m_scene_info.simulate) {
+        m_scene_info.active_camera = m_scene_info.camera.get();
+        m_scene_info.active_camera->set_width(m_panel_width);
+        m_scene_info.active_camera->set_height(m_panel_height);
+      } else {
+        m_scene_info.active_camera = m_scene_info.simulated_camera.get();
+        m_scene_info.active_camera->set_width(m_panel_width);
+        m_scene_info.active_camera->set_height(m_panel_height);
+      }
+    }
+  }
   if (ImGui::CollapsingHeader("Render triangle pipeline")) {
     {
       enum class ClipFast { CLIP_FAST_TRIANGLE, CLIP_FAST_NONE };
       constexpr std::array<const char *, 2> clip_fast_text = {
-          "clip_fast_triangle", "clip_fast_none"};
+        "clip_fast_triangle", "clip_fast_none"};
       static int clip_fast{static_cast<int>(ClipFast::CLIP_FAST_TRIANGLE)};
       auto change = ImGui::Combo("Clip Fast", &clip_fast, clip_fast_text.data(),
                                  static_cast<int>(clip_fast_text.size()));
@@ -397,10 +589,36 @@ auto Application::make_gui(bool show_debug) -> void {
         switch (static_cast<ClipFast>(clip_fast)) {
         case ClipFast::CLIP_FAST_TRIANGLE: {
           m_scene_info.render_triangle_pipeline.clip_fast =
-              Alg::clip_fast_triangle;
+            Alg::clip_fast_triangle;
         } break;
         case ClipFast::CLIP_FAST_NONE: {
           m_scene_info.render_triangle_pipeline.clip_fast = Alg::clip_fast_none;
+        } break;
+        }
+      }
+    }
+    {
+      enum class ClipBeforeDehomog {
+        CLIP_BEFORE_DEHOMOG_TRIANGLE,
+        CLIP_BEFORE_DEHOMOG_NONE
+      };
+      constexpr std::array<const char *, 2> clip_before_dehomog_text = {
+        "clip_before_dehomog_triangle", "clip_before_dehomog_none"};
+      static int clip_before_demohog{
+        static_cast<int>(ClipBeforeDehomog::CLIP_BEFORE_DEHOMOG_TRIANGLE)};
+      auto change =
+        ImGui::Combo("Clip before dehomog", &clip_before_demohog,
+                     clip_before_dehomog_text.data(),
+                     static_cast<int>(clip_before_dehomog_text.size()));
+      if (change) {
+        switch (static_cast<ClipBeforeDehomog>(clip_before_demohog)) {
+        case ClipBeforeDehomog::CLIP_BEFORE_DEHOMOG_TRIANGLE: {
+          m_scene_info.render_triangle_pipeline.clip_before_dehomog =
+            Alg::clip_before_dehomog_triangle;
+        } break;
+        case ClipBeforeDehomog::CLIP_BEFORE_DEHOMOG_NONE: {
+          m_scene_info.render_triangle_pipeline.clip_before_dehomog =
+            Alg::clip_before_dehomog_none;
         } break;
         }
       }
@@ -431,8 +649,8 @@ auto Application::make_gui(bool show_debug) -> void {
         SET_PIXEL_W_NO_DEPTH
       };
       constexpr std::array<const char *, 4> set_pixel_text = {
-          "set_pixel_rgba_depth", "set_pixel_rgba_no_depth",
-          "set_pixel_w_depth", "set_pixel_w_no_depth"};
+        "set_pixel_rgba_depth", "set_pixel_rgba_no_depth", "set_pixel_w_depth",
+        "set_pixel_w_no_depth"};
       static int set_pixel{static_cast<int>(SetPixel::SET_PIXEL_RGBA_DEPTH)};
       auto change = ImGui::Combo("Set Pixel", &set_pixel, set_pixel_text.data(),
                                  static_cast<int>(set_pixel_text.size()));
@@ -440,19 +658,19 @@ auto Application::make_gui(bool show_debug) -> void {
         switch (static_cast<SetPixel>(set_pixel)) {
         case SetPixel::SET_PIXEL_RGBA_DEPTH: {
           m_scene_info.render_triangle_pipeline.set_pixel =
-              Alg::set_pixel_rgba_depth;
+            Alg::set_pixel_rgba_depth;
         } break;
         case SetPixel::SET_PIXEL_RGBA_NO_DEPTH: {
           m_scene_info.render_triangle_pipeline.set_pixel =
-              Alg::set_pixel_rgba_no_depth;
+            Alg::set_pixel_rgba_no_depth;
         } break;
         case SetPixel::SET_PIXEL_W_DEPTH: {
           m_scene_info.render_triangle_pipeline.set_pixel =
-              Alg::set_pixel_w_depth;
+            Alg::set_pixel_w_depth;
         } break;
         case SetPixel::SET_PIXEL_W_NO_DEPTH: {
           m_scene_info.render_triangle_pipeline.set_pixel =
-              Alg::set_pixel_w_no_depth;
+            Alg::set_pixel_w_no_depth;
         } break;
         }
       }
@@ -503,8 +721,8 @@ auto Application::make_gui(bool show_debug) -> void {
         SET_PIXEL_W_NO_DEPTH
       };
       constexpr std::array<const char *, 4> set_pixel_text = {
-          "set_pixel_rgba_depth", "set_pixel_rgba_no_depth",
-          "set_pixel_w_depth", "set_pixel_w_no_depth"};
+        "set_pixel_rgba_depth", "set_pixel_rgba_no_depth", "set_pixel_w_depth",
+        "set_pixel_w_no_depth"};
       static int set_pixel{static_cast<int>(SetPixel::SET_PIXEL_RGBA_DEPTH)};
       auto change = ImGui::Combo("Set Pixel", &set_pixel, set_pixel_text.data(),
                                  static_cast<int>(set_pixel_text.size()));
@@ -512,18 +730,18 @@ auto Application::make_gui(bool show_debug) -> void {
         switch (static_cast<SetPixel>(set_pixel)) {
         case SetPixel::SET_PIXEL_RGBA_DEPTH: {
           m_scene_info.render_line_pipeline.set_pixel =
-              Alg::set_pixel_rgba_depth;
+            Alg::set_pixel_rgba_depth;
         } break;
         case SetPixel::SET_PIXEL_RGBA_NO_DEPTH: {
           m_scene_info.render_line_pipeline.set_pixel =
-              Alg::set_pixel_rgba_no_depth;
+            Alg::set_pixel_rgba_no_depth;
         } break;
         case SetPixel::SET_PIXEL_W_DEPTH: {
           m_scene_info.render_line_pipeline.set_pixel = Alg::set_pixel_w_depth;
         } break;
         case SetPixel::SET_PIXEL_W_NO_DEPTH: {
           m_scene_info.render_line_pipeline.set_pixel =
-              Alg::set_pixel_w_no_depth;
+            Alg::set_pixel_w_no_depth;
         } break;
         }
       }

@@ -1,8 +1,8 @@
 #include "pipeline.hpp"
 namespace Vis {
 namespace Alg {
-auto clip_after_dehemog_none(std::vector<Vertex> &) -> void {}
-auto clip_before_dehemog_line(std::vector<Vertex> &vertices) -> void {
+auto clip_after_dehomog_none(std::vector<Vertex> &) -> void {}
+auto clip_before_dehomog_line(std::vector<Vertex> &vertices) -> void {
   if (vertices.size() % 2 != 0) {
     return;
   }
@@ -24,8 +24,8 @@ auto clip_before_dehemog_line(std::vector<Vertex> &vertices) -> void {
   }
   vertices = new_vertices;
 }
-auto clip_before_dehemog_none(std::vector<Vertex> &) -> void {}
-auto clip_before_dehemog_triangle(std::vector<Vertex> &vertices) -> void {
+auto clip_before_dehomog_none(std::vector<Vertex> &) -> void {}
+auto clip_before_dehomog_triangle(std::vector<Vertex> &vertices) -> void {
   if (vertices.size() % 3 != 0) {
     return;
   }
@@ -170,6 +170,9 @@ auto rasterize_line(std::vector<Vertex> &vertices, Image &image,
        vertices_index += 2) {
     auto &v_a = vertices[vertices_index];
     auto &v_b = vertices[vertices_index + 1];
+    if (std::isnan(v_a.pos.x) || std::isnan(v_b.pos.x)) {
+      continue;
+    }
     double alfa = (v_b.pos.y - v_a.pos.y) / (v_b.pos.x - v_a.pos.x);
     if (alfa * alfa < 1) {
       if (v_a.pos.x > v_b.pos.x) {
@@ -225,6 +228,10 @@ auto rasterize_triangle(std::vector<Vertex> &vertices, Image &image,
     auto &v_a = vertices[vertices_index];
     auto &v_b = vertices[vertices_index + 1];
     auto &v_c = vertices[vertices_index + 2];
+    if (std::isnan(v_a.pos.x) || std::isnan(v_b.pos.x) ||
+        std::isnan(v_c.pos.x)) {
+      continue;
+    }
     if (v_a.pos.y > v_b.pos.y) {
       std::swap(v_a, v_b);
     }
