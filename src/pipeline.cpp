@@ -1,5 +1,5 @@
 #include "pipeline.hpp"
-#define PLANE_TEST(v_in, v_out, test_plane, value, comparison_operator_in)     \
+#define PLANE_TEST(test_plane, value, comparison_operator_in)                  \
   for (size_t j = 0; j < v_in.size(); ++j) {                                   \
     const auto &v1 = v_in[j];                                                  \
     const auto &v2 = v_in[(j + 1) % v_in.size()];                              \
@@ -37,19 +37,19 @@ auto clip_after_dehomog_triangle(std::vector<Vertex> &vertices) -> void {
     v_in.push_back(vertices[i + 2]);
     std::vector<Vertex> v_out;
     v_out.reserve(9);
-    PLANE_TEST(v_in, v_out, x, -1, >)
+    PLANE_TEST(x, -1, >)
     v_in = v_out;
     v_out = {};
-    PLANE_TEST(v_in, v_out, x, 1, <)
+    PLANE_TEST(x, 1, <)
     v_in = v_out;
     v_out = {};
-    PLANE_TEST(v_in, v_out, y, -1, >)
+    PLANE_TEST(y, -1, >)
     v_in = v_out;
     v_out = {};
-    PLANE_TEST(v_in, v_out, y, 1, <)
+    PLANE_TEST(y, 1, <)
     v_in = v_out;
     v_out = {};
-    PLANE_TEST(v_in, v_out, z, 1, <)
+    PLANE_TEST(z, 1, <)
     for (size_t k = 2; k < v_out.size(); ++k) {
       new_vertices.push_back(v_out[0]);
       new_vertices.push_back(v_out[k - 1]);
