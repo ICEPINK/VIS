@@ -1,7 +1,63 @@
 #include "pipeline.hpp"
+#define PLANE_TEST(v_in, v_out, test_plane, value, comparison_operator_in)     \
+  for (size_t j = 0; j < v_in.size(); ++j) {                                   \
+    const auto &v1 = v_in[j];                                                  \
+    const auto &v2 = v_in[(j + 1) % v_in.size()];                              \
+    const auto v1_in = (v1.pos.test_plane comparison_operator_in value);       \
+    const auto v2_in = (v2.pos.test_plane comparison_operator_in value);       \
+    if (v1_in && v2_in) {                                                      \
+      v_out.push_back(v2);                                                     \
+    } else if (v1_in) {                                                        \
+      const auto t =                                                           \
+        (value - v1.pos.test_plane) / (v2.pos.test_plane - v1.pos.test_plane); \
+      const auto v_new = Vertex::interpolate(t, v1, v2);                       \
+      v_out.push_back(v_new);                                                  \
+    } else if (v2_in) {                                                        \
+      const auto t =                                                           \
+        (value - v1.pos.test_plane) / (v2.pos.test_plane - v1.pos.test_plane); \
+      const auto v_new = Vertex::interpolate(t, v1, v2);                       \
+      v_out.push_back(v_new);                                                  \
+      v_out.push_back(v2);                                                     \
+    }                                                                          \
+  }
 namespace Vis {
 namespace Alg {
 auto clip_after_dehomog_none(std::vector<Vertex> &) -> void {}
+auto clip_after_dehomog_triangle(std::vector<Vertex> &vertices) -> void {
+  if (vertices.size() % 3 != 0) {
+    return;
+  }
+  std::vector<Vertex> new_vertices;
+  new_vertices.reserve(vertices.size() * 9);
+  for (size_t i = 0; i < vertices.size(); i += 3) {
+    std::vector<Vertex> v_in;
+    v_in.reserve(9);
+    v_in.push_back(vertices[i]);
+    v_in.push_back(vertices[i + 1]);
+    v_in.push_back(vertices[i + 2]);
+    std::vector<Vertex> v_out;
+    v_out.reserve(9);
+    PLANE_TEST(v_in, v_out, x, -1, >)
+    v_in = v_out;
+    v_out = {};
+    PLANE_TEST(v_in, v_out, x, 1, <)
+    v_in = v_out;
+    v_out = {};
+    PLANE_TEST(v_in, v_out, y, -1, >)
+    v_in = v_out;
+    v_out = {};
+    PLANE_TEST(v_in, v_out, y, 1, <)
+    v_in = v_out;
+    v_out = {};
+    PLANE_TEST(v_in, v_out, z, 1, <)
+    for (size_t k = 2; k < v_out.size(); ++k) {
+      new_vertices.push_back(v_out[0]);
+      new_vertices.push_back(v_out[k - 1]);
+      new_vertices.push_back(v_out[k]);
+    }
+  }
+  vertices = new_vertices;
+}
 auto clip_before_dehomog_line(std::vector<Vertex> &vertices) -> void {
   if (vertices.size() % 2 != 0) {
     return;
@@ -243,7 +299,7 @@ auto rasterize_triangle(std::vector<Vertex> &vertices, Image &image,
     }
     int64_t start_y = static_cast<int64_t>(std::max(v_a.pos.y, 0.0));
     int64_t end_y = static_cast<int64_t>(
-        std::min(v_b.pos.y, static_cast<double>(image.get_height() - 1)));
+      std::min(v_b.pos.y, static_cast<double>(image.get_height() - 1)));
     for (int64_t y = start_y; y <= end_y; ++y) {
       const double t_ab = (y - v_a.pos.y) / (v_b.pos.y - v_a.pos.y);
       Vertex v_ab = Vertex::interpolate(t_ab, v_a, v_b);
@@ -260,7 +316,7 @@ auto rasterize_triangle(std::vector<Vertex> &vertices, Image &image,
       }
       int64_t start_x = static_cast<int64_t>(std::max(v_ab.pos.x, 0.0));
       int64_t end_x = static_cast<int64_t>(
-          std::min(v_ac.pos.x, static_cast<double>(image.get_width() - 1)));
+        std::min(v_ac.pos.x, static_cast<double>(image.get_width() - 1)));
       for (int64_t x = start_x; x <= end_x; ++x) {
         const double t_abac = (x - v_ab.pos.x) / (v_ac.pos.x - v_ab.pos.x);
         Vertex v_abac = Vertex::interpolate(t_abac, v_ab, v_ac);
@@ -274,7 +330,7 @@ auto rasterize_triangle(std::vector<Vertex> &vertices, Image &image,
     }
     start_y = static_cast<int64_t>(std::max(v_b.pos.y, 0.0));
     end_y = static_cast<int64_t>(
-        std::min(v_c.pos.y, static_cast<double>(image.get_height() - 1)));
+      std::min(v_c.pos.y, static_cast<double>(image.get_height() - 1)));
     for (int64_t y = start_y; y <= end_y; ++y) {
       const double t_bc = (y - v_b.pos.y) / (v_c.pos.y - v_b.pos.y);
       Vertex v_bc = Vertex::interpolate(t_bc, v_b, v_c);
@@ -291,7 +347,7 @@ auto rasterize_triangle(std::vector<Vertex> &vertices, Image &image,
       }
       int64_t start_x = static_cast<int64_t>(std::max(v_bc.pos.x, 0.0));
       int64_t end_x = static_cast<int64_t>(
-          std::min(v_ac.pos.x, static_cast<double>(image.get_width() - 1)));
+        std::min(v_ac.pos.x, static_cast<double>(image.get_width() - 1)));
       for (int64_t x = start_x; x <= end_x; ++x) {
         const double t_bcac = (x - v_bc.pos.x) / (v_ac.pos.x - v_bc.pos.x);
         Vertex v_bcac = Vertex::interpolate(t_bcac, v_bc, v_ac);

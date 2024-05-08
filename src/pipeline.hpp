@@ -20,6 +20,7 @@ struct Pipeline {
 };
 namespace Alg {
 auto clip_after_dehomog_none(std::vector<Vertex> &vertices) -> void;
+auto clip_after_dehomog_triangle(std::vector<Vertex> &vertices) -> void;
 auto clip_before_dehomog_line(std::vector<Vertex> &vertices) -> void;
 auto clip_before_dehomog_none(std::vector<Vertex> &vertices) -> void;
 auto clip_before_dehomog_triangle(std::vector<Vertex> &vertices) -> void;

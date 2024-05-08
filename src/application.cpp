@@ -92,7 +92,7 @@ Application::Application(const std::vector<std::string_view> &args) {
   m_scene_info.simulate_triangle_pipeline.clip_before_dehomog =
     Alg::clip_before_dehomog_triangle;
   m_scene_info.simulate_triangle_pipeline.clip_after_dehomog =
-    Alg::clip_after_dehomog_none;
+    Alg::clip_after_dehomog_triangle;
   // HACK: End
 }
 [[nodiscard]] auto
