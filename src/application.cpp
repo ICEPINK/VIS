@@ -179,7 +179,44 @@ auto Application::render(std::vector<Vertex> &vertices,
   pipeline.trasform_to_viewport(vertices, m_image);
   pipeline.rasterize(vertices, m_image, pipeline.set_pixel);
 }
-auto fnc(Solid &solid, const std::vector<Vertex> &verices) -> auto {}
+auto fnc(Solid &solid, const std::vector<Vertex> &vertices,
+         const Topology topology) -> auto {
+  size_t vertices_per_primitie;
+  switch (topology) {
+  case Topology::Point: {
+    vertices_per_primitie = 1;
+  } break;
+  case Topology::Line: {
+    vertices_per_primitie = 2;
+  } break;
+  case Topology::Triangle: {
+    vertices_per_primitie = 3;
+  } break;
+  }
+  const size_t new_size = solid.vertices.size() + vertices.size();
+  solid.vertices.reserve(new_size);
+  solid.indices.reserve(new_size);
+  if (vertices.size() % vertices_per_primitie == 0) {
+    if (solid.layout.size() > 0 && solid.layout.back().topology == topology) {
+      for (size_t j = 0; j < vertices.size(); j += vertices_per_primitie) {
+        for (size_t k = 0; k < vertices_per_primitie; ++k) {
+          solid.vertices.push_back(vertices[j + k]);
+          solid.indices.push_back(solid.indices.size());
+        }
+        ++solid.layout.back().count;
+      }
+    } else {
+      solid.layout.push_back({topology, solid.vertices.size(), 0});
+      for (size_t j = 0; j < vertices.size(); j += vertices_per_primitie) {
+        for (size_t k = 0; k < vertices_per_primitie; ++k) {
+          solid.vertices.push_back(vertices[j + k]);
+          solid.indices.push_back(solid.indices.size());
+        }
+        ++solid.layout.back().count;
+      }
+    }
+  }
+}
 auto Application::simulate_solid(const Solid &solid) -> Solid {
   // NOTE: Rethink matrix
   auto matrix = m_scene_info.simulated_camera->get_projection() *
