@@ -16,10 +16,12 @@
 #include <string_view>
 #include <vector>
 namespace Vis {
+enum class SceneSpace { SolidModel, SceneModel, View, Projection };
 struct SceneInfo {
   Solid simulated_solid{Solid::Cube()};
+  SceneSpace scene_space{SceneSpace::SceneModel};
   bool render_axis{true};
-  bool render_grid{true};
+  bool render_grid{false};
   bool simulate{false};
   glm::dmat4 model_matrix{1.0};
   glm::dmat4 simulated_model_matrix{1.0};

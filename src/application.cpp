@@ -178,12 +178,12 @@ auto Application::render(std::vector<Vertex> &vertices,
   pipeline.rasterize(vertices, m_image, pipeline.set_pixel);
 }
 auto Application::simulate_solid(const Solid &solid) -> Solid {
-  // NOTE: Rethink matrix
   auto matrix = m_scene_info.simulated_camera->get_projection() *
                 m_scene_info.simulated_camera->get_view() *
                 m_scene_info.model_matrix * solid.matrix;
   Solid new_solid;
   new_solid.name = solid.name;
+  new_solid.matrix = glm::dmat4{1.0};
   for (const auto &layout : solid.layout) {
     size_t vertices_per_primitie = 1;
     Pipeline *pipeline{nullptr};
@@ -316,9 +316,25 @@ auto Application::render_image() -> void {
   // HACK: Begin
   if (m_scene_info.simulate) {
     Solid simulated = simulate_solid(m_scene_info.simulated_solid);
-    simulated.matrix =
-      glm::dmat4{glm::inverse(m_scene_info.simulated_camera->get_view()) *
-                 glm::inverse(m_scene_info.simulated_camera->get_projection())};
+    switch (m_scene_info.scene_space) {
+    case SceneSpace::SolidModel: {
+      simulated.matrix = glm::dmat4{
+        glm::inverse(m_scene_info.model_matrix) *
+        glm::inverse(m_scene_info.simulated_camera->get_view()) *
+        glm::inverse(m_scene_info.simulated_camera->get_projection())};
+    } break;
+    case SceneSpace::SceneModel: {
+      simulated.matrix = glm::dmat4{
+        glm::inverse(m_scene_info.simulated_camera->get_view()) *
+        glm::inverse(m_scene_info.simulated_camera->get_projection())};
+    } break;
+    case SceneSpace::View: {
+      simulated.matrix = glm::dmat4{
+        glm::inverse(m_scene_info.simulated_camera->get_projection())};
+    } break;
+    case SceneSpace::Projection: {
+    } break;
+    }
     render_solid(simulated);
     render_solid(get_camera_model(
       *(PerspectiveCamera *)(m_scene_info.simulated_camera.get())));
@@ -489,6 +505,19 @@ auto Application::make_gui(bool show_debug) -> void {
         m_scene_info.active_camera = m_scene_info.simulated_camera.get();
         m_scene_info.active_camera->set_width(m_panel_width);
         m_scene_info.active_camera->set_height(m_panel_height);
+      }
+    }
+  }
+  if (m_scene_info.simulate) {
+    {
+      constexpr std::array<const char *, 4> scene_space_text = {
+        "Solid", "Scene", "View", "Proj"};
+      static int scene_space{static_cast<int>(SceneSpace::SceneModel)};
+      auto change =
+        ImGui::Combo("Scene Space", &scene_space, scene_space_text.data(),
+                     static_cast<int>(scene_space_text.size()));
+      if (change) {
+        m_scene_info.scene_space = static_cast<SceneSpace>(scene_space);
       }
     }
   }
