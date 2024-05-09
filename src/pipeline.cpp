@@ -299,42 +299,52 @@ auto rasterize_triangle(std::vector<Vertex> &vertices, Image &image,
     }
     int64_t start_y = static_cast<int64_t>(v_a.pos.y);
     int64_t end_y = static_cast<int64_t>(v_b.pos.y);
-    for (int64_t y = start_y; y <= end_y; ++y) {
-      const double t_ab = (y - v_a.pos.y) / (v_b.pos.y - v_a.pos.y);
-      Vertex v_ab = Vertex::interpolate(t_ab, v_a, v_b);
-      const double t_ac = (y - v_a.pos.y) / (v_c.pos.y - v_a.pos.y);
-      Vertex v_ac = Vertex::interpolate(t_ac, v_a, v_c);
-      if (v_ab.pos.x > v_ac.pos.x) {
-        std::swap(v_ab, v_ac);
-      }
-      int64_t start_x = static_cast<int64_t>(v_ab.pos.x);
-      int64_t end_x = static_cast<int64_t>(v_ac.pos.x);
-      for (int64_t x = start_x; x <= end_x; ++x) {
-        const double t_abac = (x - v_ab.pos.x) / (v_ac.pos.x - v_ab.pos.x);
-        Vertex v_abac = Vertex::interpolate(t_abac, v_ab, v_ac);
-        v_abac.pos.x = static_cast<double>(x);
-        v_abac.pos.y = static_cast<double>(y);
-        set_pixel(v_abac, image);
+    if (start_y != end_y) {
+      for (int64_t y = start_y; y <= end_y; ++y) {
+        const double t_ab = (y - v_a.pos.y) / (v_b.pos.y - v_a.pos.y);
+        Vertex v_ab = Vertex::interpolate(t_ab, v_a, v_b);
+        const double t_ac = (y - v_a.pos.y) / (v_c.pos.y - v_a.pos.y);
+        Vertex v_ac = Vertex::interpolate(t_ac, v_a, v_c);
+        if (v_ab.pos.x > v_ac.pos.x) {
+          std::swap(v_ab, v_ac);
+        }
+        int64_t start_x = static_cast<int64_t>(v_ab.pos.x);
+        int64_t end_x = static_cast<int64_t>(v_ac.pos.x);
+        if (start_x == end_x) {
+          continue;
+        }
+        for (int64_t x = start_x; x <= end_x; ++x) {
+          const double t_abac = (x - v_ab.pos.x) / (v_ac.pos.x - v_ab.pos.x);
+          Vertex v_abac = Vertex::interpolate(t_abac, v_ab, v_ac);
+          v_abac.pos.x = static_cast<double>(x);
+          v_abac.pos.y = static_cast<double>(y);
+          set_pixel(v_abac, image);
+        }
       }
     }
     start_y = static_cast<int64_t>(v_b.pos.y);
     end_y = static_cast<int64_t>(v_c.pos.y);
-    for (int64_t y = start_y; y <= end_y; ++y) {
-      const double t_bc = (y - v_b.pos.y) / (v_c.pos.y - v_b.pos.y);
-      Vertex v_bc = Vertex::interpolate(t_bc, v_b, v_c);
-      const double t_ac = (y - v_a.pos.y) / (v_c.pos.y - v_a.pos.y);
-      Vertex v_ac = Vertex::interpolate(t_ac, v_a, v_c);
-      if (v_bc.pos.x > v_ac.pos.x) {
-        std::swap(v_bc, v_ac);
-      }
-      int64_t start_x = static_cast<int64_t>(v_bc.pos.x);
-      int64_t end_x = static_cast<int64_t>(v_ac.pos.x);
-      for (int64_t x = start_x; x <= end_x; ++x) {
-        const double t_bcac = (x - v_bc.pos.x) / (v_ac.pos.x - v_bc.pos.x);
-        Vertex v_bcac = Vertex::interpolate(t_bcac, v_bc, v_ac);
-        v_bcac.pos.x = static_cast<double>(x);
-        v_bcac.pos.y = static_cast<double>(y);
-        set_pixel(v_bcac, image);
+    if (start_y != end_y) {
+      for (int64_t y = start_y; y <= end_y; ++y) {
+        const double t_bc = (y - v_b.pos.y) / (v_c.pos.y - v_b.pos.y);
+        Vertex v_bc = Vertex::interpolate(t_bc, v_b, v_c);
+        const double t_ac = (y - v_a.pos.y) / (v_c.pos.y - v_a.pos.y);
+        Vertex v_ac = Vertex::interpolate(t_ac, v_a, v_c);
+        if (v_bc.pos.x > v_ac.pos.x) {
+          std::swap(v_bc, v_ac);
+        }
+        int64_t start_x = static_cast<int64_t>(v_bc.pos.x);
+        int64_t end_x = static_cast<int64_t>(v_ac.pos.x);
+        if (start_x == end_x) {
+          continue;
+        }
+        for (int64_t x = start_x; x <= end_x; ++x) {
+          const double t_bcac = (x - v_bc.pos.x) / (v_ac.pos.x - v_bc.pos.x);
+          Vertex v_bcac = Vertex::interpolate(t_bcac, v_bc, v_ac);
+          v_bcac.pos.x = static_cast<double>(x);
+          v_bcac.pos.y = static_cast<double>(y);
+          set_pixel(v_bcac, image);
+        }
       }
     }
   }
