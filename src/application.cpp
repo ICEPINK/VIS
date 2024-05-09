@@ -316,6 +316,9 @@ auto Application::render_image() -> void {
   // HACK: Begin
   if (m_scene_info.simulate) {
     Solid simulated = simulate_solid(m_scene_info.simulated_solid);
+    glm::dmat4 scene_matrix = {1.0};
+    Solid camera_solid = get_camera_model(
+      *(PerspectiveCamera *)(m_scene_info.simulated_camera.get()));
     switch (m_scene_info.scene_space) {
     case SceneSpace::SolidModel: {
       simulated.matrix = glm::dmat4{
@@ -331,14 +334,26 @@ auto Application::render_image() -> void {
     case SceneSpace::View: {
       simulated.matrix = glm::dmat4{
         glm::inverse(m_scene_info.simulated_camera->get_projection())};
+      scene_matrix = {0.0,  -1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0,
+                      -1.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0, 1.0};
+      camera_solid.matrix = m_scene_info.simulated_camera->get_view();
     } break;
     case SceneSpace::Projection: {
+      scene_matrix = {0.0, -1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0,
+                      1.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0, 1.0};
+      camera_solid.indices[0] = 1;
+      camera_solid.indices[2] = 2;
+      camera_solid.indices[4] = 3;
+      camera_solid.indices[6] = 4;
+      camera_solid.matrix = m_scene_info.simulated_camera->get_projection() *
+                            m_scene_info.simulated_camera->get_view();
     } break;
     }
+    std::swap(scene_matrix, m_scene_info.model_matrix);
     render_solid(simulated);
-    render_solid(get_camera_model(
-      *(PerspectiveCamera *)(m_scene_info.simulated_camera.get())));
+    render_solid(camera_solid);
     render_solid(Solid::Axis());
+    std::swap(scene_matrix, m_scene_info.model_matrix);
   } else {
     render_solid(m_scene_info.simulated_solid);
   }
