@@ -37,9 +37,7 @@ class Application {
 public:
   Application(const std::vector<std::string_view> &args = {});
   ~Application() = default;
-
   auto run() -> void;
-  [[nodiscard]] auto exit() const -> bool;
 
 private:
   [[nodiscard]] auto
@@ -66,7 +64,6 @@ private:
   float m_panel_height{0.0f};
   std::string m_title{"VIS"};
   bool m_alt_mode{false};
-  bool m_exit{false};
   double m_mouse_pos_x{0.0};
   double m_mouse_pos_y{0.0};
   Image m_image{};

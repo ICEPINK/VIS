@@ -6,9 +6,6 @@ auto main(int argc, char **argv) -> int {
 
   try {
     Vis::Application application(args);
-    if (!application.exit()) {
-      application.run();
-    }
   } catch (...) {
     return Vis::handle_exception();
   }

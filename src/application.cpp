@@ -7,44 +7,41 @@
 #include <iostream>
 namespace Vis {
 Application::Application(const std::vector<std::string_view> &args) {
+  // .. Handle args
   if (handle_args(args)) {
-    m_exit = true;
     return;
   }
+  // .. Init GLFW and Make Widnow
   p_glfw = std::make_shared<Glfw>();
   p_glfw->window_hint(GLFW_CONTEXT_VERSION_MAJOR, 4);
   p_glfw->window_hint(GLFW_CONTEXT_VERSION_MINOR, 6);
   p_glfw->window_hint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   p_glfw->window_hint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
-
   const WindowInfo window_info{m_width, m_height, m_title};
   p_window = std::make_unique<Window>(window_info, p_glfw);
   p_window->make_context_current();
-
+  // .. Load Glad (OpenGL) and Setup Debug Callback
   Glad::load_gl_loader((GLADloadproc)p_glfw->get_proc_address());
   glDebugMessageCallback(Glad::print_gl_message, nullptr);
   // std::cout << "OpenGL: Version " << glGetString(GL_VERSION) << '\n';
-
+  // .. Make Texture
   p_texture = std::make_unique<Texture>();
   p_texture->bind();
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
+  // .. Make GUI
   p_gui = std::make_unique<Gui>(*p_window, "#version 460");
-
   ImGuiIO &io = ImGui::GetIO();
   io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
   io.ConfigDockingWithShift = true;
-
   ImGui::StyleColorsDark();
-
   // HACK: Begin
   PerspectiveCameraInfo simulated_camera_info{};
   simulated_camera_info.width = static_cast<double>(m_width);
   simulated_camera_info.height = static_cast<double>(m_height);
-  simulated_camera_info.position = {0.0, 0.0, 0.0};
+  simulated_camera_info.position = {-1.0, 0.0, 0.0};
   simulated_camera_info.near_plane = 1.0;
   simulated_camera_info.far_plane = 10.0;
   m_scene_info.simulated_camera =
@@ -69,7 +66,6 @@ Application::Application(const std::vector<std::string_view> &args) {
     Alg::clip_before_dehomog_triangle;
   m_scene_info.render_triangle_pipeline.clip_after_dehomog =
     Alg::clip_after_dehomog_none;
-
   m_scene_info.render_line_pipeline.trasform_vertices = matrix_trasform;
   m_scene_info.render_line_pipeline.trasform_to_viewport =
     Alg::trasform_to_viewport;
@@ -81,7 +77,6 @@ Application::Application(const std::vector<std::string_view> &args) {
     Alg::clip_before_dehomog_line;
   m_scene_info.render_line_pipeline.clip_after_dehomog =
     Alg::clip_after_dehomog_none;
-
   m_scene_info.simulate_triangle_pipeline.trasform_vertices = matrix_trasform;
   m_scene_info.simulate_triangle_pipeline.trasform_to_viewport =
     Alg::trasform_to_none;
@@ -94,6 +89,9 @@ Application::Application(const std::vector<std::string_view> &args) {
   m_scene_info.simulate_triangle_pipeline.clip_after_dehomog =
     Alg::clip_after_dehomog_triangle;
   // HACK: End
+  //
+  // .. Run Program
+  run();
 }
 [[nodiscard]] auto
 Application::handle_args(const std::vector<std::string_view> &args) -> bool {
@@ -686,5 +684,4 @@ auto Application::make_gui(bool show_debug) -> void {
   ImGui::End();
   ImGui::PopStyleVar();
 }
-[[nodiscard]] auto Application::exit() const -> bool { return m_exit; }
 } // namespace Vis
