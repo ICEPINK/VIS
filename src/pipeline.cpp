@@ -281,9 +281,9 @@ auto rasterize_triangle(std::vector<Vertex> &vertices, Image &image,
   }
   for (size_t vertices_index = 0; vertices_index < vertices.size();
        vertices_index += 3) {
-    auto &v_a = vertices[vertices_index];
-    auto &v_b = vertices[vertices_index + 1];
-    auto &v_c = vertices[vertices_index + 2];
+    auto v_a = vertices[vertices_index];
+    auto v_b = vertices[vertices_index + 1];
+    auto v_c = vertices[vertices_index + 2];
     if (std::isnan(v_a.pos.x) || std::isnan(v_b.pos.x) ||
         std::isnan(v_c.pos.x)) {
       continue;
@@ -297,63 +297,41 @@ auto rasterize_triangle(std::vector<Vertex> &vertices, Image &image,
     if (v_a.pos.y > v_b.pos.y) {
       std::swap(v_a, v_b);
     }
-    int64_t start_y = static_cast<int64_t>(std::max(v_a.pos.y, 0.0));
-    int64_t end_y = static_cast<int64_t>(
-      std::min(v_b.pos.y, static_cast<double>(image.get_height() - 1)));
+    int64_t start_y = static_cast<int64_t>(v_a.pos.y);
+    int64_t end_y = static_cast<int64_t>(v_b.pos.y);
     for (int64_t y = start_y; y <= end_y; ++y) {
       const double t_ab = (y - v_a.pos.y) / (v_b.pos.y - v_a.pos.y);
       Vertex v_ab = Vertex::interpolate(t_ab, v_a, v_b);
-      if (std::isnan(v_ab.pos.x)) {
-        continue;
-      }
       const double t_ac = (y - v_a.pos.y) / (v_c.pos.y - v_a.pos.y);
       Vertex v_ac = Vertex::interpolate(t_ac, v_a, v_c);
-      if (std::isnan(v_ac.pos.x)) {
-        continue;
-      }
       if (v_ab.pos.x > v_ac.pos.x) {
         std::swap(v_ab, v_ac);
       }
-      int64_t start_x = static_cast<int64_t>(std::max(v_ab.pos.x, 0.0));
-      int64_t end_x = static_cast<int64_t>(
-        std::min(v_ac.pos.x, static_cast<double>(image.get_width() - 1)));
+      int64_t start_x = static_cast<int64_t>(v_ab.pos.x);
+      int64_t end_x = static_cast<int64_t>(v_ac.pos.x);
       for (int64_t x = start_x; x <= end_x; ++x) {
         const double t_abac = (x - v_ab.pos.x) / (v_ac.pos.x - v_ab.pos.x);
         Vertex v_abac = Vertex::interpolate(t_abac, v_ab, v_ac);
-        if (std::isnan(v_abac.pos.x)) {
-          continue;
-        }
         v_abac.pos.x = static_cast<double>(x);
         v_abac.pos.y = static_cast<double>(y);
         set_pixel(v_abac, image);
       }
     }
-    start_y = static_cast<int64_t>(std::max(v_b.pos.y, 0.0));
-    end_y = static_cast<int64_t>(
-      std::min(v_c.pos.y, static_cast<double>(image.get_height() - 1)));
+    start_y = static_cast<int64_t>(v_b.pos.y);
+    end_y = static_cast<int64_t>(v_c.pos.y);
     for (int64_t y = start_y; y <= end_y; ++y) {
       const double t_bc = (y - v_b.pos.y) / (v_c.pos.y - v_b.pos.y);
       Vertex v_bc = Vertex::interpolate(t_bc, v_b, v_c);
-      if (std::isnan(v_bc.pos.x)) {
-        continue;
-      }
       const double t_ac = (y - v_a.pos.y) / (v_c.pos.y - v_a.pos.y);
       Vertex v_ac = Vertex::interpolate(t_ac, v_a, v_c);
-      if (std::isnan(v_ac.pos.x)) {
-        continue;
-      }
       if (v_bc.pos.x > v_ac.pos.x) {
         std::swap(v_bc, v_ac);
       }
-      int64_t start_x = static_cast<int64_t>(std::max(v_bc.pos.x, 0.0));
-      int64_t end_x = static_cast<int64_t>(
-        std::min(v_ac.pos.x, static_cast<double>(image.get_width() - 1)));
+      int64_t start_x = static_cast<int64_t>(v_bc.pos.x);
+      int64_t end_x = static_cast<int64_t>(v_ac.pos.x);
       for (int64_t x = start_x; x <= end_x; ++x) {
         const double t_bcac = (x - v_bc.pos.x) / (v_ac.pos.x - v_bc.pos.x);
         Vertex v_bcac = Vertex::interpolate(t_bcac, v_bc, v_ac);
-        if (std::isnan(v_bcac.pos.x)) {
-          continue;
-        }
         v_bcac.pos.x = static_cast<double>(x);
         v_bcac.pos.y = static_cast<double>(y);
         set_pixel(v_bcac, image);
