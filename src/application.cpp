@@ -49,13 +49,8 @@ Application::Application(const std::vector<std::string_view> &args) {
   m_scene_info.camera =
     std::make_unique<PerspectiveCamera>(simulated_camera_info);
   m_scene_info.active_camera = m_scene_info.simulated_camera.get();
-  static constexpr auto matrix_trasform = [](std::vector<Vertex> &vertices,
-                                             const glm::dmat4 &matrix) {
-    for (auto &vertex : vertices) {
-      vertex.pos = matrix * vertex.pos;
-    }
-  };
-  m_scene_info.render_triangle_pipeline.trasform_vertices = matrix_trasform;
+  m_scene_info.render_triangle_pipeline.trasform_vertices =
+    Alg::trasform_vertices_by_matrix;
   m_scene_info.render_triangle_pipeline.trasform_to_viewport =
     Alg::trasform_to_viewport;
   m_scene_info.render_triangle_pipeline.rasterize = Alg::rasterize_triangle;
@@ -66,7 +61,8 @@ Application::Application(const std::vector<std::string_view> &args) {
     Alg::clip_before_dehomog_triangle;
   m_scene_info.render_triangle_pipeline.clip_after_dehomog =
     Alg::clip_after_dehomog_triangle;
-  m_scene_info.render_line_pipeline.trasform_vertices = matrix_trasform;
+  m_scene_info.render_line_pipeline.trasform_vertices =
+    Alg::trasform_vertices_by_matrix;
   m_scene_info.render_line_pipeline.trasform_to_viewport =
     Alg::trasform_to_viewport;
   m_scene_info.render_line_pipeline.rasterize = Alg::rasterize_line;
@@ -77,7 +73,8 @@ Application::Application(const std::vector<std::string_view> &args) {
     Alg::clip_before_dehomog_line;
   m_scene_info.render_line_pipeline.clip_after_dehomog =
     Alg::clip_after_dehomog_none;
-  m_scene_info.simulate_triangle_pipeline.trasform_vertices = matrix_trasform;
+  m_scene_info.simulate_triangle_pipeline.trasform_vertices =
+    Alg::trasform_vertices_by_matrix;
   m_scene_info.simulate_triangle_pipeline.trasform_to_viewport =
     Alg::trasform_to_none;
   m_scene_info.simulate_triangle_pipeline.rasterize = Alg::rasterize_none;
@@ -165,7 +162,6 @@ auto Application::run() -> void {
     p_window->swap_buffers();
   }
 }
-
 auto Application::render(std::vector<Vertex> &vertices,
                          const Pipeline &pipeline,
                          const glm::dmat4 &matrix) -> void {

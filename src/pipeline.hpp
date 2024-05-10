@@ -5,19 +5,6 @@
 // std includes
 #include <vector>
 namespace Vis {
-struct Pipeline {
-  void (*clip_after_dehomog)(std::vector<Vertex> &vertices);
-  void (*clip_before_dehomog)(std::vector<Vertex> &vertices);
-  void (*clip_fast)(std::vector<Vertex> &vertices);
-  void (*dehomog)(std::vector<Vertex> &vertices);
-  void (*rasterize)(std::vector<Vertex> &vertices, Image &image,
-                    void (*set_pixel)(Vertex &vertex, Image &image));
-  void (*set_pixel)(Vertex &vertex, Image &image);
-  void (*trasform_to_viewport)(std::vector<Vertex> &vertices,
-                               const Image &image);
-  void (*trasform_vertices)(std::vector<Vertex> &vertices,
-                            const glm::dmat4 &matrix);
-};
 namespace Alg {
 auto clip_after_dehomog_none(std::vector<Vertex> &vertices) -> void;
 auto clip_after_dehomog_triangle(std::vector<Vertex> &vertices) -> void;
@@ -49,5 +36,25 @@ auto trasform_to_none(std::vector<Vertex> &vertices,
                       const Image &image) -> void;
 auto trasform_to_viewport(std::vector<Vertex> &vertices,
                           const Image &image) -> void;
+auto trasform_vertices_by_matrix(std::vector<Vertex> &vertices,
+                                 const glm::dmat4 &matrix) -> void;
+auto trasform_vertices_by_none(std::vector<Vertex> &vertices,
+                                 const glm::dmat4 &matrix) -> void;
 } // namespace Alg
+struct Pipeline {
+  void (*clip_after_dehomog)(std::vector<Vertex> &vertices){
+    Alg::clip_after_dehomog_none};
+  void (*clip_before_dehomog)(std::vector<Vertex> &vertices){
+    Alg::clip_before_dehomog_none};
+  void (*clip_fast)(std::vector<Vertex> &vertices){Alg::clip_fast_none};
+  void (*dehomog)(std::vector<Vertex> &vertices){Alg::dehomog_none};
+  void (*rasterize)(std::vector<Vertex> &vertices, Image &image,
+                    void (*set_pixel)(Vertex &vertex, Image &image)){
+    Alg::rasterize_none};
+  void (*set_pixel)(Vertex &vertex, Image &image){Alg::set_pixel_none};
+  void (*trasform_to_viewport)(std::vector<Vertex> &vertices,
+                               const Image &image){Alg::trasform_to_none};
+  void (*trasform_vertices)(std::vector<Vertex> &vertices,
+                            const glm::dmat4 &matrix){Alg::trasform_vertices_by_none};
+};
 } // namespace Vis

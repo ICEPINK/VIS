@@ -218,6 +218,14 @@ auto trasform_to_viewport(std::vector<Vertex> &vertices,
     vertex.pos.y = ((vertex.pos.y + 1.0) / 2.0) * (image.get_height() - 1);
   }
 }
+auto trasform_vertices_by_matrix(std::vector<Vertex> &vertices,
+                                 const glm::dmat4 &matrix) -> void {
+  for (auto &vertex : vertices) {
+    vertex.pos = matrix * vertex.pos;
+  }
+}
+auto trasform_vertices_by_none(std::vector<Vertex> &,
+                               const glm::dmat4 &) -> void {}
 auto rasterize_line(std::vector<Vertex> &vertices, Image &image,
                     void (*set_pixel)(Vertex &vertex, Image &image)) -> void {
   if (vertices.size() % 2 != 0) {
