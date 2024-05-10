@@ -27,28 +27,29 @@ auto clip_after_dehomog_triangle(std::vector<Vertex> &vertices) -> void {
   if (vertices.size() % 3 != 0) {
     return;
   }
-  std::vector<Vertex> new_vertices;
+  static std::vector<Vertex> new_vertices;
+  new_vertices.clear();
+  static std::vector<Vertex> v_in(9);
+  static std::vector<Vertex> v_out(9);
   new_vertices.reserve(vertices.size() * 9);
   for (size_t i = 0; i < vertices.size(); i += 3) {
-    std::vector<Vertex> v_in;
-    v_in.reserve(9);
+    v_in.clear();
+    v_out.clear();
     v_in.push_back(vertices[i]);
     v_in.push_back(vertices[i + 1]);
     v_in.push_back(vertices[i + 2]);
-    std::vector<Vertex> v_out;
-    v_out.reserve(9);
     PLANE_TEST(x, -1, >)
     v_in = v_out;
-    v_out = {};
+    v_out.clear();
     PLANE_TEST(x, 1, <)
     v_in = v_out;
-    v_out = {};
+    v_out.clear();
     PLANE_TEST(y, -1, >)
     v_in = v_out;
-    v_out = {};
+    v_out.clear();
     PLANE_TEST(y, 1, <)
     v_in = v_out;
-    v_out = {};
+    v_out.clear();
     PLANE_TEST(z, 1, <)
     for (size_t k = 2; k < v_out.size(); ++k) {
       new_vertices.push_back(v_out[0]);
