@@ -65,7 +65,7 @@ Application::Application(const std::vector<std::string_view> &args) {
   m_scene_info.render_triangle_pipeline.clip_before_dehomog =
     Alg::clip_before_dehomog_triangle;
   m_scene_info.render_triangle_pipeline.clip_after_dehomog =
-    Alg::clip_after_dehomog_none;
+    Alg::clip_after_dehomog_triangle;
   m_scene_info.render_line_pipeline.trasform_vertices = matrix_trasform;
   m_scene_info.render_line_pipeline.trasform_to_viewport =
     Alg::trasform_to_viewport;
@@ -180,11 +180,11 @@ auto Application::render(std::vector<Vertex> &vertices,
 auto Application::simulate_solid(const Solid &solid) -> Solid {
   auto matrix = m_scene_info.simulated_camera->get_projection() *
                 m_scene_info.simulated_camera->get_view() *
-                m_scene_info.model_matrix * solid.matrix;
+                m_scene_info.simulated_model_matrix * solid.matrix;
   Solid new_solid;
   new_solid.name = solid.name;
   new_solid.matrix = glm::dmat4{1.0};
-  for (const auto &layout : solid.layout) {
+  for (const auto layout : solid.layout) {
     size_t vertices_per_primitie = 1;
     Pipeline *pipeline{nullptr};
     switch (layout.topology) {
@@ -201,24 +201,25 @@ auto Application::simulate_solid(const Solid &solid) -> Solid {
       pipeline = &m_scene_info.simulate_triangle_pipeline;
     } break;
     }
+    std::vector<Vertex> primitive;
+    primitive.reserve(vertices_per_primitie);
     for (size_t i = layout.start;
          i < layout.start + layout.count * vertices_per_primitie;
          i += vertices_per_primitie) {
-      std::vector<Vertex> triangle;
-      triangle.reserve(vertices_per_primitie);
+      primitive.clear();
       for (size_t j = 0; j < vertices_per_primitie; ++j) {
-        triangle.push_back(solid.vertices[solid.indices[i + j]]);
+        primitive.push_back(solid.vertices[solid.indices[i + j]]);
       }
-      render(triangle, *pipeline, matrix);
-      const size_t new_size = new_solid.vertices.size() + triangle.size();
+      render(primitive, *pipeline, matrix);
+      const size_t new_size = new_solid.vertices.size() + primitive.size();
       new_solid.vertices.reserve(new_size);
       new_solid.indices.reserve(new_size);
-      if (triangle.size() % vertices_per_primitie == 0) {
+      if (primitive.size() % vertices_per_primitie == 0) {
         if (new_solid.layout.size() > 0 &&
             new_solid.layout.back().topology == layout.topology) {
-          for (size_t j = 0; j < triangle.size(); j += vertices_per_primitie) {
+          for (size_t j = 0; j < primitive.size(); j += vertices_per_primitie) {
             for (size_t k = 0; k < vertices_per_primitie; ++k) {
-              new_solid.vertices.push_back(triangle[j + k]);
+              new_solid.vertices.push_back(primitive[j + k]);
               new_solid.indices.push_back(new_solid.indices.size());
             }
             ++new_solid.layout.back().count;
@@ -226,9 +227,9 @@ auto Application::simulate_solid(const Solid &solid) -> Solid {
         } else {
           new_solid.layout.push_back(
             {layout.topology, new_solid.vertices.size(), 0});
-          for (size_t j = 0; j < triangle.size(); j += vertices_per_primitie) {
+          for (size_t j = 0; j < primitive.size(); j += vertices_per_primitie) {
             for (size_t k = 0; k < vertices_per_primitie; ++k) {
-              new_solid.vertices.push_back(triangle[j + k]);
+              new_solid.vertices.push_back(primitive[j + k]);
               new_solid.indices.push_back(new_solid.indices.size());
             }
             ++new_solid.layout.back().count;
@@ -274,7 +275,7 @@ auto Application::render_solid(const Solid &solid) -> void {
   auto matrix = m_scene_info.active_camera->get_projection() *
                 m_scene_info.active_camera->get_view() *
                 m_scene_info.model_matrix * solid.matrix;
-  for (const auto &layout : solid.layout) {
+  for (const auto layout : solid.layout) {
     size_t vertices_per_primitie = 1;
     Pipeline *pipeline{nullptr};
     switch (layout.topology) {
@@ -291,15 +292,16 @@ auto Application::render_solid(const Solid &solid) -> void {
       pipeline = &m_scene_info.render_triangle_pipeline;
     } break;
     }
+    std::vector<Vertex> primitive;
+    primitive.reserve(vertices_per_primitie);
     for (size_t i = layout.start;
          i < layout.start + layout.count * vertices_per_primitie;
          i += vertices_per_primitie) {
-      std::vector<Vertex> triangle;
-      triangle.reserve(vertices_per_primitie);
+      primitive.clear();
       for (size_t j = 0; j < vertices_per_primitie; ++j) {
-        triangle.push_back(solid.vertices[solid.indices[i + j]]);
+        primitive.push_back(solid.vertices[solid.indices[i + j]]);
       }
-      render(triangle, *pipeline, matrix);
+      render(primitive, *pipeline, matrix);
     }
   }
 }
@@ -312,8 +314,10 @@ auto Application::render_image() -> void {
     m_scene_info.active_camera->set_width(m_panel_width);
     m_scene_info.active_camera->set_height(m_panel_height);
   }
-  m_image.clear({0.0, 0.0, 0.0, 1.0});
+  m_image.clear({0.05, 0.05, 0.05, 1.0});
   // HACK: Begin
+  m_scene_info.simulated_solid.matrix =
+    glm::translate(glm::dmat4{1.0}, {3.0, 0.0, 0.0});
   if (m_scene_info.simulate) {
     Solid simulated = simulate_solid(m_scene_info.simulated_solid);
     glm::dmat4 scene_matrix = {1.0};
@@ -322,7 +326,7 @@ auto Application::render_image() -> void {
     switch (m_scene_info.scene_space) {
     case SceneSpace::SolidModel: {
       simulated.matrix = glm::dmat4{
-        glm::inverse(m_scene_info.model_matrix) *
+        glm::inverse(m_scene_info.simulated_solid.matrix) *
         glm::inverse(m_scene_info.simulated_camera->get_view()) *
         glm::inverse(m_scene_info.simulated_camera->get_projection())};
     } break;
@@ -535,6 +539,73 @@ auto Application::make_gui(bool show_debug) -> void {
         m_scene_info.scene_space = static_cast<SceneSpace>(scene_space);
       }
     }
+    if (ImGui::CollapsingHeader("Simulate triangle pipeline")) {
+      {
+        enum class ClipFast { CLIP_FAST_TRIANGLE, CLIP_FAST_NONE };
+        constexpr std::array<const char *, 2> clip_fast_text = {
+          "clip_fast_triangle", "clip_fast_none"};
+        static int clip_fast{static_cast<int>(ClipFast::CLIP_FAST_TRIANGLE)};
+        auto change =
+          ImGui::Combo("Clip Fast", &clip_fast, clip_fast_text.data(),
+                       static_cast<int>(clip_fast_text.size()));
+        if (change) {
+          switch (static_cast<ClipFast>(clip_fast)) {
+          case ClipFast::CLIP_FAST_TRIANGLE: {
+            m_scene_info.simulate_triangle_pipeline.clip_fast =
+              Alg::clip_fast_triangle;
+          } break;
+          case ClipFast::CLIP_FAST_NONE: {
+            m_scene_info.simulate_triangle_pipeline.clip_fast =
+              Alg::clip_fast_none;
+          } break;
+          }
+        }
+      }
+      {
+        enum class ClipBeforeDehomog {
+          CLIP_BEFORE_DEHOMOG_TRIANGLE,
+          CLIP_BEFORE_DEHOMOG_NONE
+        };
+        constexpr std::array<const char *, 2> clip_before_dehomog_text = {
+          "clip_before_dehomog_triangle", "clip_before_dehomog_none"};
+        static int clip_before_demohog{
+          static_cast<int>(ClipBeforeDehomog::CLIP_BEFORE_DEHOMOG_TRIANGLE)};
+        auto change =
+          ImGui::Combo("Clip before dehomog", &clip_before_demohog,
+                       clip_before_dehomog_text.data(),
+                       static_cast<int>(clip_before_dehomog_text.size()));
+        if (change) {
+          switch (static_cast<ClipBeforeDehomog>(clip_before_demohog)) {
+          case ClipBeforeDehomog::CLIP_BEFORE_DEHOMOG_TRIANGLE: {
+            m_scene_info.simulate_triangle_pipeline.clip_before_dehomog =
+              Alg::clip_before_dehomog_triangle;
+          } break;
+          case ClipBeforeDehomog::CLIP_BEFORE_DEHOMOG_NONE: {
+            m_scene_info.simulate_triangle_pipeline.clip_before_dehomog =
+              Alg::clip_before_dehomog_none;
+          } break;
+          }
+        }
+      }
+      {
+        enum class Dehomog { DEHOMOG_ALL, DEHOMOG_POS };
+        constexpr std::array<const char *, 2> dehomog_text = {"dehomog_all",
+                                                              "dehomog_pos"};
+        static int dehomog{static_cast<int>(Dehomog::DEHOMOG_ALL)};
+        auto change = ImGui::Combo("Dehomog", &dehomog, dehomog_text.data(),
+                                   static_cast<int>(dehomog_text.size()));
+        if (change) {
+          switch (static_cast<Dehomog>(dehomog)) {
+          case Dehomog::DEHOMOG_ALL: {
+            m_scene_info.simulate_triangle_pipeline.dehomog = Alg::dehomog_all;
+          } break;
+          case Dehomog::DEHOMOG_POS: {
+            m_scene_info.simulate_triangle_pipeline.dehomog = Alg::dehomog_pos;
+          } break;
+          }
+        }
+      }
+    }
   }
   if (ImGui::CollapsingHeader("Render triangle pipeline")) {
     {
@@ -596,6 +667,32 @@ auto Application::make_gui(bool show_debug) -> void {
         } break;
         case Dehomog::DEHOMOG_POS: {
           m_scene_info.render_triangle_pipeline.dehomog = Alg::dehomog_pos;
+        } break;
+        }
+      }
+    }
+    {
+      enum class ClipAfterDehomog {
+        CLIP_AFTER_DEHOMOG_TRIANGLE,
+        CLIP_AFTER_DEHOMOG_NONE
+      };
+      constexpr std::array<const char *, 2> clip_after_dehomog_text = {
+        "clip_after_dehomog_triangle", "clip_after_dehomog_none"};
+      static int clip_after_demohog{
+        static_cast<int>(ClipAfterDehomog::CLIP_AFTER_DEHOMOG_TRIANGLE)};
+      auto change =
+        ImGui::Combo("Clip after dehomog", &clip_after_demohog,
+                     clip_after_dehomog_text.data(),
+                     static_cast<int>(clip_after_dehomog_text.size()));
+      if (change) {
+        switch (static_cast<ClipAfterDehomog>(clip_after_demohog)) {
+        case ClipAfterDehomog::CLIP_AFTER_DEHOMOG_TRIANGLE: {
+          m_scene_info.render_triangle_pipeline.clip_after_dehomog =
+            Alg::clip_after_dehomog_triangle;
+        } break;
+        case ClipAfterDehomog::CLIP_AFTER_DEHOMOG_NONE: {
+          m_scene_info.render_triangle_pipeline.clip_after_dehomog =
+            Alg::clip_after_dehomog_none;
         } break;
         }
       }
