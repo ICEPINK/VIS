@@ -7,11 +7,9 @@
 #include <iostream>
 namespace Vis {
 Application::Application(const std::vector<std::string_view> &args) {
-  // .. Handle args
   if (handle_args(args)) {
     return;
   }
-  // .. Init GLFW and Make Widnow
   p_glfw = std::make_shared<Glfw>();
   p_glfw->window_hint(GLFW_CONTEXT_VERSION_MAJOR, 4);
   p_glfw->window_hint(GLFW_CONTEXT_VERSION_MINOR, 6);
@@ -20,18 +18,15 @@ Application::Application(const std::vector<std::string_view> &args) {
   const WindowInfo window_info{m_width, m_height, m_title};
   p_window = std::make_unique<Window>(window_info, p_glfw);
   p_window->make_context_current();
-  // .. Load Glad (OpenGL) and Setup Debug Callback
   Glad::load_gl_loader((GLADloadproc)p_glfw->get_proc_address());
   glDebugMessageCallback(Glad::print_gl_message, nullptr);
   // std::cout << "OpenGL: Version " << glGetString(GL_VERSION) << '\n';
-  // .. Make Texture
   p_texture = std::make_unique<Texture>();
   p_texture->bind();
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  // .. Make GUI
   p_gui = std::make_unique<Gui>(*p_window, "#version 460");
   ImGuiIO &io = ImGui::GetIO();
   io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
@@ -42,52 +37,71 @@ Application::Application(const std::vector<std::string_view> &args) {
   simulated_camera_info.width = static_cast<double>(m_width);
   simulated_camera_info.height = static_cast<double>(m_height);
   simulated_camera_info.position = {-1.0, 0.0, 0.0};
-  simulated_camera_info.near_plane = 1.0;
+  simulated_camera_info.near_plane = 0.1;
   simulated_camera_info.far_plane = 10.0;
   m_scene_info.simulated_camera =
     std::make_unique<PerspectiveCamera>(simulated_camera_info);
   m_scene_info.camera =
     std::make_unique<PerspectiveCamera>(simulated_camera_info);
   m_scene_info.active_camera = m_scene_info.simulated_camera.get();
-  m_scene_info.render_triangle_pipeline.trasform_vertices =
-    Alg::trasform_vertices_by_matrix;
-  m_scene_info.render_triangle_pipeline.trasform_to_viewport =
-    Alg::trasform_to_viewport;
-  m_scene_info.render_triangle_pipeline.rasterize = Alg::rasterize_triangle;
-  m_scene_info.render_triangle_pipeline.set_pixel = Alg::set_pixel_rgba_depth;
-  m_scene_info.render_triangle_pipeline.dehomog = Alg::dehomog_all;
-  m_scene_info.render_triangle_pipeline.clip_fast = Alg::clip_fast_triangle;
-  m_scene_info.render_triangle_pipeline.clip_before_dehomog =
-    Alg::clip_before_dehomog_triangle;
-  m_scene_info.render_triangle_pipeline.clip_after_dehomog =
-    Alg::clip_after_dehomog_triangle;
-  m_scene_info.render_line_pipeline.trasform_vertices =
-    Alg::trasform_vertices_by_matrix;
-  m_scene_info.render_line_pipeline.trasform_to_viewport =
-    Alg::trasform_to_viewport;
-  m_scene_info.render_line_pipeline.rasterize = Alg::rasterize_line;
-  m_scene_info.render_line_pipeline.set_pixel = Alg::set_pixel_rgba_depth;
-  m_scene_info.render_line_pipeline.dehomog = Alg::dehomog_all;
-  m_scene_info.render_line_pipeline.clip_fast = Alg::clip_fast_line;
-  m_scene_info.render_line_pipeline.clip_before_dehomog =
-    Alg::clip_before_dehomog_line;
-  m_scene_info.render_line_pipeline.clip_after_dehomog =
-    Alg::clip_after_dehomog_none;
-  m_scene_info.simulate_triangle_pipeline.trasform_vertices =
-    Alg::trasform_vertices_by_matrix;
-  m_scene_info.simulate_triangle_pipeline.trasform_to_viewport =
-    Alg::trasform_to_none;
-  m_scene_info.simulate_triangle_pipeline.rasterize = Alg::rasterize_none;
-  m_scene_info.simulate_triangle_pipeline.set_pixel = Alg::set_pixel_rgba_depth;
-  m_scene_info.simulate_triangle_pipeline.dehomog = Alg::dehomog_all;
-  m_scene_info.simulate_triangle_pipeline.clip_fast = Alg::clip_fast_triangle;
-  m_scene_info.simulate_triangle_pipeline.clip_before_dehomog =
-    Alg::clip_before_dehomog_triangle;
-  m_scene_info.simulate_triangle_pipeline.clip_after_dehomog =
-    Alg::clip_after_dehomog_triangle;
+  {
+    m_scene_info.render_triangle_pipeline.trasform_vertices =
+      Alg::trasform_vertices_by_matrix;
+    m_scene_info.render_triangle_pipeline.trasform_to_viewport =
+      Alg::trasform_to_viewport;
+    m_scene_info.render_triangle_pipeline.rasterize = Alg::rasterize_triangle;
+    m_scene_info.render_triangle_pipeline.set_pixel = Alg::set_pixel_rgba_depth;
+    m_scene_info.render_triangle_pipeline.dehomog = Alg::dehomog_all;
+    m_scene_info.render_triangle_pipeline.clip_fast = Alg::clip_fast_triangle;
+    m_scene_info.render_triangle_pipeline.clip_before_dehomog =
+      Alg::clip_before_dehomog_triangle;
+    m_scene_info.render_triangle_pipeline.clip_after_dehomog =
+      Alg::clip_after_dehomog_triangle;
+  }
+  {
+    m_scene_info.render_line_pipeline.trasform_vertices =
+      Alg::trasform_vertices_by_matrix;
+    m_scene_info.render_line_pipeline.trasform_to_viewport =
+      Alg::trasform_to_viewport;
+    m_scene_info.render_line_pipeline.rasterize = Alg::rasterize_line;
+    m_scene_info.render_line_pipeline.set_pixel = Alg::set_pixel_rgba_depth;
+    m_scene_info.render_line_pipeline.dehomog = Alg::dehomog_all;
+    m_scene_info.render_line_pipeline.clip_fast = Alg::clip_fast_line;
+    m_scene_info.render_line_pipeline.clip_before_dehomog =
+      Alg::clip_before_dehomog_line;
+    m_scene_info.render_line_pipeline.clip_after_dehomog =
+      Alg::clip_after_dehomog_none;
+  }
+  {
+    m_scene_info.render_point_pipeline.trasform_vertices =
+      Alg::trasform_vertices_by_matrix;
+    m_scene_info.render_point_pipeline.trasform_to_viewport =
+      Alg::trasform_to_viewport;
+    m_scene_info.render_point_pipeline.rasterize = Alg::rasterize_point;
+    m_scene_info.render_point_pipeline.set_pixel = Alg::set_pixel_rgba_depth;
+    m_scene_info.render_point_pipeline.dehomog = Alg::dehomog_all;
+    m_scene_info.render_point_pipeline.clip_fast = Alg::clip_fast_point;
+    m_scene_info.render_point_pipeline.clip_before_dehomog =
+      Alg::clip_before_dehomog_none;
+    m_scene_info.render_point_pipeline.clip_after_dehomog =
+      Alg::clip_after_dehomog_none;
+  }
+  {
+    m_scene_info.simulate_triangle_pipeline.trasform_vertices =
+      Alg::trasform_vertices_by_matrix;
+    m_scene_info.simulate_triangle_pipeline.trasform_to_viewport =
+      Alg::trasform_to_none;
+    m_scene_info.simulate_triangle_pipeline.rasterize = Alg::rasterize_none;
+    m_scene_info.simulate_triangle_pipeline.set_pixel =
+      Alg::set_pixel_rgba_depth;
+    m_scene_info.simulate_triangle_pipeline.dehomog = Alg::dehomog_all;
+    m_scene_info.simulate_triangle_pipeline.clip_fast = Alg::clip_fast_triangle;
+    m_scene_info.simulate_triangle_pipeline.clip_before_dehomog =
+      Alg::clip_before_dehomog_triangle;
+    m_scene_info.simulate_triangle_pipeline.clip_after_dehomog =
+      Alg::clip_after_dehomog_triangle;
+  }
   // HACK: End
-  //
-  // .. Run Program
   run();
 }
 [[nodiscard]] auto
@@ -601,200 +615,238 @@ auto Application::make_gui(bool show_debug) -> void {
           }
         }
       }
-    }
-  }
-  if (ImGui::CollapsingHeader("Render triangle pipeline")) {
-    {
-      enum class ClipFast { CLIP_FAST_TRIANGLE, CLIP_FAST_NONE };
-      constexpr std::array<const char *, 2> clip_fast_text = {
-        "clip_fast_triangle", "clip_fast_none"};
-      static int clip_fast{static_cast<int>(ClipFast::CLIP_FAST_TRIANGLE)};
-      auto change = ImGui::Combo("Clip Fast", &clip_fast, clip_fast_text.data(),
-                                 static_cast<int>(clip_fast_text.size()));
-      if (change) {
-        switch (static_cast<ClipFast>(clip_fast)) {
-        case ClipFast::CLIP_FAST_TRIANGLE: {
-          m_scene_info.render_triangle_pipeline.clip_fast =
-            Alg::clip_fast_triangle;
-        } break;
-        case ClipFast::CLIP_FAST_NONE: {
-          m_scene_info.render_triangle_pipeline.clip_fast = Alg::clip_fast_none;
-        } break;
+      {
+        enum class ClipAfterDehomog {
+          CLIP_AFTER_DEHOMOG_TRIANGLE,
+          CLIP_AFTER_DEHOMOG_NONE
+        };
+        constexpr std::array<const char *, 2> clip_after_dehomog_text = {
+          "clip_after_dehomog_triangle", "clip_after_dehomog_none"};
+        static int clip_after_demohog{
+          static_cast<int>(ClipAfterDehomog::CLIP_AFTER_DEHOMOG_TRIANGLE)};
+        auto change =
+          ImGui::Combo("Clip after dehomog", &clip_after_demohog,
+                       clip_after_dehomog_text.data(),
+                       static_cast<int>(clip_after_dehomog_text.size()));
+        if (change) {
+          switch (static_cast<ClipAfterDehomog>(clip_after_demohog)) {
+          case ClipAfterDehomog::CLIP_AFTER_DEHOMOG_TRIANGLE: {
+            m_scene_info.simulate_triangle_pipeline.clip_after_dehomog =
+              Alg::clip_after_dehomog_triangle;
+          } break;
+          case ClipAfterDehomog::CLIP_AFTER_DEHOMOG_NONE: {
+            m_scene_info.simulate_triangle_pipeline.clip_after_dehomog =
+              Alg::clip_after_dehomog_none;
+          } break;
+          }
         }
       }
     }
-    {
-      enum class ClipBeforeDehomog {
-        CLIP_BEFORE_DEHOMOG_TRIANGLE,
-        CLIP_BEFORE_DEHOMOG_NONE
-      };
-      constexpr std::array<const char *, 2> clip_before_dehomog_text = {
-        "clip_before_dehomog_triangle", "clip_before_dehomog_none"};
-      static int clip_before_demohog{
-        static_cast<int>(ClipBeforeDehomog::CLIP_BEFORE_DEHOMOG_TRIANGLE)};
-      auto change =
-        ImGui::Combo("Clip before dehomog", &clip_before_demohog,
-                     clip_before_dehomog_text.data(),
-                     static_cast<int>(clip_before_dehomog_text.size()));
-      if (change) {
-        switch (static_cast<ClipBeforeDehomog>(clip_before_demohog)) {
-        case ClipBeforeDehomog::CLIP_BEFORE_DEHOMOG_TRIANGLE: {
-          m_scene_info.render_triangle_pipeline.clip_before_dehomog =
-            Alg::clip_before_dehomog_triangle;
-        } break;
-        case ClipBeforeDehomog::CLIP_BEFORE_DEHOMOG_NONE: {
-          m_scene_info.render_triangle_pipeline.clip_before_dehomog =
-            Alg::clip_before_dehomog_none;
-        } break;
+  } else {
+    if (ImGui::CollapsingHeader("Render triangle pipeline")) {
+      {
+        enum class ClipFast { CLIP_FAST_TRIANGLE, CLIP_FAST_NONE };
+        constexpr std::array<const char *, 2> clip_fast_text = {
+          "clip_fast_triangle", "clip_fast_none"};
+        static int clip_fast{static_cast<int>(ClipFast::CLIP_FAST_TRIANGLE)};
+        auto change =
+          ImGui::Combo("Clip Fast", &clip_fast, clip_fast_text.data(),
+                       static_cast<int>(clip_fast_text.size()));
+        if (change) {
+          switch (static_cast<ClipFast>(clip_fast)) {
+          case ClipFast::CLIP_FAST_TRIANGLE: {
+            m_scene_info.render_triangle_pipeline.clip_fast =
+              Alg::clip_fast_triangle;
+          } break;
+          case ClipFast::CLIP_FAST_NONE: {
+            m_scene_info.render_triangle_pipeline.clip_fast =
+              Alg::clip_fast_none;
+          } break;
+          }
+        }
+      }
+      {
+        enum class ClipBeforeDehomog {
+          CLIP_BEFORE_DEHOMOG_TRIANGLE,
+          CLIP_BEFORE_DEHOMOG_NONE
+        };
+        constexpr std::array<const char *, 2> clip_before_dehomog_text = {
+          "clip_before_dehomog_triangle", "clip_before_dehomog_none"};
+        static int clip_before_demohog{
+          static_cast<int>(ClipBeforeDehomog::CLIP_BEFORE_DEHOMOG_TRIANGLE)};
+        auto change =
+          ImGui::Combo("Clip before dehomog", &clip_before_demohog,
+                       clip_before_dehomog_text.data(),
+                       static_cast<int>(clip_before_dehomog_text.size()));
+        if (change) {
+          switch (static_cast<ClipBeforeDehomog>(clip_before_demohog)) {
+          case ClipBeforeDehomog::CLIP_BEFORE_DEHOMOG_TRIANGLE: {
+            m_scene_info.render_triangle_pipeline.clip_before_dehomog =
+              Alg::clip_before_dehomog_triangle;
+          } break;
+          case ClipBeforeDehomog::CLIP_BEFORE_DEHOMOG_NONE: {
+            m_scene_info.render_triangle_pipeline.clip_before_dehomog =
+              Alg::clip_before_dehomog_none;
+          } break;
+          }
+        }
+      }
+      {
+        enum class Dehomog { DEHOMOG_ALL, DEHOMOG_POS };
+        constexpr std::array<const char *, 2> dehomog_text = {"dehomog_all",
+                                                              "dehomog_pos"};
+        static int dehomog{static_cast<int>(Dehomog::DEHOMOG_ALL)};
+        auto change = ImGui::Combo("Dehomog", &dehomog, dehomog_text.data(),
+                                   static_cast<int>(dehomog_text.size()));
+        if (change) {
+          switch (static_cast<Dehomog>(dehomog)) {
+          case Dehomog::DEHOMOG_ALL: {
+            m_scene_info.render_triangle_pipeline.dehomog = Alg::dehomog_all;
+          } break;
+          case Dehomog::DEHOMOG_POS: {
+            m_scene_info.render_triangle_pipeline.dehomog = Alg::dehomog_pos;
+          } break;
+          }
+        }
+      }
+      {
+        enum class ClipAfterDehomog {
+          CLIP_AFTER_DEHOMOG_TRIANGLE,
+          CLIP_AFTER_DEHOMOG_NONE
+        };
+        constexpr std::array<const char *, 2> clip_after_dehomog_text = {
+          "clip_after_dehomog_triangle", "clip_after_dehomog_none"};
+        static int clip_after_demohog{
+          static_cast<int>(ClipAfterDehomog::CLIP_AFTER_DEHOMOG_TRIANGLE)};
+        auto change =
+          ImGui::Combo("Clip after dehomog", &clip_after_demohog,
+                       clip_after_dehomog_text.data(),
+                       static_cast<int>(clip_after_dehomog_text.size()));
+        if (change) {
+          switch (static_cast<ClipAfterDehomog>(clip_after_demohog)) {
+          case ClipAfterDehomog::CLIP_AFTER_DEHOMOG_TRIANGLE: {
+            m_scene_info.render_triangle_pipeline.clip_after_dehomog =
+              Alg::clip_after_dehomog_triangle;
+          } break;
+          case ClipAfterDehomog::CLIP_AFTER_DEHOMOG_NONE: {
+            m_scene_info.render_triangle_pipeline.clip_after_dehomog =
+              Alg::clip_after_dehomog_none;
+          } break;
+          }
+        }
+      }
+      {
+        enum class SetPixel {
+          SET_PIXEL_RGBA_DEPTH,
+          SET_PIXEL_RGBA_NO_DEPTH,
+          SET_PIXEL_W_DEPTH,
+          SET_PIXEL_W_NO_DEPTH,
+          SET_PIXEL_TEX
+        };
+        constexpr std::array<const char *, 5> set_pixel_text = {
+          "set_pixel_rgba_depth", "set_pixel_rgba_no_depth",
+          "set_pixel_w_depth", "set_pixel_w_no_depth", "set_pixel_tex"};
+        static int set_pixel{static_cast<int>(SetPixel::SET_PIXEL_RGBA_DEPTH)};
+        auto change =
+          ImGui::Combo("Set Pixel", &set_pixel, set_pixel_text.data(),
+                       static_cast<int>(set_pixel_text.size()));
+        if (change) {
+          switch (static_cast<SetPixel>(set_pixel)) {
+          case SetPixel::SET_PIXEL_RGBA_DEPTH: {
+            m_scene_info.render_triangle_pipeline.set_pixel =
+              Alg::set_pixel_rgba_depth;
+          } break;
+          case SetPixel::SET_PIXEL_RGBA_NO_DEPTH: {
+            m_scene_info.render_triangle_pipeline.set_pixel =
+              Alg::set_pixel_rgba_no_depth;
+          } break;
+          case SetPixel::SET_PIXEL_W_DEPTH: {
+            m_scene_info.render_triangle_pipeline.set_pixel =
+              Alg::set_pixel_w_depth;
+          } break;
+          case SetPixel::SET_PIXEL_W_NO_DEPTH: {
+            m_scene_info.render_triangle_pipeline.set_pixel =
+              Alg::set_pixel_w_no_depth;
+          } break;
+          case SetPixel::SET_PIXEL_TEX: {
+            m_scene_info.render_triangle_pipeline.set_pixel =
+              Alg::set_pixel_tex;
+          } break;
+          }
         }
       }
     }
-    {
-      enum class Dehomog { DEHOMOG_ALL, DEHOMOG_POS };
-      constexpr std::array<const char *, 2> dehomog_text = {"dehomog_all",
-                                                            "dehomog_pos"};
-      static int dehomog{static_cast<int>(Dehomog::DEHOMOG_ALL)};
-      auto change = ImGui::Combo("Dehomog", &dehomog, dehomog_text.data(),
-                                 static_cast<int>(dehomog_text.size()));
-      if (change) {
-        switch (static_cast<Dehomog>(dehomog)) {
-        case Dehomog::DEHOMOG_ALL: {
-          m_scene_info.render_triangle_pipeline.dehomog = Alg::dehomog_all;
-        } break;
-        case Dehomog::DEHOMOG_POS: {
-          m_scene_info.render_triangle_pipeline.dehomog = Alg::dehomog_pos;
-        } break;
+    if (ImGui::CollapsingHeader("Render line pipeline")) {
+      {
+        enum class ClipFast { CLIP_FAST_LINE, CLIP_FAST_NONE };
+        constexpr std::array<const char *, 2> clip_fast_text = {
+          "clip_fast_line", "clip_fast_none"};
+        static int clip_fast{static_cast<int>(ClipFast::CLIP_FAST_LINE)};
+        auto change =
+          ImGui::Combo("Clip Fast", &clip_fast, clip_fast_text.data(),
+                       static_cast<int>(clip_fast_text.size()));
+        if (change) {
+          switch (static_cast<ClipFast>(clip_fast)) {
+          case ClipFast::CLIP_FAST_LINE: {
+            m_scene_info.render_line_pipeline.clip_fast = Alg::clip_fast_line;
+          } break;
+          case ClipFast::CLIP_FAST_NONE: {
+            m_scene_info.render_line_pipeline.clip_fast = Alg::clip_fast_none;
+          } break;
+          }
         }
       }
-    }
-    {
-      enum class ClipAfterDehomog {
-        CLIP_AFTER_DEHOMOG_TRIANGLE,
-        CLIP_AFTER_DEHOMOG_NONE
-      };
-      constexpr std::array<const char *, 2> clip_after_dehomog_text = {
-        "clip_after_dehomog_triangle", "clip_after_dehomog_none"};
-      static int clip_after_demohog{
-        static_cast<int>(ClipAfterDehomog::CLIP_AFTER_DEHOMOG_TRIANGLE)};
-      auto change =
-        ImGui::Combo("Clip after dehomog", &clip_after_demohog,
-                     clip_after_dehomog_text.data(),
-                     static_cast<int>(clip_after_dehomog_text.size()));
-      if (change) {
-        switch (static_cast<ClipAfterDehomog>(clip_after_demohog)) {
-        case ClipAfterDehomog::CLIP_AFTER_DEHOMOG_TRIANGLE: {
-          m_scene_info.render_triangle_pipeline.clip_after_dehomog =
-            Alg::clip_after_dehomog_triangle;
-        } break;
-        case ClipAfterDehomog::CLIP_AFTER_DEHOMOG_NONE: {
-          m_scene_info.render_triangle_pipeline.clip_after_dehomog =
-            Alg::clip_after_dehomog_none;
-        } break;
+      {
+        enum class Dehomog { DEHOMOG_ALL, DEHOMOG_POS };
+        constexpr std::array<const char *, 2> dehomog_text = {"dehomog_all",
+                                                              "dehomog_pos"};
+        static int dehomog{static_cast<int>(Dehomog::DEHOMOG_ALL)};
+        auto change = ImGui::Combo("Dehomog", &dehomog, dehomog_text.data(),
+                                   static_cast<int>(dehomog_text.size()));
+        if (change) {
+          switch (static_cast<Dehomog>(dehomog)) {
+          case Dehomog::DEHOMOG_ALL: {
+            m_scene_info.render_line_pipeline.dehomog = Alg::dehomog_all;
+          } break;
+          case Dehomog::DEHOMOG_POS: {
+            m_scene_info.render_line_pipeline.dehomog = Alg::dehomog_pos;
+          } break;
+          }
         }
       }
-    }
-    {
-      enum class SetPixel {
-        SET_PIXEL_RGBA_DEPTH,
-        SET_PIXEL_RGBA_NO_DEPTH,
-        SET_PIXEL_W_DEPTH,
-        SET_PIXEL_W_NO_DEPTH
-      };
-      constexpr std::array<const char *, 4> set_pixel_text = {
-        "set_pixel_rgba_depth", "set_pixel_rgba_no_depth", "set_pixel_w_depth",
-        "set_pixel_w_no_depth"};
-      static int set_pixel{static_cast<int>(SetPixel::SET_PIXEL_RGBA_DEPTH)};
-      auto change = ImGui::Combo("Set Pixel", &set_pixel, set_pixel_text.data(),
-                                 static_cast<int>(set_pixel_text.size()));
-      if (change) {
-        switch (static_cast<SetPixel>(set_pixel)) {
-        case SetPixel::SET_PIXEL_RGBA_DEPTH: {
-          m_scene_info.render_triangle_pipeline.set_pixel =
-            Alg::set_pixel_rgba_depth;
-        } break;
-        case SetPixel::SET_PIXEL_RGBA_NO_DEPTH: {
-          m_scene_info.render_triangle_pipeline.set_pixel =
-            Alg::set_pixel_rgba_no_depth;
-        } break;
-        case SetPixel::SET_PIXEL_W_DEPTH: {
-          m_scene_info.render_triangle_pipeline.set_pixel =
-            Alg::set_pixel_w_depth;
-        } break;
-        case SetPixel::SET_PIXEL_W_NO_DEPTH: {
-          m_scene_info.render_triangle_pipeline.set_pixel =
-            Alg::set_pixel_w_no_depth;
-        } break;
-        }
-      }
-    }
-  }
-  if (ImGui::CollapsingHeader("Render line pipeline")) {
-    {
-      enum class ClipFast { CLIP_FAST_LINE, CLIP_FAST_NONE };
-      constexpr std::array<const char *, 2> clip_fast_text = {"clip_fast_line",
-                                                              "clip_fast_none"};
-      static int clip_fast{static_cast<int>(ClipFast::CLIP_FAST_LINE)};
-      auto change = ImGui::Combo("Clip Fast", &clip_fast, clip_fast_text.data(),
-                                 static_cast<int>(clip_fast_text.size()));
-      if (change) {
-        switch (static_cast<ClipFast>(clip_fast)) {
-        case ClipFast::CLIP_FAST_LINE: {
-          m_scene_info.render_line_pipeline.clip_fast = Alg::clip_fast_line;
-        } break;
-        case ClipFast::CLIP_FAST_NONE: {
-          m_scene_info.render_line_pipeline.clip_fast = Alg::clip_fast_none;
-        } break;
-        }
-      }
-    }
-    {
-      enum class Dehomog { DEHOMOG_ALL, DEHOMOG_POS };
-      constexpr std::array<const char *, 2> dehomog_text = {"dehomog_all",
-                                                            "dehomog_pos"};
-      static int dehomog{static_cast<int>(Dehomog::DEHOMOG_ALL)};
-      auto change = ImGui::Combo("Dehomog", &dehomog, dehomog_text.data(),
-                                 static_cast<int>(dehomog_text.size()));
-      if (change) {
-        switch (static_cast<Dehomog>(dehomog)) {
-        case Dehomog::DEHOMOG_ALL: {
-          m_scene_info.render_line_pipeline.dehomog = Alg::dehomog_all;
-        } break;
-        case Dehomog::DEHOMOG_POS: {
-          m_scene_info.render_line_pipeline.dehomog = Alg::dehomog_pos;
-        } break;
-        }
-      }
-    }
-    {
-      enum class SetPixel {
-        SET_PIXEL_RGBA_DEPTH,
-        SET_PIXEL_RGBA_NO_DEPTH,
-        SET_PIXEL_W_DEPTH,
-        SET_PIXEL_W_NO_DEPTH
-      };
-      constexpr std::array<const char *, 4> set_pixel_text = {
-        "set_pixel_rgba_depth", "set_pixel_rgba_no_depth", "set_pixel_w_depth",
-        "set_pixel_w_no_depth"};
-      static int set_pixel{static_cast<int>(SetPixel::SET_PIXEL_RGBA_DEPTH)};
-      auto change = ImGui::Combo("Set Pixel", &set_pixel, set_pixel_text.data(),
-                                 static_cast<int>(set_pixel_text.size()));
-      if (change) {
-        switch (static_cast<SetPixel>(set_pixel)) {
-        case SetPixel::SET_PIXEL_RGBA_DEPTH: {
-          m_scene_info.render_line_pipeline.set_pixel =
-            Alg::set_pixel_rgba_depth;
-        } break;
-        case SetPixel::SET_PIXEL_RGBA_NO_DEPTH: {
-          m_scene_info.render_line_pipeline.set_pixel =
-            Alg::set_pixel_rgba_no_depth;
-        } break;
-        case SetPixel::SET_PIXEL_W_DEPTH: {
-          m_scene_info.render_line_pipeline.set_pixel = Alg::set_pixel_w_depth;
-        } break;
-        case SetPixel::SET_PIXEL_W_NO_DEPTH: {
-          m_scene_info.render_line_pipeline.set_pixel =
-            Alg::set_pixel_w_no_depth;
-        } break;
+      {
+        enum class SetPixel {
+          SET_PIXEL_RGBA_DEPTH,
+          SET_PIXEL_RGBA_NO_DEPTH,
+          SET_PIXEL_W_DEPTH,
+          SET_PIXEL_W_NO_DEPTH
+        };
+        constexpr std::array<const char *, 4> set_pixel_text = {
+          "set_pixel_rgba_depth", "set_pixel_rgba_no_depth",
+          "set_pixel_w_depth", "set_pixel_w_no_depth"};
+        static int set_pixel{static_cast<int>(SetPixel::SET_PIXEL_RGBA_DEPTH)};
+        auto change =
+          ImGui::Combo("Set Pixel", &set_pixel, set_pixel_text.data(),
+                       static_cast<int>(set_pixel_text.size()));
+        if (change) {
+          switch (static_cast<SetPixel>(set_pixel)) {
+          case SetPixel::SET_PIXEL_RGBA_DEPTH: {
+            m_scene_info.render_line_pipeline.set_pixel =
+              Alg::set_pixel_rgba_depth;
+          } break;
+          case SetPixel::SET_PIXEL_RGBA_NO_DEPTH: {
+            m_scene_info.render_line_pipeline.set_pixel =
+              Alg::set_pixel_rgba_no_depth;
+          } break;
+          case SetPixel::SET_PIXEL_W_DEPTH: {
+            m_scene_info.render_line_pipeline.set_pixel =
+              Alg::set_pixel_w_depth;
+          } break;
+          case SetPixel::SET_PIXEL_W_NO_DEPTH: {
+            m_scene_info.render_line_pipeline.set_pixel =
+              Alg::set_pixel_w_no_depth;
+          } break;
+          }
         }
       }
     }

@@ -199,6 +199,7 @@ auto dehomog_all(std::vector<Vertex> &vertices) -> void {
     const auto w = vertex.pos.w;
     vertex.pos /= w;
     vertex.col /= w;
+    vertex.tex /= w;
     vertex.one /= w;
   }
 }
@@ -398,6 +399,30 @@ auto set_pixel_w_no_depth(Vertex &vertex, Image &image) -> void {
   size_t x{static_cast<size_t>(vertex.pos.x)};
   size_t y{static_cast<size_t>(vertex.pos.y)};
   image.set_pixel(x, y, {vertex.pos.z, vertex.pos.z, vertex.pos.z, 1.0});
+}
+auto set_pixel_tex(Vertex &vertex, Image &image) -> void {
+  if (vertex.pos.x < 0 || vertex.pos.y < 0) {
+    return;
+  }
+  size_t x{static_cast<size_t>(vertex.pos.x)};
+  size_t y{static_cast<size_t>(vertex.pos.y)};
+  if (vertex.pos.z > image.get_depth(x, y)) {
+    return;
+  }
+  auto r = vertex.col.r / vertex.one;
+  auto g = vertex.col.g / vertex.one;
+  auto b = vertex.col.b / vertex.one;
+  bool r_t = static_cast<int>(r * 11.0) % 2 == 0;
+  bool g_t = static_cast<int>(g * 11.0) % 2 == 0;
+  bool b_t = static_cast<int>(b * 11.0) % 2 == 0;
+  if ((r_t && g_t && !b_t) || (r_t && !g_t && b_t) || (!r_t && g_t && b_t)) {
+    r = 1.0;
+    g = 1.0;
+    b = 1.0;
+  }
+  glm::dvec4 col = {r, g, b, 1.0};
+  image.set_depth(x, y, vertex.pos.z);
+  image.set_pixel(x, y, col);
 }
 } // namespace Alg
 } // namespace Vis
