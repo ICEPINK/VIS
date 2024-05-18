@@ -1,7 +1,7 @@
 -- .nvim/run.lua ---------------------------------------------------------------
 -- Globals ---------------------------------------------------------------------
 local g_build_type = 'Release'
-local g_executable = '.\\build\\VIS.exe'
+local g_executable = 'start cmd /C .\\build\\VIS.exe'
 local g_executable_args = {}
 local g_cmake_cxx_compiler = 'clang++'
 local g_cmake_c_compiler = 'clang'
