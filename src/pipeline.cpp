@@ -412,9 +412,9 @@ auto set_pixel_tex(Vertex &vertex, Image &image) -> void {
   auto r = vertex.col.r / vertex.one;
   auto g = vertex.col.g / vertex.one;
   auto b = vertex.col.b / vertex.one;
-  bool r_t = static_cast<int>(r * 11.0) % 2 == 0;
-  bool g_t = static_cast<int>(g * 11.0) % 2 == 0;
-  bool b_t = static_cast<int>(b * 11.0) % 2 == 0;
+  bool r_t = static_cast<int>(r * 10.0) % 2 == 0;
+  bool g_t = static_cast<int>(g * 10.0) % 2 == 0;
+  bool b_t = static_cast<int>(b * 10.0) % 2 == 0;
   if ((r_t && g_t && !b_t) || (r_t && !g_t && b_t) || (!r_t && g_t && b_t)) {
     r = 1.0;
     g = 1.0;
