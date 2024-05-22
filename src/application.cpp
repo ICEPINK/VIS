@@ -20,7 +20,7 @@ Application::Application(const std::vector<std::string_view> &args) {
   p_window->make_context_current();
   Glad::load_gl_loader((GLADloadproc)p_glfw->get_proc_address());
   glDebugMessageCallback(Glad::print_gl_message, nullptr);
-  // std::cout << "OpenGL: Version " << glGetString(GL_VERSION) << '\n';
+  std::cout << "OpenGL: Version " << glGetString(GL_VERSION) << '\n';
   p_texture = std::make_unique<Texture>();
   p_texture->bind();
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -37,7 +37,7 @@ Application::Application(const std::vector<std::string_view> &args) {
   simulated_camera_info.width = static_cast<double>(m_width);
   simulated_camera_info.height = static_cast<double>(m_height);
   simulated_camera_info.position = {-1.0, 0.0, 0.0};
-  simulated_camera_info.near_plane = 0.1;
+  simulated_camera_info.near_plane = 1.0;
   simulated_camera_info.far_plane = 10.0;
   m_scene_info.simulated_camera =
     std::make_unique<PerspectiveCamera>(simulated_camera_info);
@@ -739,13 +739,13 @@ auto Application::make_gui(bool show_debug) -> void {
         enum class SetPixel {
           SET_PIXEL_RGBA_DEPTH,
           SET_PIXEL_RGBA_NO_DEPTH,
-          SET_PIXEL_W_DEPTH,
-          SET_PIXEL_W_NO_DEPTH,
+          SET_PIXEL_Z_DEPTH,
+          SET_PIXEL_Z_NO_DEPTH,
           SET_PIXEL_TEX
         };
         constexpr std::array<const char *, 5> set_pixel_text = {
           "set_pixel_rgba_depth", "set_pixel_rgba_no_depth",
-          "set_pixel_w_depth", "set_pixel_w_no_depth", "set_pixel_tex"};
+          "set_pixel_z_depth", "set_pixel_z_no_depth", "set_pixel_tex"};
         static int set_pixel{static_cast<int>(SetPixel::SET_PIXEL_RGBA_DEPTH)};
         auto change =
           ImGui::Combo("Set Pixel", &set_pixel, set_pixel_text.data(),
@@ -760,13 +760,13 @@ auto Application::make_gui(bool show_debug) -> void {
             m_scene_info.render_triangle_pipeline.set_pixel =
               Alg::set_pixel_rgba_no_depth;
           } break;
-          case SetPixel::SET_PIXEL_W_DEPTH: {
+          case SetPixel::SET_PIXEL_Z_DEPTH: {
             m_scene_info.render_triangle_pipeline.set_pixel =
-              Alg::set_pixel_w_depth;
+              Alg::set_pixel_z_depth;
           } break;
-          case SetPixel::SET_PIXEL_W_NO_DEPTH: {
+          case SetPixel::SET_PIXEL_Z_NO_DEPTH: {
             m_scene_info.render_triangle_pipeline.set_pixel =
-              Alg::set_pixel_w_no_depth;
+              Alg::set_pixel_z_no_depth;
           } break;
           case SetPixel::SET_PIXEL_TEX: {
             m_scene_info.render_triangle_pipeline.set_pixel =
@@ -818,12 +818,12 @@ auto Application::make_gui(bool show_debug) -> void {
         enum class SetPixel {
           SET_PIXEL_RGBA_DEPTH,
           SET_PIXEL_RGBA_NO_DEPTH,
-          SET_PIXEL_W_DEPTH,
-          SET_PIXEL_W_NO_DEPTH
+          SET_PIXEL_Z_DEPTH,
+          SET_PIXEL_Z_NO_DEPTH
         };
         constexpr std::array<const char *, 4> set_pixel_text = {
           "set_pixel_rgba_depth", "set_pixel_rgba_no_depth",
-          "set_pixel_w_depth", "set_pixel_w_no_depth"};
+          "set_pixel_z_depth", "set_pixel_z_no_depth"};
         static int set_pixel{static_cast<int>(SetPixel::SET_PIXEL_RGBA_DEPTH)};
         auto change =
           ImGui::Combo("Set Pixel", &set_pixel, set_pixel_text.data(),
@@ -838,13 +838,13 @@ auto Application::make_gui(bool show_debug) -> void {
             m_scene_info.render_line_pipeline.set_pixel =
               Alg::set_pixel_rgba_no_depth;
           } break;
-          case SetPixel::SET_PIXEL_W_DEPTH: {
+          case SetPixel::SET_PIXEL_Z_DEPTH: {
             m_scene_info.render_line_pipeline.set_pixel =
-              Alg::set_pixel_w_depth;
+              Alg::set_pixel_z_depth;
           } break;
-          case SetPixel::SET_PIXEL_W_NO_DEPTH: {
+          case SetPixel::SET_PIXEL_Z_NO_DEPTH: {
             m_scene_info.render_line_pipeline.set_pixel =
-              Alg::set_pixel_w_no_depth;
+              Alg::set_pixel_z_no_depth;
           } break;
           }
         }

@@ -380,7 +380,7 @@ auto set_pixel_rgba_depth(Vertex &vertex, Image &image) -> void {
   image.set_depth(x, y, vertex.pos.z);
   image.set_pixel(x, y, vertex.col * 1.0 / vertex.one);
 }
-auto set_pixel_w_depth(Vertex &vertex, Image &image) -> void {
+auto set_pixel_z_depth(Vertex &vertex, Image &image) -> void {
   if (vertex.pos.x < 0 || vertex.pos.y < 0) {
     return;
   }
@@ -392,7 +392,7 @@ auto set_pixel_w_depth(Vertex &vertex, Image &image) -> void {
   image.set_depth(x, y, vertex.pos.z);
   image.set_pixel(x, y, {vertex.pos.z, vertex.pos.z, vertex.pos.z, 1.0});
 }
-auto set_pixel_w_no_depth(Vertex &vertex, Image &image) -> void {
+auto set_pixel_z_no_depth(Vertex &vertex, Image &image) -> void {
   if (vertex.pos.x < 0 || vertex.pos.y < 0) {
     return;
   }
