@@ -187,6 +187,50 @@ auto Application::render(std::vector<Vertex> &vertices,
   pipeline.trasform_to_viewport(vertices, m_image);
   pipeline.rasterize(vertices, m_image, pipeline.set_pixel);
 }
+template <size_t vertices_per_primitie, AddToNewSolid add_to_new_solid>
+auto Application::render_topology(const Layout &layout, const Solid &solid,
+                                  const Pipeline &pipeline,
+                                  const glm::dmat4 &matrix,
+                                  Solid *new_solid) -> void {
+  std::vector<Vertex> primitive;
+  primitive.reserve(vertices_per_primitie);
+  for (size_t i = layout.start;
+       i < layout.start + layout.count * vertices_per_primitie;
+       i += vertices_per_primitie) {
+    primitive.clear();
+    for (size_t j = 0; j < vertices_per_primitie; ++j) {
+      primitive.push_back(solid.vertices[solid.indices[i + j]]);
+    }
+    render(primitive, pipeline, matrix);
+    if constexpr (add_to_new_solid == AddToNewSolid::True) {
+      const size_t new_size = new_solid->vertices.size() + primitive.size();
+      new_solid->vertices.reserve(new_size);
+      new_solid->indices.reserve(new_size);
+      if (primitive.size() % vertices_per_primitie == 0) {
+        if (new_solid->layout.size() > 0 &&
+            new_solid->layout.back().topology == layout.topology) {
+          for (size_t j = 0; j < primitive.size(); j += vertices_per_primitie) {
+            for (size_t k = 0; k < vertices_per_primitie; ++k) {
+              new_solid->vertices.push_back(primitive[j + k]);
+              new_solid->indices.push_back(new_solid->indices.size());
+            }
+            ++new_solid->layout.back().count;
+          }
+        } else {
+          new_solid->layout.push_back(
+            {layout.topology, new_solid->vertices.size(), 0});
+          for (size_t j = 0; j < primitive.size(); j += vertices_per_primitie) {
+            for (size_t k = 0; k < vertices_per_primitie; ++k) {
+              new_solid->vertices.push_back(primitive[j + k]);
+              new_solid->indices.push_back(new_solid->indices.size());
+            }
+            ++new_solid->layout.back().count;
+          }
+        }
+      }
+    }
+  }
+}
 auto Application::simulate_solid(const Solid &solid) -> Solid {
   auto matrix = m_scene_info.simulated_camera->get_projection() *
                 m_scene_info.simulated_camera->get_view() *
@@ -195,57 +239,21 @@ auto Application::simulate_solid(const Solid &solid) -> Solid {
   new_solid.name = solid.name;
   new_solid.matrix = glm::dmat4{1.0};
   for (const auto layout : solid.layout) {
-    size_t vertices_per_primitie = 1;
-    Pipeline *pipeline{nullptr};
     switch (layout.topology) {
     case Topology::Point: {
-      vertices_per_primitie = 1;
-      pipeline = &m_scene_info.simulate_point_pipeline;
+      render_topology<1, AddToNewSolid::True>(
+        layout, solid, m_scene_info.simulate_point_pipeline, matrix,
+        &new_solid);
     } break;
     case Topology::Line: {
-      vertices_per_primitie = 2;
-      pipeline = &m_scene_info.simulate_line_pipeline;
+      render_topology<2, AddToNewSolid::True>(
+        layout, solid, m_scene_info.simulate_line_pipeline, matrix, &new_solid);
     } break;
     case Topology::Triangle: {
-      vertices_per_primitie = 3;
-      pipeline = &m_scene_info.simulate_triangle_pipeline;
+      render_topology<3, AddToNewSolid::True>(
+        layout, solid, m_scene_info.simulate_triangle_pipeline, matrix,
+        &new_solid);
     } break;
-    }
-    std::vector<Vertex> primitive;
-    primitive.reserve(vertices_per_primitie);
-    for (size_t i = layout.start;
-         i < layout.start + layout.count * vertices_per_primitie;
-         i += vertices_per_primitie) {
-      primitive.clear();
-      for (size_t j = 0; j < vertices_per_primitie; ++j) {
-        primitive.push_back(solid.vertices[solid.indices[i + j]]);
-      }
-      render(primitive, *pipeline, matrix);
-      const size_t new_size = new_solid.vertices.size() + primitive.size();
-      new_solid.vertices.reserve(new_size);
-      new_solid.indices.reserve(new_size);
-      if (primitive.size() % vertices_per_primitie == 0) {
-        if (new_solid.layout.size() > 0 &&
-            new_solid.layout.back().topology == layout.topology) {
-          for (size_t j = 0; j < primitive.size(); j += vertices_per_primitie) {
-            for (size_t k = 0; k < vertices_per_primitie; ++k) {
-              new_solid.vertices.push_back(primitive[j + k]);
-              new_solid.indices.push_back(new_solid.indices.size());
-            }
-            ++new_solid.layout.back().count;
-          }
-        } else {
-          new_solid.layout.push_back(
-            {layout.topology, new_solid.vertices.size(), 0});
-          for (size_t j = 0; j < primitive.size(); j += vertices_per_primitie) {
-            for (size_t k = 0; k < vertices_per_primitie; ++k) {
-              new_solid.vertices.push_back(primitive[j + k]);
-              new_solid.indices.push_back(new_solid.indices.size());
-            }
-            ++new_solid.layout.back().count;
-          }
-        }
-      }
     }
   }
   return new_solid;
@@ -286,32 +294,19 @@ auto Application::render_solid(const Solid &solid) -> void {
                 m_scene_info.active_camera->get_view() *
                 m_scene_info.model_matrix * solid.matrix;
   for (const auto layout : solid.layout) {
-    size_t vertices_per_primitie = 1;
-    Pipeline *pipeline{nullptr};
     switch (layout.topology) {
     case Topology::Point: {
-      vertices_per_primitie = 1;
-      pipeline = &m_scene_info.render_point_pipeline;
+      render_topology<1, AddToNewSolid::False>(
+        layout, solid, m_scene_info.render_point_pipeline, matrix);
     } break;
     case Topology::Line: {
-      vertices_per_primitie = 2;
-      pipeline = &m_scene_info.render_line_pipeline;
+      render_topology<2, AddToNewSolid::False>(
+        layout, solid, m_scene_info.render_line_pipeline, matrix);
     } break;
     case Topology::Triangle: {
-      vertices_per_primitie = 3;
-      pipeline = &m_scene_info.render_triangle_pipeline;
+      render_topology<3, AddToNewSolid::False>(
+        layout, solid, m_scene_info.render_triangle_pipeline, matrix);
     } break;
-    }
-    std::vector<Vertex> primitive;
-    primitive.reserve(vertices_per_primitie);
-    for (size_t i = layout.start;
-         i < layout.start + layout.count * vertices_per_primitie;
-         i += vertices_per_primitie) {
-      primitive.clear();
-      for (size_t j = 0; j < vertices_per_primitie; ++j) {
-        primitive.push_back(solid.vertices[solid.indices[i + j]]);
-      }
-      render(primitive, *pipeline, matrix);
     }
   }
 }

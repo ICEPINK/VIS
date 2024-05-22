@@ -17,6 +17,7 @@
 #include <vector>
 namespace Vis {
 enum class SceneSpace { SolidModel, SceneModel, View, Projection };
+enum class AddToNewSolid { False, True };
 struct SceneInfo {
   Solid simulated_solid{Solid::Cube()};
   SceneSpace scene_space{SceneSpace::SceneModel};
@@ -54,6 +55,10 @@ private:
   auto render(std::vector<Vertex> &vertices, const Pipeline &pipeline,
               const glm::dmat4 &matrix) -> void;
   [[nodiscard]] auto simulate_solid(const Solid &solid) -> Solid;
+  template <size_t vertices_per_primitie, AddToNewSolid add_to_new_solid>
+  auto render_topology(const Layout &layout, const Solid &solid,
+                       const Pipeline &pipeline, const glm::dmat4 &matrix,
+                       Solid *new_solid = nullptr) -> void;
 
 private:
   std::shared_ptr<Glfw> p_glfw{nullptr};
