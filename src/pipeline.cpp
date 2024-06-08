@@ -359,6 +359,25 @@ auto rasterize_triangle(std::vector<Vertex> &vertices, Image &image,
     }
   }
 }
+auto rasterize_triangle_as_lines(std::vector<Vertex> &vertices, Image &image,
+                                 void (*set_pixel)(Vertex &vertex,
+                                                   Image &image)) -> void {
+  if (vertices.size() % 3 != 0) {
+    return;
+  }
+  for (size_t vertices_index = 0; vertices_index < vertices.size();
+       vertices_index += 3) {
+    auto v_a = vertices[vertices_index];
+    auto v_b = vertices[vertices_index + 1];
+    auto v_c = vertices[vertices_index + 2];
+    if (std::isnan(v_a.pos.x) || std::isnan(v_b.pos.x) ||
+        std::isnan(v_c.pos.x)) {
+      continue;
+    }
+    std::vector<Vertex> line_vertices = {v_a, v_b, v_b, v_c, v_c, v_a};
+    rasterize_line(line_vertices, image, set_pixel);
+  }
+}
 auto set_pixel_none(Vertex &, Image &) -> void {}
 auto set_pixel_rgba_no_depth(Vertex &vertex, Image &image) -> void {
   if (vertex.pos.x < 0 || vertex.pos.y < 0) {

@@ -731,6 +731,37 @@ auto Application::make_gui(bool show_debug) -> void {
         }
       }
       {
+        enum class RasterizeTriangle {
+          RasterizeNone,
+          RasterizeTriangle,
+          RasterizeTriangleAsLines
+        };
+        constexpr std::array<const char *, 3> rasterize_triangle_text = {
+          "rasterize_none", "rasterize_triangle", "rasterize_triangle_as_lines"};
+        static int rasterize_triangle{
+          static_cast<int>(RasterizeTriangle::RasterizeTriangle)};
+        auto change =
+          ImGui::Combo("Rasterize triangle", &rasterize_triangle,
+                       rasterize_triangle_text.data(),
+                       static_cast<int>(rasterize_triangle_text.size()));
+        if (change) {
+          switch (static_cast<RasterizeTriangle>(rasterize_triangle)) {
+          case RasterizeTriangle::RasterizeNone: {
+            m_scene_info.render_triangle_pipeline.rasterize =
+              Alg::rasterize_none;
+          } break;
+          case RasterizeTriangle::RasterizeTriangle: {
+            m_scene_info.render_triangle_pipeline.rasterize =
+              Alg::rasterize_triangle;
+          } break;
+          case RasterizeTriangle::RasterizeTriangleAsLines: {
+            m_scene_info.render_triangle_pipeline.rasterize =
+              Alg::rasterize_triangle_as_lines;
+          } break;
+          }
+        }
+      }
+      {
         enum class SetPixel {
           SET_PIXEL_RGBA_DEPTH,
           SET_PIXEL_RGBA_NO_DEPTH,
