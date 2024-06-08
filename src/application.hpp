@@ -19,7 +19,7 @@ namespace Vis {
 enum class SceneSpace { SolidModel, SceneModel, View, Projection };
 enum class AddToNewSolid { False, True };
 struct SceneInfo {
-  Solid simulated_solid{Solid::Cube()};
+  Solid simulated_solid{Solid::Icosphere()};
   SceneSpace scene_space{SceneSpace::SceneModel};
   bool render_axis{true};
   bool render_grid{false};

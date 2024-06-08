@@ -26,6 +26,9 @@ struct Solid {
 
   static auto Cube(const std::string_view name = "") -> Solid;
   static auto Axis(const std::string_view name = "") -> Solid;
+  static auto Triangle(const std::string_view name = "") -> Solid;
+  static auto Square(const std::string_view name = "") -> Solid;
+  static auto Icosphere(const std::string_view name = "") -> Solid;
 };
 
 } // namespace Vis
