@@ -532,6 +532,31 @@ auto Application::make_gui(bool show_debug) -> void {
       }
     }
   }
+  {
+
+    enum class Solids { Triangle, Square, Cube, IcoSphere };
+    constexpr std::array<const char *, 4> solids_text = {"triangle", "square",
+                                                         "cube", "icosphere"};
+    static int solids{static_cast<int>(Solids::Cube)};
+    auto change = ImGui::Combo("Solids", &solids, solids_text.data(),
+                               static_cast<int>(solids_text.size()));
+    if (change) {
+      switch (static_cast<Solids>(solids)) {
+      case Solids::Triangle: {
+        m_scene_info.simulated_solid = Solid::Triangle();
+      } break;
+      case Solids::Square: {
+        m_scene_info.simulated_solid = Solid::Square();
+      } break;
+      case Solids::Cube: {
+        m_scene_info.simulated_solid = Solid::Cube();
+      } break;
+      case Solids::IcoSphere: {
+        m_scene_info.simulated_solid = Solid::Icosphere();
+      } break;
+      }
+    }
+  }
   if (m_scene_info.simulate) {
     {
       constexpr std::array<const char *, 4> scene_space_text = {
@@ -737,7 +762,8 @@ auto Application::make_gui(bool show_debug) -> void {
           RasterizeTriangleAsLines
         };
         constexpr std::array<const char *, 3> rasterize_triangle_text = {
-          "rasterize_none", "rasterize_triangle", "rasterize_triangle_as_lines"};
+          "rasterize_none", "rasterize_triangle",
+          "rasterize_triangle_as_lines"};
         static int rasterize_triangle{
           static_cast<int>(RasterizeTriangle::RasterizeTriangle)};
         auto change =
@@ -767,11 +793,13 @@ auto Application::make_gui(bool show_debug) -> void {
           SET_PIXEL_RGBA_NO_DEPTH,
           SET_PIXEL_Z_DEPTH,
           SET_PIXEL_Z_NO_DEPTH,
-          SET_PIXEL_TEX
+          SET_PIXEL_TEX,
+          SET_PIXEL_WHITE
         };
-        constexpr std::array<const char *, 5> set_pixel_text = {
+        constexpr std::array<const char *, 6> set_pixel_text = {
           "set_pixel_rgba_depth", "set_pixel_rgba_no_depth",
-          "set_pixel_z_depth", "set_pixel_z_no_depth", "set_pixel_tex"};
+          "set_pixel_z_depth",    "set_pixel_z_no_depth",
+          "set_pixel_tex",        "set_pixel_white"};
         static int set_pixel{static_cast<int>(SetPixel::SET_PIXEL_RGBA_DEPTH)};
         auto change =
           ImGui::Combo("Set Pixel", &set_pixel, set_pixel_text.data(),
@@ -797,6 +825,10 @@ auto Application::make_gui(bool show_debug) -> void {
           case SetPixel::SET_PIXEL_TEX: {
             m_scene_info.render_triangle_pipeline.set_pixel =
               Alg::set_pixel_tex;
+          } break;
+          case SetPixel::SET_PIXEL_WHITE: {
+            m_scene_info.render_triangle_pipeline.set_pixel =
+              Alg::set_pixel_white;
           } break;
           }
         }

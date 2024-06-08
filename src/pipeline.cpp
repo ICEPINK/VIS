@@ -443,5 +443,13 @@ auto set_pixel_tex(Vertex &vertex, Image &image) -> void {
   image.set_depth(x, y, vertex.pos.z);
   image.set_pixel(x, y, col);
 }
+auto set_pixel_white(Vertex &vertex, Image &image) -> void {
+  if (vertex.pos.x < 0 || vertex.pos.y < 0) {
+    return;
+  }
+  size_t x{static_cast<size_t>(vertex.pos.x)};
+  size_t y{static_cast<size_t>(vertex.pos.y)};
+  image.set_pixel(x, y, {1.0, 1.0, 1.0, 1.0});
+}
 } // namespace Alg
 } // namespace Vis
