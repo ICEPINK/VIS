@@ -30,7 +30,7 @@ set(P_SOURCE_FILES
   "./src/main.cpp"
   "./src/perspective_camera.cpp"
   "./src/pipeline.cpp"
-  "./src/solids/solid.cpp"
+  "./src/solid.cpp"
   "./src/texture.cpp"
   "./src/window.cpp"
   )
@@ -44,10 +44,10 @@ set(P_HEADER_FILES
   "./src/image.hpp"
   "./src/main.hpp"
   "./src/pipeline.hpp"
-  "./src/solids/solid.hpp"
+  "./src/solid.hpp"
   "./src/texture.hpp"
-  "./src/utils/timer.hpp"
-  "./src/utils/vertex.hpp"
+  "./src/timer.hpp"
+  "./src/vertex.hpp"
   "./src/window.hpp"
   )
 
