@@ -1,7 +1,7 @@
 #pragma once
 // src includes
 #include "image.hpp"
-#include "utils/vertex.hpp"
+#include "vertex.hpp"
 // std includes
 #include <vector>
 namespace Vis {

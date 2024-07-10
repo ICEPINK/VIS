@@ -1,11 +1,16 @@
 #include "application.hpp"
+
 #include "glad.hpp"
-#include "utils/timer.hpp"
+#include "timer.hpp"
+
 #include <glm/ext.hpp>
 #include <glm/glm.hpp>
+
 #include <array>
 #include <iostream>
+
 namespace Vis {
+
 Application::Application(const std::vector<std::string_view> &args) {
   if (handle_args(args)) {
     return;
@@ -32,21 +37,18 @@ Application::Application(const std::vector<std::string_view> &args) {
   io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
   io.ConfigDockingWithShift = true;
   ImGui::StyleColorsDark();
-  // HACK: Begin
-  PerspectiveCameraInfo simulated_camera_info{};
-  simulated_camera_info.width = static_cast<double>(m_width);
-  simulated_camera_info.height = static_cast<double>(m_height);
-  simulated_camera_info.position = {-1.0, 0.0, 0.0};
-  simulated_camera_info.near_plane = 1.0;
-  simulated_camera_info.far_plane = 10.0;
-  m_scene_info.simulated_camera = std::make_unique<PerspectiveCamera>(simulated_camera_info);
-  PerspectiveCameraInfo render_camera_info{};
-  render_camera_info.width = static_cast<double>(m_width);
-  render_camera_info.height = static_cast<double>(m_height);
-  render_camera_info.position = {-1.0, 0.0, 0.0};
-  render_camera_info.near_plane = 0.1;
-  render_camera_info.far_plane = 100.0;
-  m_scene_info.camera = std::make_unique<PerspectiveCamera>(render_camera_info);
+  m_scene_info.simulated_camera = std::make_unique<Camera>();
+  m_scene_info.simulated_camera->width = static_cast<double>(m_width);
+  m_scene_info.simulated_camera->height = static_cast<double>(m_height);
+  m_scene_info.simulated_camera->position = {-1.0, 0.0, 0.0};
+  m_scene_info.simulated_camera->near_plane = 1.0;
+  m_scene_info.simulated_camera->far_plane = 10.0;
+  m_scene_info.render_camera = std::make_unique<Camera>();
+  m_scene_info.render_camera->width = static_cast<double>(m_width);
+  m_scene_info.render_camera->height = static_cast<double>(m_height);
+  m_scene_info.render_camera->position = {-1.0, 0.0, 0.0};
+  m_scene_info.render_camera->near_plane = 0.1;
+  m_scene_info.render_camera->far_plane = 100.0;
   m_scene_info.active_camera = m_scene_info.simulated_camera.get();
   m_scene_info.render_triangle_pipeline.trasform_vertices = Alg::trasform_vertices_by_matrix;
   m_scene_info.render_triangle_pipeline.trasform_to_viewport = Alg::trasform_to_viewport;
@@ -80,9 +82,9 @@ Application::Application(const std::vector<std::string_view> &args) {
   m_scene_info.simulate_triangle_pipeline.clip_fast = Alg::clip_fast_triangle;
   m_scene_info.simulate_triangle_pipeline.clip_before_dehomog = Alg::clip_before_dehomog_triangle;
   m_scene_info.simulate_triangle_pipeline.clip_after_dehomog = Alg::clip_after_dehomog_triangle;
-  // HACK: End
   run();
 }
+
 [[nodiscard]] auto Application::handle_args(const std::vector<std::string_view> &args) -> bool {
   [[maybe_unused]] size_t i = 0;
   for (const auto &arg : args) {
@@ -115,6 +117,7 @@ auto Application::arg_print_version() -> bool {
   std::cout << "VIS version: 0.0.0" << std::endl;
   return true;
 }
+
 auto Application::arg_resolution(const std::string_view resolution) -> void {
   auto x = resolution.find('x');
   if (x == std::string::npos) {
@@ -154,6 +157,7 @@ auto Application::run() -> void {
     p_window->swap_buffers();
   }
 }
+
 auto Application::render(std::vector<Vertex> &vertices, const Pipeline &pipeline, const glm::dmat4 &matrix) -> void {
   pipeline.trasform_vertices(vertices, matrix);
   pipeline.clip_fast(vertices);
@@ -163,6 +167,7 @@ auto Application::render(std::vector<Vertex> &vertices, const Pipeline &pipeline
   pipeline.trasform_to_viewport(vertices, m_image);
   pipeline.rasterize(vertices, m_image, pipeline.set_pixel);
 }
+
 template <size_t vertices_per_primitie, AddToNewSolid add_to_new_solid> auto Application::render_topology(const Layout &layout, const Solid &solid, const Pipeline &pipeline, const glm::dmat4 &matrix, Solid *new_solid) -> void {
   std::vector<Vertex> primitive;
   primitive.reserve(vertices_per_primitie);
@@ -199,6 +204,7 @@ template <size_t vertices_per_primitie, AddToNewSolid add_to_new_solid> auto App
     }
   }
 }
+
 auto Application::simulate_solid(const Solid &solid) -> Solid {
   auto matrix = m_scene_info.simulated_camera->get_projection() * m_scene_info.simulated_camera->get_view() * m_scene_info.simulated_model_matrix * solid.matrix;
   Solid new_solid;
@@ -219,15 +225,15 @@ auto Application::simulate_solid(const Solid &solid) -> Solid {
   }
   return new_solid;
 }
-auto get_camera_model(const PerspectiveCamera &camera) -> Solid {
-  PerspectiveCameraInfo info = camera.get_info();
+
+auto get_camera_model(const Camera &camera) -> Solid {
   Solid solid{};
   solid.name = "";
   solid.matrix = glm::dmat4{1.0};
   solid.vertices.reserve(9);
   glm::dvec4 color = {1.0, 1.0, 1.0, 1.0};
   Vertex v1{};
-  v1.pos = {info.position.x, info.position.y, info.position.z, 1.0};
+  v1.pos = {camera.position.x, camera.position.y, camera.position.z, 1.0};
   v1.col = color;
   solid.vertices.push_back(v1);
   std::array<Vertex, 8> vertices{};
@@ -248,6 +254,7 @@ auto get_camera_model(const PerspectiveCamera &camera) -> Solid {
   solid.layout.push_back({Topology::Line, 0, 12});
   return solid;
 };
+
 auto Application::render_solid(const Solid &solid) -> void {
   auto matrix = m_scene_info.active_camera->get_projection() * m_scene_info.active_camera->get_view() * m_scene_info.model_matrix * solid.matrix;
   for (const auto layout : solid.layout) {
@@ -268,16 +275,15 @@ auto Application::render_solid(const Solid &solid) -> void {
 auto Application::render_image() -> void {
   if (m_panel_width != m_image.get_width() || m_panel_height != m_image.get_height()) {
     m_image.resize(static_cast<size_t>(m_panel_width), static_cast<size_t>(m_panel_height));
-    m_scene_info.active_camera->set_width(m_panel_width);
-    m_scene_info.active_camera->set_height(m_panel_height);
+    m_scene_info.active_camera->width = m_panel_width;
+    m_scene_info.active_camera->height = m_panel_height;
   }
   m_image.clear({0.05, 0.05, 0.05, 1.0});
-  // HACK: Begin
   m_scene_info.simulated_solid.matrix = glm::translate(glm::dmat4{1.0}, {3.0, 0.0, 0.0});
   if (m_scene_info.simulate) {
     Solid simulated = simulate_solid(m_scene_info.simulated_solid);
     glm::dmat4 scene_matrix = {1.0};
-    Solid camera_solid = get_camera_model(*(PerspectiveCamera *)(m_scene_info.simulated_camera.get()));
+    Solid camera_solid = get_camera_model(*m_scene_info.simulated_camera.get());
     switch (m_scene_info.scene_space) {
     case SceneSpace::SolidModel: {
       simulated.matrix = glm::dmat4{glm::inverse(m_scene_info.simulated_solid.matrix) * glm::inverse(m_scene_info.simulated_camera->get_view()) * glm::inverse(m_scene_info.simulated_camera->get_projection())};
@@ -301,13 +307,16 @@ auto Application::render_image() -> void {
     }
     std::swap(scene_matrix, m_scene_info.model_matrix);
     render_solid(simulated);
-    render_solid(camera_solid);
-    render_solid(Solid::Axis());
+    if (m_scene_info.scene_space != SceneSpace::SolidModel) {
+      render_solid(camera_solid);
+    }
+    if (m_scene_info.render_axis) {
+      render_solid(Solid::Axis());
+    }
     std::swap(scene_matrix, m_scene_info.model_matrix);
   } else {
     render_solid(m_scene_info.simulated_solid);
   }
-  // HACK: End
   p_texture->bind();
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, static_cast<GLsizei>(m_panel_width), static_cast<GLsizei>(m_panel_height), 0, GL_RGBA, GL_UNSIGNED_BYTE, m_image.get_image_data());
 }
@@ -461,15 +470,18 @@ auto Application::make_gui(bool show_debug) -> void {
     auto change = ImGui::Checkbox("Simulate", &m_scene_info.simulate);
     if (change) {
       if (m_scene_info.simulate) {
-        m_scene_info.active_camera = m_scene_info.camera.get();
-        m_scene_info.active_camera->set_width(m_panel_width);
-        m_scene_info.active_camera->set_height(m_panel_height);
+        m_scene_info.active_camera = m_scene_info.render_camera.get();
+        m_scene_info.active_camera->width = m_panel_width;
+        m_scene_info.active_camera->height = m_panel_height;
       } else {
         m_scene_info.active_camera = m_scene_info.simulated_camera.get();
-        m_scene_info.active_camera->set_width(m_panel_width);
-        m_scene_info.active_camera->set_height(m_panel_height);
+        m_scene_info.active_camera->width = m_panel_width;
+        m_scene_info.active_camera->height = m_panel_height;
       }
     }
+  }
+  if (m_scene_info.simulate) {
+    ImGui::Checkbox("Render axis", &m_scene_info.render_axis);
   }
   {
 

@@ -4,7 +4,7 @@
 #include "gui.hpp"
 #include "image.hpp"
 #include "pipeline.hpp"
-#include "solids/solid.hpp"
+#include "solid.hpp"
 #include "texture.hpp"
 #include "window.hpp"
 // lib includes
@@ -26,7 +26,7 @@ struct SceneInfo {
   bool simulate{false};
   glm::dmat4 model_matrix{1.0};
   glm::dmat4 simulated_model_matrix{1.0};
-  std::unique_ptr<Camera> camera{nullptr};
+  std::unique_ptr<Camera> render_camera{nullptr};
   std::unique_ptr<Camera> simulated_camera{nullptr};
   Camera *active_camera{nullptr};
   Pipeline render_triangle_pipeline{};

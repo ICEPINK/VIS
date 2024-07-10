@@ -28,7 +28,7 @@ set(P_SOURCE_FILES
   "./src/gui.cpp"
   "./src/image.cpp"
   "./src/main.cpp"
-  "./src/perspective_camera.cpp"
+  "./src/camera.cpp"
   "./src/pipeline.cpp"
   "./src/solid.cpp"
   "./src/texture.cpp"
