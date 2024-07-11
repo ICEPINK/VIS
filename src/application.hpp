@@ -29,10 +29,46 @@ struct SceneInfo {
   std::unique_ptr<Camera> render_camera{nullptr};
   std::unique_ptr<Camera> simulated_camera{nullptr};
   Camera *active_camera{nullptr};
-  Pipeline render_triangle_pipeline{};
-  Pipeline render_line_pipeline{};
-  Pipeline render_point_pipeline{};
-  Pipeline simulate_triangle_pipeline{};
+  Pipeline render_triangle_pipeline{
+      .clip_after_dehomog = Alg::clip_after_dehomog_triangle,
+      .clip_before_dehomog = Alg::clip_before_dehomog_triangle,
+      .clip_fast = Alg::clip_fast_triangle,
+      .dehomog = Alg::dehomog_all,
+      .rasterize = Alg::rasterize_triangle,
+      .set_pixel = Alg::set_pixel_rgba_depth,
+      .trasform_to_viewport = Alg::trasform_to_viewport,
+      .trasform_vertices = Alg::trasform_vertices_by_matrix,
+  };
+  Pipeline render_line_pipeline{
+      .clip_after_dehomog = Alg::clip_after_dehomog_line,
+      .clip_before_dehomog = Alg::clip_before_dehomog_line,
+      .clip_fast = Alg::clip_fast_line,
+      .dehomog = Alg::dehomog_all,
+      .rasterize = Alg::rasterize_line,
+      .set_pixel = Alg::set_pixel_rgba_depth,
+      .trasform_to_viewport = Alg::trasform_to_viewport,
+      .trasform_vertices = Alg::trasform_vertices_by_matrix,
+  };
+  Pipeline render_point_pipeline{
+      .clip_after_dehomog = Alg::clip_after_dehomog_none,
+      .clip_before_dehomog = Alg::clip_before_dehomog_none,
+      .clip_fast = Alg::clip_fast_point,
+      .dehomog = Alg::dehomog_all,
+      .rasterize = Alg::rasterize_point,
+      .set_pixel = Alg::set_pixel_rgba_depth,
+      .trasform_to_viewport = Alg::trasform_to_viewport,
+      .trasform_vertices = Alg::trasform_vertices_by_matrix,
+  };
+  Pipeline simulate_triangle_pipeline{
+      .clip_after_dehomog = Alg::clip_after_dehomog_triangle,
+      .clip_before_dehomog = Alg::clip_before_dehomog_triangle,
+      .clip_fast = Alg::clip_fast_triangle,
+      .dehomog = Alg::dehomog_all,
+      .rasterize = Alg::rasterize_none,
+      .set_pixel = Alg::set_pixel_none,
+      .trasform_to_viewport = Alg::trasform_to_none,
+      .trasform_vertices = Alg::trasform_vertices_by_matrix,
+  };
   Pipeline simulate_line_pipeline{};
   Pipeline simulate_point_pipeline{};
 };

@@ -1,27 +1,76 @@
 #include "pipeline.hpp"
-#define PLANE_TEST(test_plane, value, comparison_operator_in)                  \
-  for (size_t j = 0; j < v_in.size(); ++j) {                                   \
-    const auto &v1 = v_in[j];                                                  \
-    const auto &v2 = v_in[(j + 1) % v_in.size()];                              \
-    const auto v1_in = (v1.pos.test_plane comparison_operator_in value);       \
-    const auto v2_in = (v2.pos.test_plane comparison_operator_in value);       \
-    if (v1_in && v2_in) {                                                      \
-      v_out.push_back(v2);                                                     \
-    } else if (v1_in) {                                                        \
-      const auto t =                                                           \
-        (value - v1.pos.test_plane) / (v2.pos.test_plane - v1.pos.test_plane); \
-      const auto v_new = Vertex::interpolate(t, v1, v2);                       \
-      v_out.push_back(v_new);                                                  \
-    } else if (v2_in) {                                                        \
-      const auto t =                                                           \
-        (value - v1.pos.test_plane) / (v2.pos.test_plane - v1.pos.test_plane); \
-      const auto v_new = Vertex::interpolate(t, v1, v2);                       \
-      v_out.push_back(v_new);                                                  \
-      v_out.push_back(v2);                                                     \
-    }                                                                          \
+#define PLANE_TEST(test_plane, value, comparison_operator_in) \
+  for (size_t j = 0; j < v_in.size(); ++j) { \
+    const auto &v1 = v_in[j]; \
+    const auto &v2 = v_in[(j + 1) % v_in.size()]; \
+    const auto v1_in = (v1.pos.test_plane comparison_operator_in value); \
+    const auto v2_in = (v2.pos.test_plane comparison_operator_in value); \
+    if (v1_in && v2_in) { \
+      v_out.push_back(v2); \
+    } else if (v1_in) { \
+      const auto t = (value - v1.pos.test_plane) / (v2.pos.test_plane - v1.pos.test_plane); \
+      const auto v_new = Vertex::interpolate(t, v1, v2); \
+      v_out.push_back(v_new); \
+    } else if (v2_in) { \
+      const auto t = (value - v1.pos.test_plane) / (v2.pos.test_plane - v1.pos.test_plane); \
+      const auto v_new = Vertex::interpolate(t, v1, v2); \
+      v_out.push_back(v_new); \
+      v_out.push_back(v2); \
+    } \
   }
 namespace Vis {
 namespace Alg {
+
+auto clip_after_dehomog_line(std::vector<Vertex> &vertices) -> void {
+  if (vertices.size() % 2 != 0) {
+    return;
+  }
+  for (size_t i = 0; i < vertices.size(); i += 2) {
+    auto &v1 = vertices[i];
+    auto &v2 = vertices[i + 1];
+    if (v1.pos.x < -1) {
+      const auto t = (-1 - v1.pos.x) / (v2.pos.x - v1.pos.x);
+      v1 = Vertex::interpolate(t, v1, v2);
+    }
+    if (v2.pos.x < -1) {
+      const auto t = (-1 - v2.pos.x) / (v1.pos.x - v2.pos.x);
+      v2 = Vertex::interpolate(t, v2, v1);
+    }
+    if (v1.pos.y < -1) {
+      const auto t = (-1 - v1.pos.y) / (v2.pos.y - v1.pos.y);
+      v1 = Vertex::interpolate(t, v1, v2);
+    }
+    if (v2.pos.y < -1) {
+      const auto t = (-1 - v2.pos.y) / (v1.pos.y - v2.pos.y);
+      v2 = Vertex::interpolate(t, v2, v1);
+    }
+    if (v1.pos.x > 1) {
+      const auto t = (1 - v1.pos.x) / (v2.pos.x - v1.pos.x);
+      v1 = Vertex::interpolate(t, v1, v2);
+    }
+    if (v2.pos.x > 1) {
+      const auto t = (1 - v2.pos.x) / (v1.pos.x - v2.pos.x);
+      v2 = Vertex::interpolate(t, v2, v1);
+    }
+    if (v1.pos.y > 1) {
+      const auto t = (1 - v1.pos.y) / (v2.pos.y - v1.pos.y);
+      v1 = Vertex::interpolate(t, v1, v2);
+    }
+    if (v2.pos.y > 1) {
+      const auto t = (1 - v2.pos.y) / (v1.pos.y - v2.pos.y);
+      v2 = Vertex::interpolate(t, v2, v1);
+    }
+    if (v1.pos.z > 1) {
+      const auto t = (1 - v1.pos.z) / (v2.pos.z - v1.pos.z);
+      v1 = Vertex::interpolate(t, v1, v2);
+    }
+    if (v2.pos.z > 1) {
+      const auto t = (1 - v2.pos.z) / (v1.pos.z - v2.pos.z);
+      v2 = Vertex::interpolate(t, v2, v1);
+    }
+  }
+}
+
 auto clip_after_dehomog_none(std::vector<Vertex> &) -> void {}
 auto clip_after_dehomog_triangle(std::vector<Vertex> &vertices) -> void {
   if (vertices.size() % 3 != 0) {
@@ -140,12 +189,7 @@ auto clip_fast_line(std::vector<Vertex> &vertices) -> void {
   for (size_t i = 0; i < vertices.size(); i += 2) {
     const auto &v1 = vertices[i];
     const auto &v2 = vertices[i + 1];
-    if ((v1.pos.x < -v1.pos.w && v2.pos.x < -v2.pos.w) ||
-        (v1.pos.x > v1.pos.w && v2.pos.x > v2.pos.w) ||
-        (v1.pos.y < -v1.pos.w && v2.pos.y < -v2.pos.w) ||
-        (v1.pos.y > v1.pos.w && v2.pos.y > v2.pos.w) ||
-        (v1.pos.z < 0 && v2.pos.z < 0) ||
-        (v1.pos.z > v1.pos.w && v2.pos.z > v2.pos.w)) {
+    if ((v1.pos.x < -v1.pos.w && v2.pos.x < -v2.pos.w) || (v1.pos.x > v1.pos.w && v2.pos.x > v2.pos.w) || (v1.pos.y < -v1.pos.w && v2.pos.y < -v2.pos.w) || (v1.pos.y > v1.pos.w && v2.pos.y > v2.pos.w) || (v1.pos.z < 0 && v2.pos.z < 0) || (v1.pos.z > v1.pos.w && v2.pos.z > v2.pos.w)) {
       continue;
     }
     new_vertices.push_back(v1);
@@ -159,9 +203,7 @@ auto clip_fast_point(std::vector<Vertex> &vertices) -> void {
   new_vertices.reserve(vertices.size());
   for (size_t i = 0; i < vertices.size(); ++i) {
     const auto &v1 = vertices[i];
-    if ((v1.pos.x < -v1.pos.w) || (v1.pos.x > v1.pos.w) ||
-        (v1.pos.y < -v1.pos.w) || (v1.pos.y > v1.pos.w) || (v1.pos.z < 0) ||
-        (v1.pos.z > v1.pos.w)) {
+    if ((v1.pos.x < -v1.pos.w) || (v1.pos.x > v1.pos.w) || (v1.pos.y < -v1.pos.w) || (v1.pos.y > v1.pos.w) || (v1.pos.z < 0) || (v1.pos.z > v1.pos.w)) {
       continue;
     }
     new_vertices.push_back(v1);
@@ -178,14 +220,7 @@ auto clip_fast_triangle(std::vector<Vertex> &vertices) -> void {
     const auto &v1 = vertices[i];
     const auto &v2 = vertices[i + 1];
     const auto &v3 = vertices[i + 2];
-    if ((v1.pos.x < -v1.pos.w && v2.pos.x < -v2.pos.w &&
-         v3.pos.x < -v3.pos.w) ||
-        (v1.pos.x > v1.pos.w && v2.pos.x > v2.pos.w && v3.pos.x > v3.pos.w) ||
-        (v1.pos.y < -v1.pos.w && v2.pos.y < -v2.pos.w &&
-         v3.pos.y < -v3.pos.w) ||
-        (v1.pos.y > v1.pos.w && v2.pos.y > v2.pos.w && v3.pos.y > v3.pos.w) ||
-        (v1.pos.z < 0 && v2.pos.z < 0 && v3.pos.z < 0) ||
-        (v1.pos.z > v1.pos.w && v2.pos.z > v2.pos.w && v3.pos.z > v3.pos.w)) {
+    if ((v1.pos.x < -v1.pos.w && v2.pos.x < -v2.pos.w && v3.pos.x < -v3.pos.w) || (v1.pos.x > v1.pos.w && v2.pos.x > v2.pos.w && v3.pos.x > v3.pos.w) || (v1.pos.y < -v1.pos.w && v2.pos.y < -v2.pos.w && v3.pos.y < -v3.pos.w) || (v1.pos.y > v1.pos.w && v2.pos.y > v2.pos.w && v3.pos.y > v3.pos.w) || (v1.pos.z < 0 && v2.pos.z < 0 && v3.pos.z < 0) || (v1.pos.z > v1.pos.w && v2.pos.z > v2.pos.w && v3.pos.z > v3.pos.w)) {
       continue;
     }
     new_vertices.push_back(v1);
@@ -212,28 +247,23 @@ auto dehomog_pos(std::vector<Vertex> &vertices) -> void {
   }
 }
 auto trasform_to_none(std::vector<Vertex> &, const Image &) -> void {}
-auto trasform_to_viewport(std::vector<Vertex> &vertices,
-                          const Image &image) -> void {
+auto trasform_to_viewport(std::vector<Vertex> &vertices, const Image &image) -> void {
   for (auto &vertex : vertices) {
     vertex.pos.x = ((vertex.pos.x + 1.0) / 2.0) * (image.get_width() - 1);
     vertex.pos.y = ((vertex.pos.y + 1.0) / 2.0) * (image.get_height() - 1);
   }
 }
-auto trasform_vertices_by_matrix(std::vector<Vertex> &vertices,
-                                 const glm::dmat4 &matrix) -> void {
+auto trasform_vertices_by_matrix(std::vector<Vertex> &vertices, const glm::dmat4 &matrix) -> void {
   for (auto &vertex : vertices) {
     vertex.pos = matrix * vertex.pos;
   }
 }
-auto trasform_vertices_by_none(std::vector<Vertex> &,
-                               const glm::dmat4 &) -> void {}
-auto rasterize_line(std::vector<Vertex> &vertices, Image &image,
-                    void (*set_pixel)(Vertex &vertex, Image &image)) -> void {
+auto trasform_vertices_by_none(std::vector<Vertex> &, const glm::dmat4 &) -> void {}
+auto rasterize_line(std::vector<Vertex> &vertices, Image &image, void (*set_pixel)(Vertex &vertex, Image &image)) -> void {
   if (vertices.size() % 2 != 0) {
     return;
   }
-  for (size_t vertices_index = 0; vertices_index < vertices.size();
-       vertices_index += 2) {
+  for (size_t vertices_index = 0; vertices_index < vertices.size(); vertices_index += 2) {
     auto &v_a = vertices[vertices_index];
     auto &v_b = vertices[vertices_index + 1];
     if (std::isnan(v_a.pos.x) || std::isnan(v_b.pos.x)) {
@@ -275,27 +305,21 @@ auto rasterize_line(std::vector<Vertex> &vertices, Image &image,
     }
   }
 }
-auto rasterize_none(std::vector<Vertex> &, Image &,
-                    void (*)(Vertex &, Image &)) -> void {}
-auto rasterize_point(std::vector<Vertex> &vertices, Image &image,
-                     void (*set_pixel)(Vertex &vertex, Image &image)) -> void {
+auto rasterize_none(std::vector<Vertex> &, Image &, void (*)(Vertex &, Image &)) -> void {}
+auto rasterize_point(std::vector<Vertex> &vertices, Image &image, void (*set_pixel)(Vertex &vertex, Image &image)) -> void {
   for (auto &vertex : vertices) {
     set_pixel(vertex, image);
   }
 }
-auto rasterize_triangle(std::vector<Vertex> &vertices, Image &image,
-                        void (*set_pixel)(Vertex &vertex,
-                                          Image &image)) -> void {
+auto rasterize_triangle(std::vector<Vertex> &vertices, Image &image, void (*set_pixel)(Vertex &vertex, Image &image)) -> void {
   if (vertices.size() % 3 != 0) {
     return;
   }
-  for (size_t vertices_index = 0; vertices_index < vertices.size();
-       vertices_index += 3) {
+  for (size_t vertices_index = 0; vertices_index < vertices.size(); vertices_index += 3) {
     auto v_a = vertices[vertices_index];
     auto v_b = vertices[vertices_index + 1];
     auto v_c = vertices[vertices_index + 2];
-    if (std::isnan(v_a.pos.x) || std::isnan(v_b.pos.x) ||
-        std::isnan(v_c.pos.x)) {
+    if (std::isnan(v_a.pos.x) || std::isnan(v_b.pos.x) || std::isnan(v_c.pos.x)) {
       continue;
     }
     if (v_a.pos.y > v_b.pos.y) {
@@ -359,19 +383,15 @@ auto rasterize_triangle(std::vector<Vertex> &vertices, Image &image,
     }
   }
 }
-auto rasterize_triangle_as_lines(std::vector<Vertex> &vertices, Image &image,
-                                 void (*set_pixel)(Vertex &vertex,
-                                                   Image &image)) -> void {
+auto rasterize_triangle_as_lines(std::vector<Vertex> &vertices, Image &image, void (*set_pixel)(Vertex &vertex, Image &image)) -> void {
   if (vertices.size() % 3 != 0) {
     return;
   }
-  for (size_t vertices_index = 0; vertices_index < vertices.size();
-       vertices_index += 3) {
+  for (size_t vertices_index = 0; vertices_index < vertices.size(); vertices_index += 3) {
     auto v_a = vertices[vertices_index];
     auto v_b = vertices[vertices_index + 1];
     auto v_c = vertices[vertices_index + 2];
-    if (std::isnan(v_a.pos.x) || std::isnan(v_b.pos.x) ||
-        std::isnan(v_c.pos.x)) {
+    if (std::isnan(v_a.pos.x) || std::isnan(v_b.pos.x) || std::isnan(v_c.pos.x)) {
       continue;
     }
     std::vector<Vertex> line_vertices = {v_a, v_b, v_b, v_c, v_c, v_a};

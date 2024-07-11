@@ -3,4 +3,5 @@ IndentWidth: 2
 ContinuationIndentWidth: 2
 SortIncludes: Never
 IndentPPDirectives: AfterHash
+AlignEscapedNewlines: DontAlign
 ColumnLimit: 99999

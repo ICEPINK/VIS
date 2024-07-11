@@ -50,38 +50,7 @@ Application::Application(const std::vector<std::string_view> &args) {
   m_scene_info.render_camera->near_plane = 0.1;
   m_scene_info.render_camera->far_plane = 100.0;
   m_scene_info.active_camera = m_scene_info.simulated_camera.get();
-  m_scene_info.render_triangle_pipeline.trasform_vertices = Alg::trasform_vertices_by_matrix;
-  m_scene_info.render_triangle_pipeline.trasform_to_viewport = Alg::trasform_to_viewport;
-  m_scene_info.render_triangle_pipeline.rasterize = Alg::rasterize_triangle;
-  m_scene_info.render_triangle_pipeline.set_pixel = Alg::set_pixel_rgba_depth;
-  m_scene_info.render_triangle_pipeline.dehomog = Alg::dehomog_all;
-  m_scene_info.render_triangle_pipeline.clip_fast = Alg::clip_fast_triangle;
-  m_scene_info.render_triangle_pipeline.clip_before_dehomog = Alg::clip_before_dehomog_triangle;
-  m_scene_info.render_triangle_pipeline.clip_after_dehomog = Alg::clip_after_dehomog_triangle;
-  m_scene_info.render_line_pipeline.trasform_vertices = Alg::trasform_vertices_by_matrix;
-  m_scene_info.render_line_pipeline.trasform_to_viewport = Alg::trasform_to_viewport;
-  m_scene_info.render_line_pipeline.rasterize = Alg::rasterize_line;
-  m_scene_info.render_line_pipeline.set_pixel = Alg::set_pixel_rgba_depth;
-  m_scene_info.render_line_pipeline.dehomog = Alg::dehomog_all;
-  m_scene_info.render_line_pipeline.clip_fast = Alg::clip_fast_line;
-  m_scene_info.render_line_pipeline.clip_before_dehomog = Alg::clip_before_dehomog_line;
-  m_scene_info.render_line_pipeline.clip_after_dehomog = Alg::clip_after_dehomog_none;
-  m_scene_info.render_point_pipeline.trasform_vertices = Alg::trasform_vertices_by_matrix;
-  m_scene_info.render_point_pipeline.trasform_to_viewport = Alg::trasform_to_viewport;
-  m_scene_info.render_point_pipeline.rasterize = Alg::rasterize_point;
-  m_scene_info.render_point_pipeline.set_pixel = Alg::set_pixel_rgba_depth;
-  m_scene_info.render_point_pipeline.dehomog = Alg::dehomog_all;
-  m_scene_info.render_point_pipeline.clip_fast = Alg::clip_fast_point;
-  m_scene_info.render_point_pipeline.clip_before_dehomog = Alg::clip_before_dehomog_none;
-  m_scene_info.render_point_pipeline.clip_after_dehomog = Alg::clip_after_dehomog_none;
-  m_scene_info.simulate_triangle_pipeline.trasform_vertices = Alg::trasform_vertices_by_matrix;
-  m_scene_info.simulate_triangle_pipeline.trasform_to_viewport = Alg::trasform_to_none;
-  m_scene_info.simulate_triangle_pipeline.rasterize = Alg::rasterize_none;
-  m_scene_info.simulate_triangle_pipeline.set_pixel = Alg::set_pixel_rgba_depth;
-  m_scene_info.simulate_triangle_pipeline.dehomog = Alg::dehomog_all;
-  m_scene_info.simulate_triangle_pipeline.clip_fast = Alg::clip_fast_triangle;
-  m_scene_info.simulate_triangle_pipeline.clip_before_dehomog = Alg::clip_before_dehomog_triangle;
-  m_scene_info.simulate_triangle_pipeline.clip_after_dehomog = Alg::clip_after_dehomog_triangle;
+  m_scene_info.simulated_solid.matrix = glm::translate(glm::dmat4{1.0}, {3.0, 0.0, 0.0});
   run();
 }
 
@@ -279,7 +248,6 @@ auto Application::render_image() -> void {
     m_scene_info.active_camera->height = m_panel_height;
   }
   m_image.clear({0.05, 0.05, 0.05, 1.0});
-  m_scene_info.simulated_solid.matrix = glm::translate(glm::dmat4{1.0}, {3.0, 0.0, 0.0});
   if (m_scene_info.simulate) {
     Solid simulated = simulate_solid(m_scene_info.simulated_solid);
     glm::dmat4 scene_matrix = {1.0};
@@ -752,6 +720,27 @@ auto Application::make_gui(bool show_debug) -> void {
         }
       }
     }
+  }
+  if (ImGui::CollapsingHeader("Camera settings")) {
+    static float near_plane = m_scene_info.simulated_camera->near_plane;
+    if (ImGui::SliderFloat("Near plane", &near_plane, 0.1f, 9.9f, "%.3f")) {
+      m_scene_info.simulated_camera->near_plane = near_plane;
+    }
+    static float fov = 360 * m_scene_info.simulated_camera->fov / (glm::pi<float>() * 2);
+    if (ImGui::SliderFloat("Field of view", &fov, 0.1f, 179.0f, "%.3f")) {
+      m_scene_info.simulated_camera->fov = (fov / 360) * 2 * glm::pi<double>();
+    }
+  }
+  if (ImGui::CollapsingHeader("Solid")) {
+      static float vec3[3] = { 0.0f, 0.0f, 0.0f };
+      vec3[0] = m_scene_info.simulated_solid.matrix[3].x;
+      vec3[1] = m_scene_info.simulated_solid.matrix[3].y;
+      vec3[2] = m_scene_info.simulated_solid.matrix[3].z;
+      if (ImGui::InputFloat3("Position", vec3)) {
+          m_scene_info.simulated_solid.matrix[3].x = vec3[0];
+          m_scene_info.simulated_solid.matrix[3].y = vec3[1];
+          m_scene_info.simulated_solid.matrix[3].z = vec3[2];
+      }
   }
   ImGui::End();
 
