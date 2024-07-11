@@ -1,24 +1,21 @@
 #pragma once
 
-#include <cstddef>
-#include <cstdint>
+#include <glad/glad.h>
 
 namespace Vis {
 
 class Texture {
-  public:
-    Texture();
-    ~Texture();
+public:
+  Texture();
+  ~Texture();
 
-    void bind();
-    void unbind();
+  auto bind() -> void;
+  auto unbind() -> void;
+  static auto active_texture(int texture_slot) -> void;
+  [[nodiscard]] auto get_id() -> GLuint;
 
-    void set_image(size_t width, size_t height, void *image_ptr);
-
-    uint32_t get_id();
-
-  private:
-    uint32_t m_id;
+private:
+  GLuint m_id{0};
 };
 
 } // namespace Vis

@@ -1,348 +1,475 @@
 #include "pipeline.hpp"
-////////////////////////////////////////////////////////////////////////////////
-#include <algorithm>
-#include <memory>
-////////////////////////////////////////////////////////////////////////////////
+#define PLANE_TEST(test_plane, value, comparison_operator_in) \
+  for (size_t j = 0; j < v_in.size(); ++j) { \
+    const auto &v1 = v_in[j]; \
+    const auto &v2 = v_in[(j + 1) % v_in.size()]; \
+    const auto v1_in = (v1.pos.test_plane comparison_operator_in value); \
+    const auto v2_in = (v2.pos.test_plane comparison_operator_in value); \
+    if (v1_in && v2_in) { \
+      v_out.push_back(v2); \
+    } else if (v1_in) { \
+      const auto t = (value - v1.pos.test_plane) / (v2.pos.test_plane - v1.pos.test_plane); \
+      const auto v_new = Vertex::interpolate(t, v1, v2); \
+      v_out.push_back(v_new); \
+    } else if (v2_in) { \
+      const auto t = (value - v1.pos.test_plane) / (v2.pos.test_plane - v1.pos.test_plane); \
+      const auto v_new = Vertex::interpolate(t, v1, v2); \
+      v_out.push_back(v_new); \
+      v_out.push_back(v2); \
+    } \
+  }
 namespace Vis {
-////////////////////////////////////////////////////////////////////////////////
-Pipeline::Pipeline(PipelineData &data) : m_data_ref(data) {}
-////////////////////////////////////////////////////////////////////////////////
-Pipeline::~Pipeline() {}
-////////////////////////////////////////////////////////////////////////////////
-bool Pipeline::fast_clip_line(std::unique_ptr<std::vector<Vertex>> &vertices) {
-    const Vertex &a = vertices->at(0);
-    const Vertex &b = vertices->at(1);
+namespace Alg {
 
-    if (a.position.x <= -a.position.w && b.position.x <= -b.position.w) {
-        return true;
-    }
-    if (a.position.x >= a.position.w && b.position.x >= b.position.w) {
-        return true;
-    }
-    if (a.position.y <= -a.position.w && b.position.y <= -b.position.w) {
-        return true;
-    }
-    if (a.position.y >= a.position.w && b.position.y >= b.position.w) {
-        return true;
-    }
-    if (a.position.z <= 0 && b.position.z <= 0) {
-        return true;
-    }
-    if (a.position.z >= a.position.w && b.position.z >= b.position.w) {
-        return true;
-    }
-
-    return false;
-}
-////////////////////////////////////////////////////////////////////////////////
-void Pipeline::clip_after_dehomog_line(
-    [[maybe_unused]] std::unique_ptr<std::vector<Vertex>> &vertices) {
-    // TODO:
+auto clip_after_dehomog_line(std::vector<Vertex> &vertices) -> void {
+  if (vertices.size() % 2 != 0) {
     return;
+  }
+  for (size_t i = 0; i < vertices.size(); i += 2) {
+    auto &v1 = vertices[i];
+    auto &v2 = vertices[i + 1];
+    if (v1.pos.x < -1) {
+      const auto t = (-1 - v1.pos.x) / (v2.pos.x - v1.pos.x);
+      v1 = Vertex::interpolate(t, v1, v2);
+    }
+    if (v2.pos.x < -1) {
+      const auto t = (-1 - v2.pos.x) / (v1.pos.x - v2.pos.x);
+      v2 = Vertex::interpolate(t, v2, v1);
+    }
+    if (v1.pos.y < -1) {
+      const auto t = (-1 - v1.pos.y) / (v2.pos.y - v1.pos.y);
+      v1 = Vertex::interpolate(t, v1, v2);
+    }
+    if (v2.pos.y < -1) {
+      const auto t = (-1 - v2.pos.y) / (v1.pos.y - v2.pos.y);
+      v2 = Vertex::interpolate(t, v2, v1);
+    }
+    if (v1.pos.x > 1) {
+      const auto t = (1 - v1.pos.x) / (v2.pos.x - v1.pos.x);
+      v1 = Vertex::interpolate(t, v1, v2);
+    }
+    if (v2.pos.x > 1) {
+      const auto t = (1 - v2.pos.x) / (v1.pos.x - v2.pos.x);
+      v2 = Vertex::interpolate(t, v2, v1);
+    }
+    if (v1.pos.y > 1) {
+      const auto t = (1 - v1.pos.y) / (v2.pos.y - v1.pos.y);
+      v1 = Vertex::interpolate(t, v1, v2);
+    }
+    if (v2.pos.y > 1) {
+      const auto t = (1 - v2.pos.y) / (v1.pos.y - v2.pos.y);
+      v2 = Vertex::interpolate(t, v2, v1);
+    }
+    if (v1.pos.z > 1) {
+      const auto t = (1 - v1.pos.z) / (v2.pos.z - v1.pos.z);
+      v1 = Vertex::interpolate(t, v1, v2);
+    }
+    if (v2.pos.z > 1) {
+      const auto t = (1 - v2.pos.z) / (v1.pos.z - v2.pos.z);
+      v2 = Vertex::interpolate(t, v2, v1);
+    }
+  }
 }
-////////////////////////////////////////////////////////////////////////////////
-void Pipeline::clip_before_dehomog_line(
-    std::unique_ptr<std::vector<Vertex>> &vertices) {
-    Vertex &a = vertices->at(0);
-    Vertex &b = vertices->at(1);
 
-    if (a.position.z > b.position.z) {
-        std::swap(a, b);
-    }
-
-    if (a.position.z <= 0.0f) {
-        const float t_ba =
-            (0.0f - b.position.z) / (a.position.z - b.position.z);
-        a = Vertex::interpolate(t_ba, b, a);
-    }
-}
-////////////////////////////////////////////////////////////////////////////////
-void Pipeline::rasterization_line_dda(
-    std::unique_ptr<std::vector<Vertex>> &vertices,
-    [[maybe_unused]] const size_t width, [[maybe_unused]] const size_t height,
-    std::function<void(const int64_t x, const int64_t y, const Vertex &vertex)>
-        set_pixel) {
-    // NOTE: unused width, height
-    for (size_t i = 0; i < vertices->size(); i += 2) {
-        auto &a = vertices->at(i);
-        auto &b = vertices->at(i + 1);
-
-        float alpha =
-            (b.position.y - a.position.y) / (b.position.x - a.position.x);
-
-        if (alpha * alpha > 1.0) {
-            if (a.position.y > b.position.y) {
-                std::swap(a, b);
-            }
-
-            alpha =
-                (b.position.x - a.position.x) / (b.position.y - a.position.y);
-            float x = a.position.x;
-            const int64_t a_y = static_cast<int64_t>(a.position.y);
-            const int64_t b_y = static_cast<int64_t>(b.position.y);
-            for (int64_t y = a_y; y <= b_y; ++y) {
-                float t = (y - a_y) / static_cast<float>(b_y - a_y);
-                Vertex vertex = Vertex::interpolate(t, a, b);
-                set_pixel(static_cast<int64_t>(x), y, vertex);
-                x += alpha;
-            }
-        } else {
-            if (a.position.x > b.position.x) {
-                std::swap(a, b);
-            }
-
-            float y = a.position.y;
-            const int64_t a_x = static_cast<int64_t>(a.position.x);
-            const int64_t b_x = static_cast<int64_t>(b.position.x);
-            for (int64_t x = a_x; x <= b_x; ++x) {
-                float t = (x - a_x) / static_cast<float>(b_x - a_x);
-                Vertex vertex = Vertex::interpolate(t, a, b);
-                set_pixel(x, static_cast<int64_t>(y), vertex);
-                y += alpha;
-            }
-        }
-    }
-}
-////////////////////////////////////////////////////////////////////////////////
-std::optional<std::unique_ptr<std::vector<Vertex>>>
-Pipeline::render(const std::vector<Vertex> &vertices) const {
-    auto temp_vertices = std::make_unique<std::vector<Vertex>>(vertices);
-    auto &d = m_data_ref;
-    d.trasform_vertices_by_matrix(temp_vertices, d.matrix);
-
-    if (d.fast_clip(temp_vertices)) {
-        return {};
-    }
-
-    d.clip_before_dehomog(temp_vertices);
-    d.dehomog_vertices(temp_vertices);
-    d.clip_after_dehomog(temp_vertices);
-    d.trasform_vertices_onto_viewport(temp_vertices, d.width, d.height);
-
-    if (d.callback) {
-        return temp_vertices;
-    }
-
-    d.rasterization(temp_vertices, d.width, d.height, d.set_pixel);
-
-    return {};
-}
-////////////////////////////////////////////////////////////////////////////////
-void Pipeline::update_matrix() const {
-    auto &d = m_data_ref;
-    d.matrix = d.matrix_calculation(d.solid_matrix, d.model_matrix,
-                                    d.view_matrix, d.proj_matrix);
-}
-////////////////////////////////////////////////////////////////////////////////
-glm::mat4 Pipeline::matrix_calculation_smvp(const glm::mat4 &solid,
-                                            const glm::mat4 &model,
-                                            const glm::mat4 &view,
-                                            const glm::mat4 &proj) {
-    return proj * view * model * solid;
-}
-////////////////////////////////////////////////////////////////////////////////
-void Pipeline::trasform_vertices_by_matrix_all(
-    std::unique_ptr<std::vector<Vertex>> &vertices, const glm::mat4 &matrix) {
-    for (Vertex &vertex : *vertices) {
-        vertex = {matrix * vertex.position, vertex.color, vertex.uv,
-                  vertex.one};
-    }
-}
-////////////////////////////////////////////////////////////////////////////////
-void Pipeline::dehomog_vertices(
-    std::unique_ptr<std::vector<Vertex>> &vertices) {
-    std::for_each(vertices->begin(), vertices->end(), [](Vertex &vertex) {
-        vertex = vertex * (1.0f / vertex.position.w);
-    });
-}
-////////////////////////////////////////////////////////////////////////////////
-bool Pipeline::fast_clip_triangle(
-    std::unique_ptr<std::vector<Vertex>> &vertices) {
-
-    const Vertex &a = vertices->at(0);
-    const Vertex &b = vertices->at(1);
-    const Vertex &c = vertices->at(2);
-
-    if (a.position.x <= -a.position.w && b.position.x <= -b.position.w &&
-        c.position.x <= -c.position.w) {
-        return true;
-    }
-    if (a.position.x >= a.position.w && b.position.x >= b.position.w &&
-        c.position.x >= c.position.w) {
-        return true;
-    }
-    if (a.position.y <= -a.position.w && b.position.y <= -b.position.w &&
-        c.position.y <= -c.position.w) {
-        return true;
-    }
-    if (a.position.y >= a.position.w && b.position.y >= b.position.w &&
-        c.position.y >= c.position.w) {
-        return true;
-    }
-    if (a.position.z <= 0 && b.position.z <= 0 && c.position.z <= 0) {
-        return true;
-    }
-    if (a.position.z >= a.position.w && b.position.z >= b.position.w &&
-        c.position.z >= c.position.w) {
-        return true;
-    }
-
-    return false;
-}
-////////////////////////////////////////////////////////////////////////////////
-void Pipeline::clip_before_dehomog_triangle(
-    std::unique_ptr<std::vector<Vertex>> &vertices) {
-
-    Vertex &a = vertices->at(0);
-    Vertex &b = vertices->at(1);
-    Vertex &c = vertices->at(2);
-
-    if (a.position.z > b.position.z) {
-        std::swap(a, b);
-    }
-    if (b.position.z > c.position.z) {
-        std::swap(b, c);
-    }
-    if (a.position.z > b.position.z) {
-        std::swap(a, b);
-    }
-
-    if (b.position.z <= 0) {
-        const float t_cb = (0 - c.position.z) / (b.position.z - c.position.z);
-        b = Vertex::interpolate(t_cb, c, b);
-
-        const float t_ca = (0 - c.position.z) / (a.position.z - c.position.z);
-        a = Vertex::interpolate(t_ca, c, a);
-
-    } else if (a.position.z <= 0) {
-        vertices->push_back(c);
-        vertices->push_back(b);
-
-        Vertex &a_new = vertices->at(0);
-        Vertex &b_new = vertices->at(1);
-        Vertex &c_new = vertices->at(2);
-
-        const float t_ba =
-            (0 - b_new.position.z) / (a_new.position.z - b_new.position.z);
-        b_new = Vertex::interpolate(t_ba, b_new, a_new);
-
-        const float t_ca =
-            (0 - c_new.position.z) / (a_new.position.z - c_new.position.z);
-        a_new = Vertex::interpolate(t_ca, c_new, a_new);
-
-        vertices->push_back(b_new);
-    }
-}
-////////////////////////////////////////////////////////////////////////////////
-void Pipeline::clip_after_dehomog_triangle(
-    [[maybe_unused]] std::unique_ptr<std::vector<Vertex>> &vertices) {
-    // TODO: clip by every plane
+auto clip_after_dehomog_none(std::vector<Vertex> &) -> void {}
+auto clip_after_dehomog_triangle(std::vector<Vertex> &vertices) -> void {
+  if (vertices.size() % 3 != 0) {
     return;
+  }
+  static std::vector<Vertex> new_vertices;
+  new_vertices.clear();
+  static std::vector<Vertex> v_in(9);
+  static std::vector<Vertex> v_out(9);
+  new_vertices.reserve(vertices.size() * 9);
+  for (size_t i = 0; i < vertices.size(); i += 3) {
+    v_in.clear();
+    v_out.clear();
+    v_in.push_back(vertices[i]);
+    v_in.push_back(vertices[i + 1]);
+    v_in.push_back(vertices[i + 2]);
+    PLANE_TEST(x, -1, >)
+    v_in = v_out;
+    v_out.clear();
+    PLANE_TEST(x, 1, <)
+    v_in = v_out;
+    v_out.clear();
+    PLANE_TEST(y, -1, >)
+    v_in = v_out;
+    v_out.clear();
+    PLANE_TEST(y, 1, <)
+    v_in = v_out;
+    v_out.clear();
+    PLANE_TEST(z, 1, <)
+    for (size_t k = 2; k < v_out.size(); ++k) {
+      new_vertices.push_back(v_out[0]);
+      new_vertices.push_back(v_out[k - 1]);
+      new_vertices.push_back(v_out[k]);
+    }
+  }
+  vertices = new_vertices;
 }
-////////////////////////////////////////////////////////////////////////////////
-void Pipeline::clip_after_dehomog_none(
-    [[maybe_unused]] std::unique_ptr<std::vector<Vertex>> &vertices) {
+auto clip_before_dehomog_line(std::vector<Vertex> &vertices) -> void {
+  if (vertices.size() % 2 != 0) {
     return;
-}
-////////////////////////////////////////////////////////////////////////////////
-void Pipeline::trasform_vertices_onto_viewport(
-    std::unique_ptr<std::vector<Vertex>> &vertices, const size_t widht,
-    const size_t height) {
-    for (auto &vertex : *vertices) {
-        float &x = vertex.position.x;
-        float &y = vertex.position.y;
-        x = (x + 1) / 2.0f * widht;
-        y = (y + 1) / 2.0f * height;
+  }
+  std::vector<Vertex> new_vertices;
+  new_vertices.reserve(vertices.size());
+  for (size_t i = 0; i < vertices.size(); i += 2) {
+    auto &v1 = vertices[i];
+    auto &v2 = vertices[i + 1];
+    // WARN: pos.z no dehomo?
+    if (v1.pos.z > v2.pos.z) {
+      std::swap(v1, v2);
     }
-}
-////////////////////////////////////////////////////////////////////////////////
-void Pipeline::rasterization_triangle_fill_color(
-    std::unique_ptr<std::vector<Vertex>> &vertices, const size_t width,
-    const size_t height,
-    std::function<void(const int64_t x, const int64_t y, const Vertex &vertex)>
-        set_pixel) {
-    for (size_t i = 0; i < vertices->size(); i += 3) {
-        auto &a = vertices->at(i);
-        auto &b = vertices->at(i + 1);
-        auto &c = vertices->at(i + 2);
-
-        // a..y < b..y < c..y
-        if (a.position.y > b.position.y) {
-            std::swap(a, b);
-        }
-        if (b.position.y > c.position.y) {
-            std::swap(b, c);
-        }
-        if (a.position.y > b.position.y) {
-            std::swap(a, b);
-        }
-
-        const int64_t start_y_ab = std::max(static_cast<int64_t>(0),
-                                            static_cast<int64_t>(a.position.y));
-        const int64_t end_y_ab = std::min(static_cast<int64_t>(height - 1),
-                                          static_cast<int64_t>(b.position.y));
-
-        for (int64_t y = start_y_ab; y <= end_y_ab; ++y) {
-
-            float ab_t = (y - a.position.y) / (b.position.y - a.position.y);
-            Vertex ab = Vertex::interpolate(ab_t, a, b);
-
-            float ac_t = (y - a.position.y) / (c.position.y - a.position.y);
-            Vertex ac = Vertex::interpolate(ac_t, a, c);
-
-            if (ab.position.x > ac.position.x) {
-                std::swap(ab, ac);
-            }
-
-            const int64_t start_x_ab_ac = std::max(
-                static_cast<int64_t>(0), static_cast<int64_t>(ab.position.x));
-            const int64_t end_x_ab_ac =
-                std::min(static_cast<int64_t>(width - 1),
-                         static_cast<int64_t>(ac.position.x));
-
-            for (int64_t x = start_x_ab_ac; x <= end_x_ab_ac; ++x) {
-
-                float ab_ac_t =
-                    (x - ab.position.x) / (ac.position.x - ab.position.x);
-                Vertex ab_ac = Vertex::interpolate(ab_ac_t, ab, ac);
-
-                set_pixel(x, y, ab_ac);
-            }
-        }
-
-        const int64_t start_y_bc = std::max(static_cast<int64_t>(0),
-                                            static_cast<int64_t>(b.position.y));
-        const int64_t end_y_bc = std::min(static_cast<int64_t>(height - 1),
-                                          static_cast<int64_t>(c.position.y));
-
-        for (int64_t y = start_y_bc; y <= end_y_bc; ++y) {
-
-            float bc_t = (y - b.position.y) / (c.position.y - b.position.y);
-            Vertex bc = Vertex::interpolate(bc_t, b, c);
-
-            float ac_t = (y - a.position.y) / (c.position.y - a.position.y);
-            Vertex ac = Vertex::interpolate(ac_t, a, c);
-
-            if (bc.position.x > ac.position.x) {
-                std::swap(bc, ac);
-            }
-
-            const int64_t start_x_bc_ac = std::max(
-                static_cast<int64_t>(0), static_cast<int64_t>(bc.position.x));
-            const int64_t end_x_bc_ac =
-                std::min(static_cast<int64_t>(width - 1),
-                         static_cast<int64_t>(ac.position.x));
-
-            for (int64_t x = start_x_bc_ac; x <= end_x_bc_ac; ++x) {
-
-                float bc_ac_t =
-                    (x - bc.position.x) / (ac.position.x - bc.position.x);
-                Vertex bc_ac = Vertex::interpolate(bc_ac_t, bc, ac);
-
-                set_pixel(x, y, bc_ac);
-            }
-        }
+    if (v1.pos.z <= 0) {
+      const double t_21 = (0 - v2.pos.z) / (v1.pos.z - v2.pos.z);
+      v1 = Vertex::interpolate(t_21, v2, v1);
     }
+    new_vertices.push_back(v1);
+    new_vertices.push_back(v2);
+  }
+  vertices = new_vertices;
 }
-////////////////////////////////////////////////////////////////////////////////
+auto clip_before_dehomog_none(std::vector<Vertex> &) -> void {}
+auto clip_before_dehomog_triangle(std::vector<Vertex> &vertices) -> void {
+  if (vertices.size() % 3 != 0) {
+    return;
+  }
+  std::vector<Vertex> new_vertices;
+  new_vertices.reserve(vertices.size() * 2);
+  for (size_t i = 0; i < vertices.size(); i += 3) {
+    auto &v1 = vertices[i];
+    auto &v2 = vertices[i + 1];
+    auto &v3 = vertices[i + 2];
+    if (v1.pos.z > 0 && v2.pos.z > 0 && v3.pos.z > 0) {
+      new_vertices.push_back(v1);
+      new_vertices.push_back(v2);
+      new_vertices.push_back(v3);
+      continue;
+    }
+    // WARN: pos.z no dehomo?
+    if (v1.pos.z > v2.pos.z) {
+      std::swap(v1, v2);
+    }
+    if (v2.pos.z > v3.pos.z) {
+      std::swap(v2, v3);
+    }
+    if (v1.pos.z > v2.pos.z) {
+      std::swap(v1, v2);
+    }
+    if (v2.pos.z <= 0) {
+      const double t_32 = (0 - v3.pos.z) / (v2.pos.z - v3.pos.z);
+      v2 = Vertex::interpolate(t_32, v3, v2);
+      const double t_31 = (0 - v3.pos.z) / (v1.pos.z - v3.pos.z);
+      v1 = Vertex::interpolate(t_31, v3, v1);
+      new_vertices.push_back(v1);
+      new_vertices.push_back(v2);
+      new_vertices.push_back(v3);
+    } else {
+      const double t_21 = (0 - v2.pos.z) / (v1.pos.z - v2.pos.z);
+      auto v21 = Vertex::interpolate(t_21, v2, v1);
+      const double t_31 = (0 - v3.pos.z) / (v1.pos.z - v3.pos.z);
+      auto v31 = Vertex::interpolate(t_31, v3, v1);
+      new_vertices.push_back(v21);
+      new_vertices.push_back(v31);
+      new_vertices.push_back(v3);
+      new_vertices.push_back(v2);
+      new_vertices.push_back(v21);
+      new_vertices.push_back(v3);
+    }
+  }
+  vertices = new_vertices;
+}
+auto clip_fast_line(std::vector<Vertex> &vertices) -> void {
+  if (vertices.size() % 2 != 0) {
+    return;
+  }
+  std::vector<Vertex> new_vertices;
+  new_vertices.reserve(vertices.size());
+  for (size_t i = 0; i < vertices.size(); i += 2) {
+    const auto &v1 = vertices[i];
+    const auto &v2 = vertices[i + 1];
+    if ((v1.pos.x < -v1.pos.w && v2.pos.x < -v2.pos.w) || (v1.pos.x > v1.pos.w && v2.pos.x > v2.pos.w) || (v1.pos.y < -v1.pos.w && v2.pos.y < -v2.pos.w) || (v1.pos.y > v1.pos.w && v2.pos.y > v2.pos.w) || (v1.pos.z < 0 && v2.pos.z < 0) || (v1.pos.z > v1.pos.w && v2.pos.z > v2.pos.w)) {
+      continue;
+    }
+    new_vertices.push_back(v1);
+    new_vertices.push_back(v2);
+  }
+  vertices = new_vertices;
+}
+auto clip_fast_none(std::vector<Vertex> &) -> void {}
+auto clip_fast_point(std::vector<Vertex> &vertices) -> void {
+  std::vector<Vertex> new_vertices;
+  new_vertices.reserve(vertices.size());
+  for (size_t i = 0; i < vertices.size(); ++i) {
+    const auto &v1 = vertices[i];
+    if ((v1.pos.x < -v1.pos.w) || (v1.pos.x > v1.pos.w) || (v1.pos.y < -v1.pos.w) || (v1.pos.y > v1.pos.w) || (v1.pos.z < 0) || (v1.pos.z > v1.pos.w)) {
+      continue;
+    }
+    new_vertices.push_back(v1);
+  }
+  vertices = new_vertices;
+}
+auto clip_fast_triangle(std::vector<Vertex> &vertices) -> void {
+  if (vertices.size() % 3 != 0) {
+    return;
+  }
+  std::vector<Vertex> new_vertices;
+  new_vertices.reserve(vertices.size());
+  for (size_t i = 0; i < vertices.size(); i += 3) {
+    const auto &v1 = vertices[i];
+    const auto &v2 = vertices[i + 1];
+    const auto &v3 = vertices[i + 2];
+    if ((v1.pos.x < -v1.pos.w && v2.pos.x < -v2.pos.w && v3.pos.x < -v3.pos.w) || (v1.pos.x > v1.pos.w && v2.pos.x > v2.pos.w && v3.pos.x > v3.pos.w) || (v1.pos.y < -v1.pos.w && v2.pos.y < -v2.pos.w && v3.pos.y < -v3.pos.w) || (v1.pos.y > v1.pos.w && v2.pos.y > v2.pos.w && v3.pos.y > v3.pos.w) || (v1.pos.z < 0 && v2.pos.z < 0 && v3.pos.z < 0) || (v1.pos.z > v1.pos.w && v2.pos.z > v2.pos.w && v3.pos.z > v3.pos.w)) {
+      continue;
+    }
+    new_vertices.push_back(v1);
+    new_vertices.push_back(v2);
+    new_vertices.push_back(v3);
+  }
+  vertices = new_vertices;
+}
+auto dehomog_all(std::vector<Vertex> &vertices) -> void {
+  for (auto &vertex : vertices) {
+    const auto w = vertex.pos.w;
+    vertex.pos /= w;
+    vertex.col /= w;
+    vertex.tex /= w;
+    vertex.one /= w;
+  }
+}
+
+auto dehomog_none(std::vector<Vertex> &) -> void {}
+auto dehomog_pos(std::vector<Vertex> &vertices) -> void {
+  for (auto &vertex : vertices) {
+    const auto w = vertex.pos.w;
+    vertex.pos /= w;
+  }
+}
+auto trasform_to_none(std::vector<Vertex> &, const Image &) -> void {}
+auto trasform_to_viewport(std::vector<Vertex> &vertices, const Image &image) -> void {
+  for (auto &vertex : vertices) {
+    vertex.pos.x = ((vertex.pos.x + 1.0) / 2.0) * (image.get_width() - 1);
+    vertex.pos.y = ((vertex.pos.y + 1.0) / 2.0) * (image.get_height() - 1);
+  }
+}
+auto trasform_vertices_by_matrix(std::vector<Vertex> &vertices, const glm::dmat4 &matrix) -> void {
+  for (auto &vertex : vertices) {
+    vertex.pos = matrix * vertex.pos;
+  }
+}
+auto trasform_vertices_by_none(std::vector<Vertex> &, const glm::dmat4 &) -> void {}
+auto rasterize_line(std::vector<Vertex> &vertices, Image &image, void (*set_pixel)(Vertex &vertex, Image &image)) -> void {
+  if (vertices.size() % 2 != 0) {
+    return;
+  }
+  for (size_t vertices_index = 0; vertices_index < vertices.size(); vertices_index += 2) {
+    auto &v_a = vertices[vertices_index];
+    auto &v_b = vertices[vertices_index + 1];
+    if (std::isnan(v_a.pos.x) || std::isnan(v_b.pos.x)) {
+      continue;
+    }
+    double alfa = (v_b.pos.y - v_a.pos.y) / (v_b.pos.x - v_a.pos.x);
+    if (alfa * alfa < 1) {
+      if (v_a.pos.x > v_b.pos.x) {
+        std::swap(v_a, v_b);
+      }
+      for (int64_t x = static_cast<int64_t>(v_a.pos.x); x <= v_b.pos.x; ++x) {
+        if (v_b.pos.x == v_a.pos.x) {
+          continue;
+        }
+        double t = (x - v_a.pos.x) / (v_b.pos.x - v_a.pos.x);
+        auto vertex = Vertex::interpolate(t, v_a, v_b);
+        if (std::isnan(vertex.pos.x)) {
+          continue;
+        }
+        vertex.pos.x = static_cast<double>(x);
+        set_pixel(vertex, image);
+      }
+    } else {
+      if (v_a.pos.y > v_b.pos.y) {
+        std::swap(v_a, v_b);
+      }
+      for (int64_t y = static_cast<int64_t>(v_a.pos.y); y <= v_b.pos.y; ++y) {
+        if (v_b.pos.y == v_a.pos.y) {
+          continue;
+        }
+        double t = (y - v_a.pos.y) / (v_b.pos.y - v_a.pos.y);
+        auto vertex = Vertex::interpolate(t, v_a, v_b);
+        if (std::isnan(vertex.pos.x)) {
+          continue;
+        }
+        vertex.pos.y = static_cast<double>(y);
+        set_pixel(vertex, image);
+      }
+    }
+  }
+}
+auto rasterize_none(std::vector<Vertex> &, Image &, void (*)(Vertex &, Image &)) -> void {}
+auto rasterize_point(std::vector<Vertex> &vertices, Image &image, void (*set_pixel)(Vertex &vertex, Image &image)) -> void {
+  for (auto &vertex : vertices) {
+    set_pixel(vertex, image);
+  }
+}
+auto rasterize_triangle(std::vector<Vertex> &vertices, Image &image, void (*set_pixel)(Vertex &vertex, Image &image)) -> void {
+  if (vertices.size() % 3 != 0) {
+    return;
+  }
+  for (size_t vertices_index = 0; vertices_index < vertices.size(); vertices_index += 3) {
+    auto v_a = vertices[vertices_index];
+    auto v_b = vertices[vertices_index + 1];
+    auto v_c = vertices[vertices_index + 2];
+    if (std::isnan(v_a.pos.x) || std::isnan(v_b.pos.x) || std::isnan(v_c.pos.x)) {
+      continue;
+    }
+    if (v_a.pos.y > v_b.pos.y) {
+      std::swap(v_a, v_b);
+    }
+    if (v_b.pos.y > v_c.pos.y) {
+      std::swap(v_b, v_c);
+    }
+    if (v_a.pos.y > v_b.pos.y) {
+      std::swap(v_a, v_b);
+    }
+    int64_t start_y = static_cast<int64_t>(v_a.pos.y);
+    int64_t end_y = static_cast<int64_t>(v_b.pos.y);
+    if (start_y != end_y) {
+      for (int64_t y = start_y; y <= end_y; ++y) {
+        const double t_ab = (y - v_a.pos.y) / (v_b.pos.y - v_a.pos.y);
+        Vertex v_ab = Vertex::interpolate(t_ab, v_a, v_b);
+        const double t_ac = (y - v_a.pos.y) / (v_c.pos.y - v_a.pos.y);
+        Vertex v_ac = Vertex::interpolate(t_ac, v_a, v_c);
+        if (v_ab.pos.x > v_ac.pos.x) {
+          std::swap(v_ab, v_ac);
+        }
+        int64_t start_x = static_cast<int64_t>(v_ab.pos.x);
+        int64_t end_x = static_cast<int64_t>(v_ac.pos.x);
+        if (start_x == end_x) {
+          continue;
+        }
+        for (int64_t x = start_x; x <= end_x; ++x) {
+          const double t_abac = (x - v_ab.pos.x) / (v_ac.pos.x - v_ab.pos.x);
+          Vertex v_abac = Vertex::interpolate(t_abac, v_ab, v_ac);
+          v_abac.pos.x = static_cast<double>(x);
+          v_abac.pos.y = static_cast<double>(y);
+          set_pixel(v_abac, image);
+        }
+      }
+    }
+    start_y = static_cast<int64_t>(v_b.pos.y);
+    end_y = static_cast<int64_t>(v_c.pos.y);
+    if (start_y != end_y) {
+      for (int64_t y = start_y; y <= end_y; ++y) {
+        const double t_bc = (y - v_b.pos.y) / (v_c.pos.y - v_b.pos.y);
+        Vertex v_bc = Vertex::interpolate(t_bc, v_b, v_c);
+        const double t_ac = (y - v_a.pos.y) / (v_c.pos.y - v_a.pos.y);
+        Vertex v_ac = Vertex::interpolate(t_ac, v_a, v_c);
+        if (v_bc.pos.x > v_ac.pos.x) {
+          std::swap(v_bc, v_ac);
+        }
+        int64_t start_x = static_cast<int64_t>(v_bc.pos.x);
+        int64_t end_x = static_cast<int64_t>(v_ac.pos.x);
+        if (start_x == end_x) {
+          continue;
+        }
+        for (int64_t x = start_x; x <= end_x; ++x) {
+          const double t_bcac = (x - v_bc.pos.x) / (v_ac.pos.x - v_bc.pos.x);
+          Vertex v_bcac = Vertex::interpolate(t_bcac, v_bc, v_ac);
+          v_bcac.pos.x = static_cast<double>(x);
+          v_bcac.pos.y = static_cast<double>(y);
+          set_pixel(v_bcac, image);
+        }
+      }
+    }
+  }
+}
+auto rasterize_triangle_as_lines(std::vector<Vertex> &vertices, Image &image, void (*set_pixel)(Vertex &vertex, Image &image)) -> void {
+  if (vertices.size() % 3 != 0) {
+    return;
+  }
+  for (size_t vertices_index = 0; vertices_index < vertices.size(); vertices_index += 3) {
+    auto v_a = vertices[vertices_index];
+    auto v_b = vertices[vertices_index + 1];
+    auto v_c = vertices[vertices_index + 2];
+    if (std::isnan(v_a.pos.x) || std::isnan(v_b.pos.x) || std::isnan(v_c.pos.x)) {
+      continue;
+    }
+    std::vector<Vertex> line_vertices = {v_a, v_b, v_b, v_c, v_c, v_a};
+    rasterize_line(line_vertices, image, set_pixel);
+  }
+}
+auto set_pixel_none(Vertex &, Image &) -> void {}
+auto set_pixel_rgba_no_depth(Vertex &vertex, Image &image) -> void {
+  if (vertex.pos.x < 0 || vertex.pos.y < 0) {
+    return;
+  }
+  size_t x{static_cast<size_t>(vertex.pos.x)};
+  size_t y{static_cast<size_t>(vertex.pos.y)};
+  image.set_pixel(x, y, vertex.col * 1.0 / vertex.one);
+}
+auto set_pixel_rgba_depth(Vertex &vertex, Image &image) -> void {
+  if (vertex.pos.x < 0 || vertex.pos.y < 0) {
+    return;
+  }
+  size_t x{static_cast<size_t>(vertex.pos.x)};
+  size_t y{static_cast<size_t>(vertex.pos.y)};
+  if (vertex.pos.z > image.get_depth(x, y)) {
+    return;
+  }
+  image.set_depth(x, y, vertex.pos.z);
+  image.set_pixel(x, y, vertex.col * 1.0 / vertex.one);
+}
+auto set_pixel_z_depth(Vertex &vertex, Image &image) -> void {
+  if (vertex.pos.x < 0 || vertex.pos.y < 0) {
+    return;
+  }
+  size_t x{static_cast<size_t>(vertex.pos.x)};
+  size_t y{static_cast<size_t>(vertex.pos.y)};
+  if (vertex.pos.z > image.get_depth(x, y)) {
+    return;
+  }
+  image.set_depth(x, y, vertex.pos.z);
+  image.set_pixel(x, y, {vertex.pos.z, vertex.pos.z, vertex.pos.z, 1.0});
+}
+auto set_pixel_z_no_depth(Vertex &vertex, Image &image) -> void {
+  if (vertex.pos.x < 0 || vertex.pos.y < 0) {
+    return;
+  }
+  size_t x{static_cast<size_t>(vertex.pos.x)};
+  size_t y{static_cast<size_t>(vertex.pos.y)};
+  image.set_pixel(x, y, {vertex.pos.z, vertex.pos.z, vertex.pos.z, 1.0});
+}
+auto set_pixel_tex(Vertex &vertex, Image &image) -> void {
+  if (vertex.pos.x < 0 || vertex.pos.y < 0) {
+    return;
+  }
+  size_t x{static_cast<size_t>(vertex.pos.x)};
+  size_t y{static_cast<size_t>(vertex.pos.y)};
+  if (vertex.pos.z > image.get_depth(x, y)) {
+    return;
+  }
+  auto r = vertex.col.r / vertex.one;
+  auto g = vertex.col.g / vertex.one;
+  auto b = vertex.col.b / vertex.one;
+  bool r_t = static_cast<int>(r * 10.0) % 2 == 0;
+  bool g_t = static_cast<int>(g * 10.0) % 2 == 0;
+  bool b_t = static_cast<int>(b * 10.0) % 2 == 0;
+  if ((r_t && g_t && !b_t) || (r_t && !g_t && b_t) || (!r_t && g_t && b_t)) {
+    r = 1.0;
+    g = 1.0;
+    b = 1.0;
+  }
+  glm::dvec4 col = {r, g, b, 1.0};
+  image.set_depth(x, y, vertex.pos.z);
+  image.set_pixel(x, y, col);
+}
+auto set_pixel_white(Vertex &vertex, Image &image) -> void {
+  if (vertex.pos.x < 0 || vertex.pos.y < 0) {
+    return;
+  }
+  size_t x{static_cast<size_t>(vertex.pos.x)};
+  size_t y{static_cast<size_t>(vertex.pos.y)};
+  image.set_pixel(x, y, {1.0, 1.0, 1.0, 1.0});
+}
+} // namespace Alg
 } // namespace Vis

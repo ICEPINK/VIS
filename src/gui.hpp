@@ -1,31 +1,22 @@
 #pragma once
 
-#include <string>
+#include "window.hpp"
 
-#define GLFW_INCLUDE_NONE
-#include <GLFW/glfw3.h>
 #include <imgui.h>
-
-#include "utils/app_info.hpp"
-#include "utils/scene_info.hpp"
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_opengl3.h>
 
 namespace Vis {
 
 class Gui {
-  public:
-    Gui(AppInfo &app_info, SceneInfo &scene_info);
-    ~Gui();
+public:
+  Gui(const Window &window, const char *glsl_version);
+  ~Gui();
 
-    void render();
-    void new_frame();
-    void prepare_gui(const bool demo = 0);
+  auto new_frame() -> void;
+  auto render() -> void;
 
-    void glfw_init(GLFWwindow *window);
-    void opengl_init(const std::string &glsl_version);
-
-  private:
-    AppInfo &m_app_info_ref;
-    SceneInfo &m_scene_info_ref;
+private:
 };
 
 } // namespace Vis
