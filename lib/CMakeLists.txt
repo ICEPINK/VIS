@@ -78,5 +78,7 @@ target_link_libraries(${PROJECT_NAME}
     PRIVATE -static-libstdc++
     )
 
+target_compile_definitions(${PROJECT_NAME} PRIVATE GLFW_INCLUDE_NONE)
+
 # Glm
 add_subdirectory("./glm/")

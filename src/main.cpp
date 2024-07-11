@@ -1,6 +1,11 @@
+#include "main.hpp"
 #include "application.hpp"
-
-int main() {
-    Vis::Application app;
-    return app.run();
+auto main(int argc, char **argv) -> int {
+  const std::vector<std::string_view> args(argv, argv + argc);
+  try {
+    Vis::Application application(args);
+  } catch (...) {
+    return Vis::handle_exception();
+  }
+  return EXIT_SUCCESS;
 }
