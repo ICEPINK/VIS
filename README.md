@@ -11,6 +11,7 @@ Requirements:
 ## Windows & Linux
 
 ~~~
+$ git clone --recursive https://github.com/ICEPINK/VIS.git
 $ cmake -B ./build/
 $ cd build/
 $ cmake --build
