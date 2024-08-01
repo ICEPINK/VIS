@@ -1,10 +1,33 @@
 # VIS
+
 Visualization of rendering pipeline
 
-## TODO:
-- UI
-- Reset Camera ?
-- Reset Pipeline ?
-- Application() into more fnc ?
-- Active render pipeline ?
-- Orthogonal camera ?
+# Build
+
+Requirements:
+- CMake version 3.28
+- C++ compiler
+
+## Windows & Linux
+
+~~~
+$ cmake -B ./build/
+$ cd build/
+$ cmake --build
+~~~
+
+# Controls
+| Key | Action |
+| --- | ------ |
+| w | Move forward |
+| s | Move backward |
+| a | Move left |
+| d | Move right |
+| z | Look down |
+| y | Look up |
+| q | Look left |
+| e | Look right |
+| space | Move up|
+| left ctrl | Move down |
+| alt | Alternative mode |
+| mouse move | Mouse look |
