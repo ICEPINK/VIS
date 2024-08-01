@@ -12,7 +12,8 @@ Requirements:
 
 ~~~
 $ git clone --recursive https://github.com/ICEPINK/VIS.git
-$ cmake -B ./build/
+$ cd VIS/
+$ cmake -B ./build/ -DCMAKE_BUILD_TYPE=Release
 $ cd build/
 $ cmake --build
 ~~~

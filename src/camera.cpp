@@ -3,6 +3,7 @@
 namespace Vis {
 
 auto Camera::get_projection() const -> glm::dmat4 { return glm::perspective(fov, width / height, near_plane, far_plane); }
+// auto Camera::get_projection() const -> glm::dmat4 { return glm::ortho(-5.0, 5.0, -5.0, 5.0, near_plane, far_plane); }
 
 auto Camera::get_view() const -> glm::dmat4 { return glm::lookAt(position, direction + position, up); }
 

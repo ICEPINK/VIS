@@ -1,4 +1,5 @@
 #include "pipeline.hpp"
+#include <iostream>
 #define PLANE_TEST(test_plane, value, comparison_operator_in) \
   for (size_t j = 0; j < v_in.size(); ++j) { \
     const auto &v1 = v_in[j]; \
