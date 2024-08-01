@@ -108,6 +108,29 @@ auto clip_after_dehomog_triangle(std::vector<Vertex> &vertices) -> void {
   }
   vertices = new_vertices;
 }
+
+auto clip_backface_none(std::vector<Vertex> &) -> void {}
+
+auto clip_backface_triangle(std::vector<Vertex> &vertices) -> void {
+    if (vertices.size() % 3 != 0) { return; }
+    std::vector<Vertex> new_vertices;
+    new_vertices.reserve(vertices.size());
+    for (size_t i = 0; i < vertices.size(); i += 3) {
+        auto &v1 = vertices[i];
+        auto &v2 = vertices[i + 1];
+        auto &v3 = vertices[i + 2];
+        const auto a = glm::dvec3((v2.pos/v2.pos.w) - (v1.pos/v1.pos.w));
+        const auto b = glm::dvec3((v3.pos/v3.pos.w) - (v1.pos/v1.pos.w));
+        const auto n = glm::cross(a, b);
+        const auto bfc = glm::dot(n, glm::dvec3(0, 0, 1));
+        if (bfc <= 0) { continue; }
+        new_vertices.push_back(v1);
+        new_vertices.push_back(v2);
+        new_vertices.push_back(v3);
+    }
+    vertices = new_vertices;
+}
+
 auto clip_before_dehomog_line(std::vector<Vertex> &vertices) -> void {
   if (vertices.size() % 2 != 0) {
     return;

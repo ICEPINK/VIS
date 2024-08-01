@@ -31,6 +31,7 @@ struct SceneInfo {
   Camera *active_camera{nullptr};
   Pipeline render_triangle_pipeline{
       .clip_after_dehomog = Alg::clip_after_dehomog_triangle,
+      .clip_backface = Alg::clip_backface_triangle,
       .clip_before_dehomog = Alg::clip_before_dehomog_triangle,
       .clip_fast = Alg::clip_fast_triangle,
       .dehomog = Alg::dehomog_all,
@@ -72,15 +73,14 @@ struct SceneInfo {
   Pipeline simulate_line_pipeline{};
   Pipeline simulate_point_pipeline{};
 };
+
 class Application {
 public:
   Application(const std::vector<std::string_view> &args = {});
   ~Application() = default;
-  auto run() -> void;
 
 private:
-  [[nodiscard]] auto
-  handle_args(const std::vector<std::string_view> &args) -> bool;
+  [[nodiscard]] auto handle_args(const std::vector<std::string_view> &args) -> bool;
   auto arg_print_help() -> bool;
   auto arg_print_version() -> bool;
   auto arg_resolution(std::string_view resolution) -> void;
@@ -90,6 +90,7 @@ private:
   auto render_solid(const Solid &solid) -> void;
   auto render(std::vector<Vertex> &vertices, const Pipeline &pipeline,
               const glm::dmat4 &matrix) -> void;
+  auto run() -> void;
   [[nodiscard]] auto simulate_solid(const Solid &solid) -> Solid;
   template <size_t vertices_per_primitie, AddToNewSolid add_to_new_solid>
   auto render_topology(const Layout &layout, const Solid &solid,

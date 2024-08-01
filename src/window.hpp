@@ -32,7 +32,11 @@ public:
   }
 
   inline auto set_input_mode(const int mode, const int value) const -> auto {
-    return p_glfw->set_input_mode(p_window, mode, value);
+    p_glfw->set_input_mode(p_window, mode, value);
+  }
+
+  inline auto set_should_close(const int value) const -> auto {
+    p_glfw->set_window_should_close(p_window, value);
   }
 
   [[nodiscard]] inline auto get_glfw_window_ptr() const -> auto {

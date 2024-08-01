@@ -1,16 +1,16 @@
 -- .nvim/run.lua --
 
 -- global variables --
-local g_executable = 'VIS.exe'
+local g_executable = 'VIS'
 local g_executable_args = {}
 local g_setup = 'cmake'
 local g_setup_args = {} 
-local g_setup_build_dir = 'build\\' 
+local g_setup_build_dir = 'build/' 
 local g_setup_build_type = 'Release'
 local g_setup_c_compiler = 'clang'
 local g_setup_cxx_compiler = 'clang++'
 local g_setup_generator = 'Ninja' 
-local g_setup_source_dir = '.\\' 
+local g_setup_source_dir = './' 
 
 -- fuctions --
 function in_args(a)
@@ -37,7 +37,8 @@ local function build()
 end
 local function run()
     print('@run(' .. g_executable .. ' ' .. table.concat(g_executable_args, ' ') ..  ')')
-    return os.execute('start cmd /C ' .. g_setup_build_dir .. g_executable .. ' ' .. table.concat(g_executable_args, ' '))
+    -- return os.execute('start cmd /C ' .. g_setup_build_dir .. g_executable .. ' ' .. table.concat(g_executable_args, ' '))
+    return os.execute(g_setup_build_dir .. g_executable .. ' ' .. table.concat(g_executable_args, ' '))
 end
 
 -- script --

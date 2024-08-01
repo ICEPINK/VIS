@@ -37,7 +37,11 @@ public:
   }
   inline auto set_input_mode(GLFWwindow *const window, const int mode,
                              const int value) const -> auto {
-    return glfwSetInputMode(window, mode, value);
+    glfwSetInputMode(window, mode, value);
+  }
+
+  inline auto set_window_should_close(GLFWwindow *const window, const int value) const -> auto {
+      glfwSetWindowShouldClose(window, value);
   }
 
   inline auto get_key(GLFWwindow *const window, const int key) const -> auto {

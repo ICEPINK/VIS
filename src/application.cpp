@@ -40,7 +40,7 @@ Application::Application(const std::vector<std::string_view> &args) {
   m_scene_info.simulated_camera = std::make_unique<Camera>();
   m_scene_info.simulated_camera->width = static_cast<double>(m_width);
   m_scene_info.simulated_camera->height = static_cast<double>(m_height);
-  m_scene_info.simulated_camera->position = {-1.0, 0.0, 0.0};
+  m_scene_info.simulated_camera->position = {-2.0, 0.0, 0.0};
   m_scene_info.simulated_camera->near_plane = 1.0;
   m_scene_info.simulated_camera->far_plane = 10.0;
   m_scene_info.render_camera = std::make_unique<Camera>();
@@ -119,7 +119,7 @@ auto Application::run() -> void {
     Timer timer(&m_last_loop_time);
 
     handle_input();
-    make_gui(true);
+    make_gui();
     render_image();
 
     p_gui->render();
@@ -395,7 +395,12 @@ auto Application::make_gui(bool show_debug) -> void {
 
   if (ImGui::BeginMainMenuBar()) {
     if (ImGui::BeginMenu("App")) {
-      if (ImGui::MenuItem("Item1")) {
+      if (ImGui::MenuItem("Quit")) {
+        p_window->set_should_close(true);
+      }
+      if (ImGui::MenuItem("Reset camera")) {
+        m_scene_info.active_camera->position = {-2.0, 0.0, 0.0};
+        m_scene_info.active_camera->direction = {1.0, 0.0, 0.0};
       }
       ImGui::EndMenu();
     }
@@ -429,8 +434,6 @@ auto Application::make_gui(bool show_debug) -> void {
   ImGui::Text("- height: %zu", m_image.get_height());
   ImGui::Text("m_last_loop_time: %f", m_last_loop_time);
   ImGui::Text("- fps: %f", 1 / m_last_loop_time);
-  ImGui::SeparatorText("Test variables");
-  ImGui::Text("test_blue: %f", test_blue);
   ImGui::End();
 
   ImGui::Begin("Settings");

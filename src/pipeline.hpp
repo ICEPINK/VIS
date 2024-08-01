@@ -9,6 +9,8 @@ namespace Alg {
 auto clip_after_dehomog_line(std::vector<Vertex> &vertices) -> void;
 auto clip_after_dehomog_none(std::vector<Vertex> &vertices) -> void;
 auto clip_after_dehomog_triangle(std::vector<Vertex> &vertices) -> void;
+auto clip_backface_none(std::vector<Vertex> &vertices) -> void;
+auto clip_backface_triangle(std::vector<Vertex> &vertices) -> void;
 auto clip_before_dehomog_line(std::vector<Vertex> &vertices) -> void;
 auto clip_before_dehomog_none(std::vector<Vertex> &vertices) -> void;
 auto clip_before_dehomog_triangle(std::vector<Vertex> &vertices) -> void;
@@ -38,6 +40,7 @@ auto trasform_vertices_by_none(std::vector<Vertex> &vertices, const glm::dmat4 &
 } // namespace Alg
 struct Pipeline {
   void (*clip_after_dehomog)(std::vector<Vertex> &vertices){Alg::clip_after_dehomog_none};
+  void (*clip_backface)(std::vector<Vertex> &vertices){Alg::clip_backface_none};
   void (*clip_before_dehomog)(std::vector<Vertex> &vertices){Alg::clip_before_dehomog_none};
   void (*clip_fast)(std::vector<Vertex> &vertices){Alg::clip_fast_none};
   void (*dehomog)(std::vector<Vertex> &vertices){Alg::dehomog_none};
