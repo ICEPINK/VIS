@@ -130,6 +130,7 @@ auto Application::run() -> void {
 auto Application::render(std::vector<Vertex> &vertices, const Pipeline &pipeline, const glm::dmat4 &matrix) -> void {
   pipeline.trasform_vertices(vertices, matrix);
   pipeline.clip_fast(vertices);
+  pipeline.clip_backface(vertices);
   pipeline.clip_before_dehomog(vertices);
   pipeline.dehomog(vertices);
   pipeline.clip_after_dehomog(vertices);
@@ -316,47 +317,16 @@ auto Application::handle_input() -> void {
     p_window->set_input_mode(GLFW_CURSOR, GLFW_CURSOR_NORMAL);
   }
   if (m_alt_mode) {
-    int key;
-    key = p_window->get_key(GLFW_KEY_W);
-    if (key == GLFW_PRESS || key == GLFW_REPEAT) {
-      m_scene_info.active_camera->move_forward(0.02);
-    }
-    key = p_window->get_key(GLFW_KEY_S);
-    if (key == GLFW_PRESS || key == GLFW_REPEAT) {
-      m_scene_info.active_camera->move_backward(0.02);
-    }
-    key = p_window->get_key(GLFW_KEY_A);
-    if (key == GLFW_PRESS || key == GLFW_REPEAT) {
-      m_scene_info.active_camera->move_left(0.02);
-    }
-    key = p_window->get_key(GLFW_KEY_D);
-    if (key == GLFW_PRESS || key == GLFW_REPEAT) {
-      m_scene_info.active_camera->move_right(0.02);
-    }
-    key = p_window->get_key(GLFW_KEY_SPACE);
-    if (key == GLFW_PRESS || key == GLFW_REPEAT) {
-      m_scene_info.active_camera->move_up(0.02);
-    }
-    key = p_window->get_key(GLFW_KEY_LEFT_CONTROL);
-    if (key == GLFW_PRESS || key == GLFW_REPEAT) {
-      m_scene_info.active_camera->move_down(0.02);
-    }
-    key = p_window->get_key(GLFW_KEY_Q);
-    if (key == GLFW_PRESS || key == GLFW_REPEAT) {
-      m_scene_info.active_camera->rotate_left(0.01);
-    }
-    key = p_window->get_key(GLFW_KEY_E);
-    if (key == GLFW_PRESS || key == GLFW_REPEAT) {
-      m_scene_info.active_camera->rotate_right(0.01);
-    }
-    key = p_window->get_key(GLFW_KEY_Y);
-    if (key == GLFW_PRESS || key == GLFW_REPEAT) {
-      m_scene_info.active_camera->rotate_up(0.01);
-    }
-    key = p_window->get_key(GLFW_KEY_Z);
-    if (key == GLFW_PRESS || key == GLFW_REPEAT) {
-      m_scene_info.active_camera->rotate_down(0.01);
-    }
+    key_action(GLFW_KEY_W, GLFW_PRESS | GLFW_REPEAT, [this]() { m_scene_info.active_camera->move_forward(0.02); });
+    key_action(GLFW_KEY_S, GLFW_PRESS | GLFW_REPEAT, [this]() { m_scene_info.active_camera->move_backward(0.02); });
+    key_action(GLFW_KEY_A, GLFW_PRESS | GLFW_REPEAT, [this]() { m_scene_info.active_camera->move_left(0.02); });
+    key_action(GLFW_KEY_D, GLFW_PRESS | GLFW_REPEAT, [this]() { m_scene_info.active_camera->move_right(0.02); });
+    key_action(GLFW_KEY_SPACE, GLFW_PRESS | GLFW_REPEAT, [this]() { m_scene_info.active_camera->move_up(0.02); });
+    key_action(GLFW_KEY_LEFT_CONTROL, GLFW_PRESS | GLFW_REPEAT, [this]() { m_scene_info.active_camera->move_down(0.02); });
+    key_action(GLFW_KEY_Q, GLFW_PRESS | GLFW_REPEAT, [this]() { m_scene_info.active_camera->rotate_left(0.01); });
+    key_action(GLFW_KEY_E, GLFW_PRESS | GLFW_REPEAT, [this]() { m_scene_info.active_camera->rotate_right(0.01); });
+    key_action(GLFW_KEY_Y, GLFW_PRESS | GLFW_REPEAT, [this]() { m_scene_info.active_camera->rotate_up(0.01); });
+    key_action(GLFW_KEY_Z, GLFW_PRESS | GLFW_REPEAT, [this]() { m_scene_info.active_camera->rotate_down(0.01); });
     if (m_mouse_pos_y < 0.0) {
       for (auto i = 0.0; i < -m_mouse_pos_y; ++i) {
         m_scene_info.active_camera->rotate_up(1 / 500.0);
@@ -381,6 +351,13 @@ auto Application::handle_input() -> void {
     m_mouse_pos_y = 0.0;
     p_window->set_cursor_pos(m_mouse_pos_x, m_mouse_pos_y);
   }
+}
+
+constexpr auto Application::key_action(const int key, const int key_state, const auto fnc) -> void {
+    int key_info = p_window->get_key(key);
+    if (key_info & key_state) {
+        fnc();
+    }
 }
 
 auto Application::make_gui(bool show_debug) -> void {

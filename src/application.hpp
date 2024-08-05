@@ -31,7 +31,7 @@ struct SceneInfo {
   Camera *active_camera{nullptr};
   Pipeline render_triangle_pipeline{
       .clip_after_dehomog = Alg::clip_after_dehomog_triangle,
-      .clip_backface = Alg::clip_backface_triangle,
+      .clip_backface = Alg::clip_backface_none,
       .clip_before_dehomog = Alg::clip_before_dehomog_triangle,
       .clip_fast = Alg::clip_fast_triangle,
       .dehomog = Alg::dehomog_all,
@@ -62,6 +62,7 @@ struct SceneInfo {
   };
   Pipeline simulate_triangle_pipeline{
       .clip_after_dehomog = Alg::clip_after_dehomog_triangle,
+      .clip_backface = Alg::clip_backface_none,
       .clip_before_dehomog = Alg::clip_before_dehomog_triangle,
       .clip_fast = Alg::clip_fast_triangle,
       .dehomog = Alg::dehomog_all,
@@ -86,6 +87,7 @@ private:
   auto arg_resolution(std::string_view resolution) -> void;
   auto make_gui(bool show_debug = false) -> void;
   auto handle_input() -> void;
+  constexpr auto key_action(const int key, const int key_state, const auto fnc) -> void;
   auto render_image() -> void;
   auto render_solid(const Solid &solid) -> void;
   auto render(std::vector<Vertex> &vertices, const Pipeline &pipeline,
