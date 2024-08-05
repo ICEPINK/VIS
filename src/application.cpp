@@ -415,12 +415,12 @@ auto Application::make_gui(bool show_debug) -> void {
 
   ImGui::Begin("Application Info");
   ImGui::SeparatorText("Applicaton Info");
-  ImGui::Text("p_glfw: %p", (void *)p_glfw.get());
-  ImGui::Text("p_window: %p", (void *)p_window.get());
-  ImGui::Text("- glfw_window_ptr: %p", (void *)p_window->get_glfw_window_ptr());
-  ImGui::Text("p_gui: %p", (void *)p_gui.get());
-  ImGui::Text("p_texture: %p", (void *)p_texture.get());
-  ImGui::Text("- opengl_id: %u", p_texture->get_id());
+  // ImGui::Text("p_glfw: %p", (void *)p_glfw.get());
+  // ImGui::Text("p_window: %p", (void *)p_window.get());
+  // ImGui::Text("- glfw_window_ptr: %p", (void *)p_window->get_glfw_window_ptr());
+  // ImGui::Text("p_gui: %p", (void *)p_gui.get());
+  // ImGui::Text("p_texture: %p", (void *)p_texture.get());
+  // ImGui::Text("- opengl_id: %u", p_texture->get_id());
   ImGui::Text("m_width: %zu", m_width);
   ImGui::Text("m_height: %zu", m_height);
   ImGui::Text("m_panel_width: %f", m_panel_width);
@@ -725,24 +725,24 @@ auto Application::make_gui(bool show_debug) -> void {
     }
   }
   if (ImGui::CollapsingHeader("Camera settings")) {
-    static float near_plane = m_scene_info.simulated_camera->near_plane;
+    static float near_plane = static_cast<float>(m_scene_info.simulated_camera->near_plane);
     if (ImGui::SliderFloat("Near plane", &near_plane, 0.1f, 9.9f, "%.3f")) {
       m_scene_info.simulated_camera->near_plane = near_plane;
     }
-    static float fov = 360 * m_scene_info.simulated_camera->fov / (glm::pi<float>() * 2);
+    static float fov = 360 * static_cast<float>(m_scene_info.simulated_camera->fov) / (glm::pi<float>() * 2);
     if (ImGui::SliderFloat("Field of view", &fov, 0.1f, 179.0f, "%.3f")) {
       m_scene_info.simulated_camera->fov = (fov / 360) * 2 * glm::pi<double>();
     }
   }
   if (ImGui::CollapsingHeader("Solid")) {
       static float vec3[3] = { 0.0f, 0.0f, 0.0f };
-      vec3[0] = m_scene_info.simulated_solid.matrix[3].x;
-      vec3[1] = m_scene_info.simulated_solid.matrix[3].y;
-      vec3[2] = m_scene_info.simulated_solid.matrix[3].z;
+      vec3[0] = static_cast<float>(m_scene_info.simulated_solid.matrix[3].x);
+      vec3[1] = static_cast<float>(m_scene_info.simulated_solid.matrix[3].y);
+      vec3[2] = static_cast<float>(m_scene_info.simulated_solid.matrix[3].z);
       if (ImGui::InputFloat3("Position", vec3)) {
-          m_scene_info.simulated_solid.matrix[3].x = vec3[0];
-          m_scene_info.simulated_solid.matrix[3].y = vec3[1];
-          m_scene_info.simulated_solid.matrix[3].z = vec3[2];
+          m_scene_info.simulated_solid.matrix[3].x = static_cast<double>(vec3[0]);
+          m_scene_info.simulated_solid.matrix[3].y = static_cast<double>(vec3[1]);
+          m_scene_info.simulated_solid.matrix[3].z = static_cast<double>(vec3[2]);
       }
   }
   ImGui::End();
