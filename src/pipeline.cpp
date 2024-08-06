@@ -307,7 +307,13 @@ auto rasterize_line(std::vector<Vertex> &vertices, Image &image, void (*set_pixe
         if (std::isnan(vertex.pos.x)) {
           continue;
         }
+        auto anti =  vertex.pos.y - (long)vertex.pos.y;
+        auto col_a = vertex.col.a;
+        vertex.col.a *= anti;
         vertex.pos.x = static_cast<double>(x);
+        set_pixel(vertex, image);
+        vertex.col.a = col_a * (1.0 - anti);
+        vertex.pos.y -= 1.0;
         set_pixel(vertex, image);
       }
     } else {
@@ -323,7 +329,13 @@ auto rasterize_line(std::vector<Vertex> &vertices, Image &image, void (*set_pixe
         if (std::isnan(vertex.pos.x)) {
           continue;
         }
+        auto anti =  vertex.pos.x - (long)vertex.pos.x;
+        auto col_a = vertex.col.a;
+        vertex.col.a *= anti;
         vertex.pos.y = static_cast<double>(y);
+        set_pixel(vertex, image);
+        vertex.col.a = col_a * (1.0 - anti);
+        vertex.pos.x -= 1.0;
         set_pixel(vertex, image);
       }
     }
